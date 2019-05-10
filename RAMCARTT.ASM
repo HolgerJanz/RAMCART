@@ -191,27 +191,27 @@ start.check.loop
 		rts
 
 start.lock
-		.byte 'The!Cart is not plug in or config is locked.'
+		.byte 'THE!CART NOT FOUND'
 		.byte $9b
 start.lock.end
 
 start.letsgo
-		.byte 'The!Cart RAMIO Test Version 19.05.09'
+		.byte 'THE!TEST FOR THE!RAMDISK'
 		.byte $9b
 start.letsgo.end
 
 start.write
-		.byte 'Write'
+		.byte 'WRITE'
 		.byte $9b
 start.write.end
 
 start.check
-		.byte 'Read and Check'
+		.byte 'READ AND CHECK'
 		.byte $9b
 start.check.end
 
 start.counter.init
-		.byte 'Sector ____'
+		.byte 'SECTOR ____'
 start.counter.init.end
 start.counter.lf
 		.byte $9b
