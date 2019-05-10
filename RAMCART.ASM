@@ -212,10 +212,10 @@ setup.ok
 		jsr print		
 ; Patch FMS to use 1050 VTOC instead of 130XE VTOC
 ; and switch to D8: for MEM.SAV and DUP.SYS 
-        lda #$06	 ; offset 6 -> 1050
-        sta FIXVTOC	; set max VTOC length
-        lda #$8a      
-        sta FIXXFMT ; set VTOC head
+		lda #$06	 ; offset 6 -> 1050
+		sta FIXVTOC	; set max VTOC length
+		lda #$8a      
+		sta FIXXFMT ; set VTOC head
 ; activate RAMDISK at D8:
 		lda DRVBYT  ; to active drives...
 		ora #$80    ; ...include this drive
@@ -231,22 +231,22 @@ setup.ok
 		lda #'8'
 		sta file.dup.NAME+1
 ; check for DUP.SYS on D8:
-    	ldx #$70
-    	lda #XIO.OPEN       ;OPEN
-    	sta IOCB.CMD,X
-    	lda #XIO.READ       ;FOR READ
+		ldx #$70
+		lda #XIO.OPEN       ;OPEN
+		sta IOCB.CMD,X
+		lda #XIO.READ       ;FOR READ
 		sta IOCB.AUX1,X
 		lda #<file.dup.name ;D1:DUP.SYS
 		sta IOCB.BUF,X
-    	lda #>file.dup.name
+		lda #>file.dup.name
 		sta IOCB.BUF+1,X
 		jsr CIOV
-    	bmi dup.notfound    ;NO DUP(?)
+		bmi dup.notfound    ;NO DUP(?)
 		jsr close
-    	bmi dup.notfound    ;NO DUP(?)
+		bmi dup.notfound    ;NO DUP(?)
 ; switch to D8: for MEM.SAV and DUP.SYS
 		lda #'8'
-    	sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
+		sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
 ; finish 
 dup.notfound
         rts				; OK and we are done!
@@ -258,15 +258,15 @@ prepare.ramdisk
 		lda #msg.format.end-msg.format
 		jsr print
 ; format
-    	ldx #$70         ; we will use channel 7 for this
-    	lda #XIO.FMTDD   ; the format command
-    	sta IOCB.CMD,X   ; is first item on agenda!
-    	lda #<drv.name   ; LSB of address of drive name
-    	sta IOCB.BUF,X   ; to IOCB
-    	lda #>drv.name   ; then MSB
-    	sta IOCB.BUF+1,X ; also to IOCB
-    	jsr CIOV         ; call CIO to FORMAT the disk
-    	BMI oops1        ; but we can't handle an error! (do nothing)
+		ldx #$70         ; we will use channel 7 for this
+		lda #XIO.FMTDD   ; the format command
+		sta IOCB.CMD,X   ; is first item on agenda!
+		lda #<drv.name   ; LSB of address of drive name
+		sta IOCB.BUF,X   ; to IOCB
+		lda #>drv.name   ; then MSB
+		sta IOCB.BUF+1,X ; also to IOCB
+		jsr CIOV         ; call CIO to FORMAT the disk
+		BMI oops1        ; but we can't handle an error! (do nothing)
 
 ;*** (2) COPY DUP.SYS TO D8:
 		ldx #<msg.copy
@@ -274,23 +274,23 @@ prepare.ramdisk
 		lda #msg.copy.end-msg.copy
 		jsr print
 ; start copy of DUP.SYS
-    	ldx #$70
-    	lda #XIO.OPEN
-    	sta IOCB.CMD,X
-    	lda #XIO.READ
+		ldx #$70
+		lda #XIO.OPEN
+		sta IOCB.CMD,X
+		lda #XIO.READ
 		sta IOCB.AUX1,X
 		lda #<file.dup.name
 		sta IOCB.BUF,X
-    	lda #>file.dup.name
+		lda #>file.dup.name
 		sta IOCB.BUF+1,X
 		jsr CIOV
 oops1
-    	bmi oops2           ;NO DUP(?)
+		bmi oops2           ;NO DUP(?)
 ; read it into buffer
-    	ldx #$70
+		ldx #$70
 		lda #XIO.GET
 		sta IOCB.CMD,X
-    	lda #<file.dup.size
+		lda #<file.dup.size
 		sta IOCB.BUFLEN,X
 		lda #>file.dup.size
 		sta IOCB.BUFLEN+1,X
@@ -298,7 +298,7 @@ oops1
 		sta IOCB.BUF,X
 		lda #>file.dup.buffer
 		sta IOCB.BUF+1,X
-    	jsr CIOV
+		jsr CIOV
 oops2
 		bmi oops3
 		jsr close
@@ -320,7 +320,7 @@ oops2
 oops3
 		bmi  oops4
 ; write dup.sys to D8:
-    	ldx #$70
+		ldx #$70
 		lda #XIO.PUT
 		sta IOCB.CMD,X
 		lda #<file.dup.size
@@ -341,7 +341,7 @@ OOPS4
 ; only and only if format and copy OK, 
 ; switch to D8: for MEM.SAV and DUP.SYS
 		lda #'8'
-    	sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
+		sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
 		
 ;*** (3) CREATE MEM.SAV FILE
 		ldx #<msg.create
@@ -349,7 +349,7 @@ OOPS4
 		lda #msg.create.end-msg.create
 		jsr print
 ; start copy of DUP.SYS
-    	ldx #$70
+		ldx #$70
 		lda #XIO.OPEN
 		sta IOCB.CMD,X
 		lda #XIO.WRITE

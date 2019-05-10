@@ -213,10 +213,10 @@ mads 1.9.9
    212 4020 20 62 42				jsr print		
    213 				; Patch FMS to use 1050 VTOC instead of 130XE VTOC
    214 				; and switch to D8: for MEM.SAV and DUP.SYS 
-   215 4023 A9 06		        lda #$06	 ; offset 6 -> 1050
-   216 4025 8D 87 0B		        sta FIXVTOC	; set max VTOC length
-   217 4028 A9 8A		        lda #$8a      
-   218 402A 8D 5D 10		        sta FIXXFMT ; set VTOC head
+   215 4023 A9 06				lda #$06	 ; offset 6 -> 1050
+   216 4025 8D 87 0B				sta FIXVTOC	; set max VTOC length
+   217 4028 A9 8A				lda #$8a      
+   218 402A 8D 5D 10				sta FIXXFMT ; set VTOC head
    219 				; activate RAMDISK at D8:
    220 402D AD 0A 07				lda DRVBYT  ; to active drives...
    221 4030 09 80				ora #$80    ; ...include this drive
@@ -232,22 +232,22 @@ mads 1.9.9
    231 403E A9 38				lda #'8'
    232 4040 8D 0F 42				sta file.dup.NAME+1
    233 				; check for DUP.SYS on D8:
-   234 4043 A2 70		    	ldx #$70
-   235 4045 A9 03		    	lda #XIO.OPEN       ;OPEN
-   236 4047 9D 42 03		    	sta IOCB.CMD,X
-   237 404A A9 04		    	lda #XIO.READ       ;FOR READ
+   234 4043 A2 70				ldx #$70
+   235 4045 A9 03				lda #XIO.OPEN       ;OPEN
+   236 4047 9D 42 03				sta IOCB.CMD,X
+   237 404A A9 04				lda #XIO.READ       ;FOR READ
    238 404C 9D 4A 03				sta IOCB.AUX1,X
    239 404F A9 0E				lda #<file.dup.name ;D1:DUP.SYS
    240 4051 9D 44 03				sta IOCB.BUF,X
-   241 4054 A9 42		    	lda #>file.dup.name
+   241 4054 A9 42				lda #>file.dup.name
    242 4056 9D 45 03				sta IOCB.BUF+1,X
    243 4059 20 56 E4				jsr CIOV
-   244 405C 30 0A		    	bmi dup.notfound    ;NO DUP(?)
+   244 405C 30 0A				bmi dup.notfound    ;NO DUP(?)
    245 405E 20 24 42				jsr close
-   246 4061 30 05		    	bmi dup.notfound    ;NO DUP(?)
+   246 4061 30 05				bmi dup.notfound    ;NO DUP(?)
    247 				; switch to D8: for MEM.SAV and DUP.SYS
    248 4063 A9 38				lda #'8'
-   249 4065 8D 3F 15		    	sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
+   249 4065 8D 3F 15				sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
    250 				; finish 
    251 4068			dup.notfound
    252 4068 60			        rts				; OK and we are done!
@@ -259,15 +259,15 @@ mads 1.9.9
    258 406D A9 0F				lda #msg.format.end-msg.format
    259 406F 20 62 42				jsr print
    260 				; format
-   261 4072 A2 70		    	ldx #$70         ; we will use channel 7 for this
-   262 4074 A9 FE		    	lda #XIO.FMTDD   ; the format command
-   263 4076 9D 42 03		    	sta IOCB.CMD,X   ; is first item on agenda!
-   264 4079 A9 0A		    	lda #<drv.name   ; LSB of address of drive name
-   265 407B 9D 44 03		    	sta IOCB.BUF,X   ; to IOCB
-   266 407E A9 42		    	lda #>drv.name   ; then MSB
-   267 4080 9D 45 03		    	sta IOCB.BUF+1,X ; also to IOCB
-   268 4083 20 56 E4		    	jsr CIOV         ; call CIO to FORMAT the disk
-   269 4086 30 22		    	BMI oops1        ; but we can't handle an error! (do nothing)
+   261 4072 A2 70				ldx #$70         ; we will use channel 7 for this
+   262 4074 A9 FE				lda #XIO.FMTDD   ; the format command
+   263 4076 9D 42 03				sta IOCB.CMD,X   ; is first item on agenda!
+   264 4079 A9 0A				lda #<drv.name   ; LSB of address of drive name
+   265 407B 9D 44 03				sta IOCB.BUF,X   ; to IOCB
+   266 407E A9 42				lda #>drv.name   ; then MSB
+   267 4080 9D 45 03				sta IOCB.BUF+1,X ; also to IOCB
+   268 4083 20 56 E4				jsr CIOV         ; call CIO to FORMAT the disk
+   269 4086 30 22				BMI oops1        ; but we can't handle an error! (do nothing)
    270
    271 				;*** (2) COPY DUP.SYS TO D8:
    272 4088 A2 E2				ldx #<msg.copy
@@ -275,23 +275,23 @@ mads 1.9.9
    274 408C A9 0D				lda #msg.copy.end-msg.copy
    275 408E 20 62 42				jsr print
    276 				; start copy of DUP.SYS
-   277 4091 A2 70		    	ldx #$70
-   278 4093 A9 03		    	lda #XIO.OPEN
-   279 4095 9D 42 03		    	sta IOCB.CMD,X
-   280 4098 A9 04		    	lda #XIO.READ
+   277 4091 A2 70				ldx #$70
+   278 4093 A9 03				lda #XIO.OPEN
+   279 4095 9D 42 03				sta IOCB.CMD,X
+   280 4098 A9 04				lda #XIO.READ
    281 409A 9D 4A 03				sta IOCB.AUX1,X
    282 409D A9 0E				lda #<file.dup.name
    283 409F 9D 44 03				sta IOCB.BUF,X
-   284 40A2 A9 42		    	lda #>file.dup.name
+   284 40A2 A9 42				lda #>file.dup.name
    285 40A4 9D 45 03				sta IOCB.BUF+1,X
    286 40A7 20 56 E4				jsr CIOV
    287 40AA			oops1
-   288 40AA 30 1E		    	bmi oops2           ;NO DUP(?)
+   288 40AA 30 1E				bmi oops2           ;NO DUP(?)
    289 				; read it into buffer
-   290 40AC A2 70		    	ldx #$70
+   290 40AC A2 70				ldx #$70
    291 40AE A9 07				lda #XIO.GET
    292 40B0 9D 42 03				sta IOCB.CMD,X
-   293 40B3 A9 06		    	lda #<file.dup.size
+   293 40B3 A9 06				lda #<file.dup.size
    294 40B5 9D 48 03				sta IOCB.BUFLEN,X
    295 40B8 A9 14				lda #>file.dup.size
    296 40BA 9D 49 03				sta IOCB.BUFLEN+1,X
@@ -299,7 +299,7 @@ mads 1.9.9
    298 40BF 9D 44 03				sta IOCB.BUF,X
    299 40C2 A9 42				lda #>file.dup.buffer
    300 40C4 9D 45 03				sta IOCB.BUF+1,X
-   301 40C7 20 56 E4		    	jsr CIOV
+   301 40C7 20 56 E4				jsr CIOV
    302 40CA			oops2
    303 40CA 30 23				bmi oops3
    304 40CC 20 24 42				jsr close
@@ -321,7 +321,7 @@ mads 1.9.9
    320 40EF			oops3
    321 40EF 30 1E				bmi  oops4
    322 				; write dup.sys to D8:
-   323 40F1 A2 70		    	ldx #$70
+   323 40F1 A2 70				ldx #$70
    324 40F3 A9 0B				lda #XIO.PUT
    325 40F5 9D 42 03				sta IOCB.CMD,X
    326 40F8 A9 06				lda #<file.dup.size
@@ -342,7 +342,7 @@ mads 1.9.9
    341 				; only and only if format and copy OK, 
    342 				; switch to D8: for MEM.SAV and DUP.SYS
    343 4116 A9 38				lda #'8'
-   344 4118 8D 3F 15		    	sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
+   344 4118 8D 3F 15				sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
    345 						
    346 				;*** (3) CREATE MEM.SAV FILE
    347 411B A2 EF				ldx #<msg.create
@@ -350,7 +350,7 @@ mads 1.9.9
    349 411F A9 0F				lda #msg.create.end-msg.create
    350 4121 20 62 42				jsr print
    351 				; start copy of DUP.SYS
-   352 4124 A2 70		    	ldx #$70
+   352 4124 A2 70				ldx #$70
    353 4126 A9 03				lda #XIO.OPEN
    354 4128 9D 42 03				sta IOCB.CMD,X
    355 412B A9 08				lda #XIO.WRITE
