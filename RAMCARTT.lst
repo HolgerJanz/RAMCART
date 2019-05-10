@@ -8,8 +8,8 @@ mads 1.9.9
      7 				; The!Cart Equates
      8 				;
      9
-    10 = D5A6			TCMOSL = $d5a6	; mode ($00-$3d,$01)
-    11 = 00FF			TCMOSL.LOCK		= $ff	; config lock or not present
+    10 = D5A6			TCMOSL		= $d5a6	; mode ($00-$3d,$01)
+    11 = 00FF			TCMOSL.LOCK	= $ff	; config lock or not present
     12
     13 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     14 				;

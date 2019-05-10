@@ -7,8 +7,8 @@
 ; The!Cart Equates
 ;
 
-TCMOSL = $d5a6	; mode ($00-$3d,$01)
-TCMOSL.LOCK		= $ff	; config lock or not present
+TCMOSL		= $d5a6	; mode ($00-$3d,$01)
+TCMOSL.LOCK	= $ff	; config lock or not present
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;

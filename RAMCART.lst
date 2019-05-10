@@ -250,7 +250,7 @@ mads 1.9.9
    249 4065 8D 3F 15				sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
    250 				; finish 
    251 4068			dup.notfound
-   252 4068 60			        rts				; OK and we are done!
+   252 4068 60					rts				; OK and we are done!
    253
    254 4069			prepare.ramdisk
    255 				; *** (1) FORMAT
@@ -308,7 +308,7 @@ mads 1.9.9
    307 40D1 A9 38				lda #'8' ;
    308 40D3 8D 0F 42				sta file.dup.NAME+1
    309 				; now open for write
-   310 40D6 A2 70		    	ldx #$70
+   310 40D6 A2 70				ldx #$70
    311 40D8 A9 03				lda #XIO.OPEN
    312 40DA 9D 42 03				sta IOCB.CMD,X
    313 40DD A9 08				lda #XIO.WRITE
@@ -363,7 +363,7 @@ mads 1.9.9
    362 413D			OOPS5
    363 413D 30 1E				bmi oops6
    364 				; write mem.sav to d8:
-   365 413F A2 70		    	ldx #$70
+   365 413F A2 70				ldx #$70
    366 4141 A9 0B				lda #XIO.PUT
    367 4143 9D 42 03				sta IOCB.CMD,X
    368 4146 A9 8A				lda #<file.mem.size
@@ -457,12 +457,12 @@ mads 1.9.9
    456 				;
    457
    458 420E			file.dup.name
-   459 420E 44 31 3A 44 55 50 + 	.byte 'D1:DUP.SYS',$9b
-   460 = 1406			file.dup.size = 5126
+   459 420E 44 31 3A 44 55 50 + 		.byte 'D1:DUP.SYS',$9b
+   460 = 1406			file.dup.size	= 5126
    461 = 427C			file.dup.buffer = BUFFER
    462
    463 4219			file.mem.name
-   464 4219 44 38 3A 4D 45 4D + 	.byte 'D8:MEM.SAV',$9b
+   464 4219 44 38 3A 4D 45 4D + 		.byte 'D8:MEM.SAV',$9b
    465 = 158A			file.mem.size 	= NDUP-NDOS
    466 = 1D7C			file.mem.buffer	= NDOS
    467
@@ -472,7 +472,7 @@ mads 1.9.9
    471 				;
    472
    473 4224			close ; close channel in X
-   474 4224 A2 70		    	ldx #$70
+   474 4224 A2 70				ldx #$70
    475 4226 A9 0C				lda #XIO.CLOSE
    476 4228 9D 42 03				sta IOCB.CMD,X
    477 422B 20 56 E4				jsr CIOV

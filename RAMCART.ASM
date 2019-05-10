@@ -249,7 +249,7 @@ setup.ok
 		sta FIXMDUP	; set MEM.SAV and DUP.SYS drive
 ; finish 
 dup.notfound
-        rts				; OK and we are done!
+		rts				; OK and we are done!
 
 prepare.ramdisk
 ; *** (1) FORMAT
@@ -307,7 +307,7 @@ oops2
 		lda #'8' ;
 		sta file.dup.NAME+1
 ; now open for write
-    	ldx #$70
+		ldx #$70
 		lda #XIO.OPEN
 		sta IOCB.CMD,X
 		lda #XIO.WRITE
@@ -362,7 +362,7 @@ OOPS4
 OOPS5
 		bmi oops6
 ; write mem.sav to d8:
-    	ldx #$70
+		ldx #$70
 		lda #XIO.PUT
 		sta IOCB.CMD,X
 		lda #<file.mem.size
@@ -456,12 +456,12 @@ drv.name
 ;
 
 file.dup.name
-	.byte 'D1:DUP.SYS',$9b
-file.dup.size = 5126
+		.byte 'D1:DUP.SYS',$9b
+file.dup.size	= 5126
 file.dup.buffer = BUFFER
 
 file.mem.name
-	.byte 'D8:MEM.SAV',$9b
+		.byte 'D8:MEM.SAV',$9b
 file.mem.size 	= NDUP-NDOS
 file.mem.buffer	= NDOS
 
@@ -471,7 +471,7 @@ file.mem.buffer	= NDOS
 ;
 
 close ; close channel in X
-    	ldx #$70
+		ldx #$70
 		lda #XIO.CLOSE
 		sta IOCB.CMD,X
 		jsr CIOV
