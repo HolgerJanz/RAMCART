@@ -170,7 +170,7 @@ FIXVTOC = $0b87 ; Patch RDVTOC in FMS
 ;   $0C = TYPERAM 512 sectores (originial)
 
 DISKBUF = $0304 ; buffer address for read/write
-DCBSEC    = $030a    ; DAUX1,DAUX2 contains sector number
+DCBSEC  = $030a    ; DAUX1,DAUX2 contains sector number
 
 RAMIO   = $1481 ; start of RAMIO of DOS 2.5, end $14e7 = $66
 SETBANK = $12cb ; start of SETBANK of DOS 2.5, end $12ec = $21
