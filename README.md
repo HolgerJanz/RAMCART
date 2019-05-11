@@ -19,13 +19,8 @@ Files:
 
     RAMCART.ASM     Driver Source
     RAMCART.COM     Driver Executable 
-    RAMCART.lab     Driver MADS label listing
-    RAMCART.lst     Driver MADS assembler listing 
     RAMCARTT.ASM    Test Suite Source
     RAMCARTT.COM    Test Suite Executable
-    RAMCARTT.lab    Test Suite MADS label listing
-    RAMCARTT.lst    Test Suite MADS assembler listing
-    ramcart.pages   Documentation Apple Page 
     ramcart.pdf     Documentation PDF
 
 ---
