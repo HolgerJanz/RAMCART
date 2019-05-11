@@ -1,7 +1,7 @@
 # RAMCART
 Atari XL Ramdisk for The!Cart
 
-RAMCART is a Ramdisk driver for the Atari XL using the cartridge The!Cart and Atari DOS 2.5. The driver was developed using WUDSN IDE and MADS Cross Assembler.
+RAMCART is a ramdisk driver for the Atari XL using the cartridge The!Cart and Atari DOS 2.5. The driver was developed using WUDSN IDE and MADS Cross Assembler.
 
 ---
 
