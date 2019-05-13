@@ -3,6 +3,27 @@
 ; The!Ramdisk - Ramdisk for The!Cart
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Assembler Switches
+
+; patchDOS:
+;   assemble with (1) our without (0) DOS 2.5 patches 
+; initRAMDISK
+;   init RAMDISK (1), our without (0) 
+
+; RAMCART.COM
+patchDOS = 1
+initRAMDISK = 1
+
+; RAMDISK.COM
+; patchDOS = 0
+; initRAMDISK = 1
+
+; PATCH.COM
+; patchDOS = 1
+; initRAMDISK = 0
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
 ; The!Cart programming information
 ; (c) 2013 Matthias Reichl
@@ -187,11 +208,16 @@ DVMAXSC = 1024-14        ; max sector count Enhanced Density
 
         org $4000 
 start                   ; Start of code
+
+.if patchDOS & initRAMDISK
 ; start message
         ldx #<msg.start
         ldy #>msg.start
         lda #msg.start.end-msg.start
         jsr print
+.endif
+
+.if initRAMDISK
 ; check for The!Cart
         lda TCMOSL
         cmp #TCMOSL.LOCK
@@ -210,12 +236,18 @@ setup.ok
         ldy #>msg.setup
         lda #msg.setup.end-msg.setup
         jsr print        
+.endif
+
+.if patchDOS
 ; Patch FMS to use 1050 VTOC instead of 130XE VTOC
 ; and switch to D8: for MEM.SAV and DUP.SYS 
         lda #$06        ; offset 6 -> 1050
         sta FIXVTOC     ; set max VTOC length
         lda #$8a      
         sta FIXXFMT     ; set VTOC head
+.endif
+
+.if initRAMDISK
 ; activate RAMDISK at D8:
         lda DRVBYT      ; to active drives...
         ora #$80        ; ...include this drive
@@ -404,6 +436,7 @@ count.tens
         jsr print
 ; close channel, just in case
         jsr close
+.endif
 
         rts         ; ERROR and we are done!
 
@@ -412,11 +445,14 @@ count.tens
 ; Messages
 ;
 
+.if patchDOS & initRAMDISK
 msg.start
         .byte 'THE!RAMDISK FOR THE!CART AND DOS '
         .byte $a0,$0b2,$ae,$b5,$a0 ; invers _2.5_
 msg.start.end
+.endif
 
+.if initRAMDISK
 msg.notfound
         .byte 'THE!CART NOT FOUND', $9b
 msg.notfound.end
@@ -499,7 +535,7 @@ check.vtoc ; Check VTOC sector
         sta DISKBUF+1
 ; call RAMIONEW
         clc             ; read
-        jsr RAMIONEW
+        jsr RAMIO
 ; check first three bytes
         ldy #$03
         
@@ -545,7 +581,9 @@ print    ;print message
 ; Buffer for copy
 
 BUFFER  =  *+1
+.endif
 
+.if patchDOS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
 ; RAMIO: IN DCBSEC: sector number (low, high)
@@ -581,7 +619,6 @@ RAMIO.RAMPTR = $32  ; address to ramdisk sector
 ;==================
 
         org RAMIO
-RAMIONEW
 ; save the!cart registers
         lda TCMOSL
         pha
@@ -677,6 +714,8 @@ RAMIO.copy.end
 ; return code 1 = OK
         iny
         rts
+
+.endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
