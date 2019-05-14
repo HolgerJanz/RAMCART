@@ -190,6 +190,9 @@ FIXVTOC = $0b87 ; Patch RDVTOC in FMS
 ;   $06 = TYPE1050 1024 sectors
 ;   $0C = TYPERAM 512 sectores (originial)
 
+FIXDUP  = $1f31 ; start of version number in DUP
+; used to patch 2.5 -> 2.5TC (Th!Cart DOS now ;-)
+
 DISKBUF = $0304 ; buffer address for read/write
 DCBSEC  = $030a    ; DAUX1,DAUX2 contains sector number
 
@@ -250,16 +253,16 @@ setup.ok
 .if patchDOS & !initRAMDISK
 ; Patch DUP set 2.5TC invers
 ; do not patch for RAMDISK because DUP is loaded later
-        lda #$b2
-        sta $1f31
-        lda #$ae
-        sta $1f32
-        lda #$b5
-        sta $1f33
-        lda #$d4
-        sta $1f34
-        lda #$c3
-        sta $1f35
+        lda #$b2        ; inverse 2
+        sta FIXDUP
+        lda #$ae        ; inverse .
+        sta FIXDUP+1
+        lda #$b5        ; inverse 5
+        sta FIXDUP+2
+        lda #$d4        ; inverse T
+        sta FIXDUP+3
+        lda #$c3        ; inverse C
+        sta FIXDUP+4
 .endif
 
 .if initRAMDISK
