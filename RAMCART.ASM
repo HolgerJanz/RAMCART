@@ -247,6 +247,21 @@ setup.ok
         sta FIXXFMT     ; set VTOC head
 .endif
 
+.if patchDOS & !initRAMDISK
+; Patch DUP set 2.5TC invers
+; do not patch for RAMDISK because DUP is loaded later
+        lda #$b2
+        sta $1f31
+        lda #$ae
+        sta $1f32
+        lda #$b5
+        sta $1f33
+        lda #$d4
+        sta $1f34
+        lda #$c3
+        sta $1f35
+.endif
+
 .if initRAMDISK
 ; activate RAMDISK at D8:
         lda DRVBYT      ; to active drives...
