@@ -8,7 +8,12 @@
 ;
 
 TCMOSL      = $d5a6     ; mode ($00-$3d,$01)
-TCMOSL.LOCK = $ff       ; config lock or not present
+; how to figure out that The!Cart is not active?
+; If the address is not used then the XL returns $ff but
+; the XE (and old 800) return $d5 (high byte of address,
+; the value of the last bus cycle)
+TCMOSL.XLLOCK  = $ff    ; config lock or not present
+TCMOSL.XELOCK  = $d5    ; config lock or not present
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -51,8 +56,11 @@ DCBSEC   = $030a     ; DAUX1,DAUX2 containing sector number
 start                    ; Start of code
 ; check for The!Cart
         lda TCMOSL
-        cmp #TCMOSL.LOCK
+        cmp #TCMOSL.XLLOCK
+        beq start.locked
+        cmp #TCMOSL.XELOCK
         bne start.ok
+start.locked
         ldx #<start.lock
         ldy #>start.lock
         lda #start.lock.end-start.lock
