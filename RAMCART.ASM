@@ -100,7 +100,13 @@ TCMOSL.8K    = $01    ; 8k banks at $A000
 TCMOSL.FLEXI = $21    ; flexi mode,
                          ; separate 8k banks at $A000 and $8000
 TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
-TCMOSL.LOCK  = $ff    ; config lock or not present
+
+; how to figure out that The!Cart is not active?
+; If the address is not used then the XL returns $ff but
+; the XE (and old 800) return $d5 (high byte of address,
+; the value of the last bus cycle)
+TCMOSL.XLLOCK  = $ff    ; config lock or not present
+TCMOSL.XELOCK  = $d5    ; config lock or not present
 
 ; Mode Flash/RAM Select
 TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
@@ -223,8 +229,11 @@ start                   ; Start of code
 .if initRAMDISK
 ; check for The!Cart
         lda TCMOSL
-        cmp #TCMOSL.LOCK
+        cmp #TCMOSL.XLLOCK
+        beq setup.error
+        cmp #TCMOSL.XELOCK
         bne setup.ok
+setup.error
 ; not found message        
         ldx #<msg.notfound
         ldy #>msg.notfound
