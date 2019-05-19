@@ -689,7 +689,7 @@ RAMIO.sync
         beq RAMIO.sync  ; no
         sta NMIEN       ; disable VBI and DLI
         sei             ; and disable IRQ's
-; set new The!Cart mode (bank on stack), 30c
+; set new The!Cart mode, 30c
         lda #TCMOSL.16K     ; 2c, set 2x8k mode at $8000-$BFFF
         sta TCMOSL          ; 4c,
         lda #TCMOFR.PBRAM   ; 2c, set to RAM
