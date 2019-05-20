@@ -239,6 +239,12 @@ setup.error
         ldy #>msg.notfound
         lda #msg.notfound.end-msg.notfound
         jsr print
+; deactivate RAMDISK at D8:
+        lda DRVBYT      ; to active drives...
+        and #$7f        ; ...exclude this drive
+        sta DRVBYT      ; and update the mask
+        jsr INITDOS     ; including the drive table,
+                        ; alloc buffer, etc.
 ; finish
         rts             ; OK and we are done!
         
