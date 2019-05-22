@@ -230,7 +230,7 @@ start                   ; Start of code
 
 .endif
 
-.if patchDOS & !initRAMDISK
+.if patchDOS
 
 ; Patch DUP set 2.5 to 2.5TC
 ; do not patch for RAMDISK because DUP is loaded later
