@@ -1,6 +1,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
-; The!Ramdisk - Ramdisk for The!Cart
+; The!Ramdisk vers42 - Ramdisk for The!Cart
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -216,17 +216,45 @@ DVMAXSC = 1024-14        ; max sector count Enhanced Density
 ;
 
         org $4000 
+
 start                   ; Start of code
 
-.if patchDOS & initRAMDISK
+.if patchDOS
+
+; Patch FMS to use 1050 VTOC instead of 130XE VTOC
+; and switch to D8: for MEM.SAV and DUP.SYS 
+        lda #$06        ; offset 6 -> 1050
+        sta FIXVTOC     ; set max VTOC length
+        lda #$8a      
+        sta FIXXFMT     ; set VTOC head
+
+.endif
+
+.if patchDOS & !initRAMDISK
+
+; Patch DUP set 2.5 to 2.5TC
+; do not patch for RAMDISK because DUP is loaded later
+        lda #$b2        ; inverse 2
+        sta FIXDUP
+        lda #$ae        ; inverse .
+        sta FIXDUP+1
+        lda #$b5        ; inverse 5
+        sta FIXDUP+2
+        lda #$d4        ; inverse T
+        sta FIXDUP+3
+        lda #$c3        ; inverse C
+        sta FIXDUP+4
+
+.endif
+
 ; start message
         ldx #<msg.start
         ldy #>msg.start
         lda #msg.start.end-msg.start
         jsr print
-.endif
 
 .if initRAMDISK
+
 ; check for The!Cart
         lda TCMOSL
         cmp #TCMOSL.XLLOCK
@@ -240,9 +268,9 @@ setup.error
         lda #msg.notfound.end-msg.notfound
         jsr print
 ; deactivate RAMDISK at D8:
-        lda DRVBYT      ; to active drives...
-        and #$7f        ; ...exclude this drive
-        sta DRVBYT      ; and update the mask
+;        lda DRVBYT      ; to active drives...
+;        and #$7f        ; ...exclude this drive
+;        sta DRVBYT      ; and update the mask
         jsr INITDOS     ; including the drive table,
                         ; alloc buffer, etc.
 ; finish
@@ -254,33 +282,7 @@ setup.ok
         ldy #>msg.setup
         lda #msg.setup.end-msg.setup
         jsr print        
-.endif
 
-.if patchDOS
-; Patch FMS to use 1050 VTOC instead of 130XE VTOC
-; and switch to D8: for MEM.SAV and DUP.SYS 
-        lda #$06        ; offset 6 -> 1050
-        sta FIXVTOC     ; set max VTOC length
-        lda #$8a      
-        sta FIXXFMT     ; set VTOC head
-.endif
-
-.if patchDOS & !initRAMDISK
-; Patch DUP set 2.5TC invers
-; do not patch for RAMDISK because DUP is loaded later
-        lda #$b2        ; inverse 2
-        sta FIXDUP
-        lda #$ae        ; inverse .
-        sta FIXDUP+1
-        lda #$b5        ; inverse 5
-        sta FIXDUP+2
-        lda #$d4        ; inverse T
-        sta FIXDUP+3
-        lda #$c3        ; inverse C
-        sta FIXDUP+4
-.endif
-
-.if initRAMDISK
 ; activate RAMDISK at D8:
         lda DRVBYT      ; to active drives...
         ora #$80        ; ...include this drive
@@ -478,14 +480,22 @@ count.tens
 ; Messages
 ;
 
-.if patchDOS & initRAMDISK
 msg.start
-        .byte 'THE!RAMDISK FOR THE!CART AND DOS '
-        .byte $a0,$0b2,$ae,$b5,$a0 ; invers _2.5_
-msg.start.end
+        .byte 'THE!RAMDISK vers42 '
+.if patchDOS & initRAMDISK
+        .byte 'PATCH&RAMDISK '
 .endif
+.if patchDOS & !initRAMDISK
+        .byte 'PATCH         '
+.endif
+.if !patchDOS & initRAMDISK
+        .byte 'RAMDISK       '
+.endif
+        .byte $0b2,$ae,$b5,$d4,$c3 ; invers 2.5TC
+msg.start.end
 
 .if initRAMDISK
+
 msg.notfound
         .byte 'THE!CART NOT FOUND', $9b
 msg.notfound.end
@@ -528,6 +538,7 @@ drv.name
 file.dup.name
         .byte 'D1:DUP.SYS',$9b
 file.dup.size   = 5126
+
 file.dup.buffer = BUFFER
 
 file.mem.name
@@ -590,6 +601,8 @@ check.vtoc ; Check VTOC sector
 check.vtoc.end
         rts
 
+.endif
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
 ; Print Message
@@ -614,9 +627,9 @@ print    ;print message
 ; Buffer for copy
 
 BUFFER  =  *+1
-.endif
 
 .if patchDOS
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
 ; RAMIO: IN DCBSEC: sector number (low, high)
