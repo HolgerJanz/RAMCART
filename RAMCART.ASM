@@ -481,7 +481,7 @@ count.tens
 ;
 
 msg.start
-        .byte 'THE!RAMDISK vers42 '
+        .byte 'THE!RAMDISK vers43 '
 .if patchDOS & initRAMDISK
         .byte 'PATCH&RAMDISK '
 .endif
@@ -664,6 +664,49 @@ RAMIO.RAMPTR = $32  ; address to ramdisk sector
 ; perfect $92 < $94
 ;==================
 
+        org SETBANK
+; check carry (read or write mode)
+; set offsets for address in copy loop
+        ldx #loop.radr.off      ; offset for LB read     
+        ldy #loop.wadr.off      ; offset for LB write
+        bcc RAMIO.read  
+        ldx #loop.wadr.off      ; offset for LB write
+        ldy #loop.radr.off      ; offset for LB read 
+RAMIO.read
+; calc address
+        lda DCBSEC              ; get low byte of sector
+        sec                     ; set Bit7
+        ror                     ; save Bit0 in carry
+        and #$bf                ; clear Bit6
+        sta loop.copy+1,X       ; high byte of address
+        lda #$00
+        ror                     ; make carry Bit7
+        sta loop.copy,X         ; low byte of address
+; set buffer address
+        lda DISKBUF
+        sta loop.copy,Y         ; low byte of address
+        lda DISKBUF+1
+        sta loop.copy+1,Y       ; high byte of address
+; calc bank number, set A to bank number times 2 for T!C
+        lda DCBSEC              ; get low byte of sector
+        asl                     ; save Bit8 in carry 
+        lda DCBSEC+1            ; get high byte of sector
+        rol                     ; get Bit8 of low byte 
+        asl                     ; get bank number with LSB 0
+; set critical mode
+        ldy #$01
+        sty CRITIC              ; tell VBLANK this is critical!
+        ldx RTCLOKL
+RAMIO.sync
+        cpx RTCLOKL             ; got a VBLANK yet?
+        beq RAMIO.sync          ; no
+        sty NMIEN               ; disable VBI and DLI
+; back to RAMIO, it must SEI
+; only $3d bytes in SETBANK
+        rts
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
         org RAMIO
 ; save the!cart registers
         lda TCMOSL
@@ -676,80 +719,38 @@ RAMIO.RAMPTR = $32  ; address to ramdisk sector
         pha
         lda TCPBEN
         pha
-; save carry (read or write mode)
-        php
-; calc bank number
-        lda DCBSEC      ; get low byte of sector
-        asl             ; save Bit8 in carry 
-        lda DCBSEC+1    ; get high byte of sector
-        rol             ; get Bit8 of low byte 
-        asl             ; get bank number with LSB 0
-        tay             ; save bank number in Y
-; calc address
-        lda DCBSEC      ; get low byte of sector
-        sec             ; set Bit7
-        ror             ; save Bit0 in carry
-        and #$bf        ; clear Bit6
-        sta RAMIO.RAMPTR+1 ; high byte of address
-        lda #$00
-        ror             ; make carry Bit7
-        sta RAMIO.RAMPTR ; low byte of address
-; set buffer address
-        lda DISKBUF
-        sta RAMIO.SECPTR
-        lda DISKBUF+1
-        sta RAMIO.SECPTR+1
-; set critical mode
-        lda #$01
-        sta CRITIC      ; tell VBLANK this is critical!
-        ldx RTCLOKL
-RAMIO.sync
-        cpx RTCLOKL     ; got a VBLANK yet?
-        beq RAMIO.sync  ; no
-        sta NMIEN       ; disable VBI and DLI
-        sei             ; and disable IRQ's
-; set new The!Cart mode, 30c
-        lda #TCMOSL.16K     ; 2c, set 2x8k mode at $8000-$BFFF
-        sta TCMOSL          ; 4c,
-        lda #TCMOFR.PBRAM   ; 2c, set to RAM
-        sta TCMOFR          ; 4c,
-        sty TCPBRL          ; 4c, get bank number from Y
-; only $57 in RAMIO next part in SETBANK
-        jmp RAMIONEW2
-
-        org SETBANK
-RAMIONEW2
-        ldy #$00            ; 2c,
-        sty TCPBRH          ; 4c,
-        iny                 ; 2c, enable
-        sty TCPBEN          ; 4c,
-; copy from/to buffer, 10c
-        ldy #$7f            ; 2c, 128 bytes in a sector
-        plp                 ; 4c, read or write?
-        bcc RAMIO.read      ; 3/4c, read request
-RAMIO.write    ; write sector to RAMDISK,  2290c
-        lda (RAMIO.SECPTR),Y ; 6c, move 128 bytes...
-        sta (RAMIO.RAMPTR),Y ; 6c, ...to RAMDISK
-        dey                  ; 2c
-        bpl RAMIO.write      ; 3/4c
-        bmi RAMIO.copy.end   ; 3/4c all bytes written
-RAMIO.read ; read sector from RAMDISK, 2286c
-        lda (RAMIO.RAMPTR),Y ; 6c
-        sta (RAMIO.SECPTR),Y ; 6c, move 128 bytes
-        dey                  ; 2c
-        bpl RAMIO.read       ; 3/4c
-RAMIO.copy.end
-; restore The!Cart registers, 40c
-        pla                  ; 4c
-        sta TCPBEN           ; 4c
-        pla                  ; 4c
-        sta TCPBRH           ; 4c
-        pla                  ; 4c
-        sta TCPBRL           ; 4c
-        pla                  ; 4c
-        sta TCMOFR           ; 4c
-        pla                  ; 4c
-        sta TCMOSL           ; 4c
+; calc and set read/write address
+        jsr SETBANK
+        sei                     ; and disable IRQ's
+; set new The!Cart mode
+        ldx #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+        stx TCMOSL          
+        ldx #TCMOFR.PBRAM       ; set to RAM
+        stx TCMOFR  
+        sta TCPBRL              ; get bank number from A
+        sty TCPBEN              ; Y must be $01 from SETBANK        
+        dey                     
+        sty TCPBRH              ; enable
+; copy from/to buffer
+        ldy #$7f                ; 128 bytes in a sector
+loop.copy ; read/write sector from RAMDISK
+loop.radr.off = $01
+loop.wadr.off = $04
+        lda $ffff,Y     ; $FFFF is set to read address
+        sta $ffff,Y     ; $FFFF is set to write address
+        dey
+        bpl loop.copy
+; restore The!Cart registers
+        pla                 
+        sta TCPBEN          
+        pla                 
+        sta TCPBRH          
+        pla                 
+        sta TCPBRL          
+        pla                 
+        sta TCMOFR          
+        pla                 
+        sta TCMOSL          
 ; unset critical mode
         lda #$c0
         sta NMIEN       ; enable VBI's and DLI's
@@ -759,8 +760,10 @@ RAMIO.copy.end
         cli             ; and IRQ's are now legal
 ; return code 1 = OK
         iny
+; end back
         rts
-
+; phuuu, just at the finish line, needed $93,
+; limit for RAMIO is $94
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
