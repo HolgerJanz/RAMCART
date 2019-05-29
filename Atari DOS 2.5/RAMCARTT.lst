@@ -1,0 +1,449 @@
+mads 1.9.9
+     1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     2 				; 
+     3 				; Test Driver - The!Ramdisk for The!Cart
+     4
+     5 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     6 				;
+     7 				; The!Cart Equates
+     8 				;
+     9
+    10 = D5A6			TCMOSL      = $d5a6     ; mode ($00-$3d,$01)
+    11 				; how to figure out that The!Cart is not active?
+    12 				; If the address is not used then the XL returns $ff but
+    13 				; the XE (and old 800) return $d5 (high byte of address,
+    14 				; the value of the last bus cycle)
+    15 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+    16 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+    17
+    18 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    19 				;
+    20 				; Equates used to call CIO
+    21 				;
+    22
+    23 = 00FE			XIO.FMT = 254   ; Format command
+    24 = 0009			XIO.PRINT = 9   ; Print line
+    25 = 0003			XIO.OPEN  = 3   ; Open
+    26 = 000C			XIO.CLOSE = 12  ; Close
+    27 = 0004			XIO.READ  = 4   ; Read
+    28 = 0008			XIO.WRITE = 8   ; Write
+    29 = 0007			XIO.GET   = 7   ; Get
+    30 = 000B			XIO.PUT   = 11  ; Put
+    31
+    32 = 0340			IOCB        =  $0340    ; address of first IOCB
+    33 = 0342			IOCB.CMD    = IOCB+2    ; where command goes in IOCB
+    34 = 0344			IOCB.BUF    = IOCB+4    ; buffer (or name) address
+    35 = 0348			IOCB.BUFLEN = IOCB+8    ; max buffer length address
+    36 = 034A			IOCB.AUX1   = IOCB+10    ; Auxilliary byte 1
+    37 = 034B			IOCB.AUX2   = IOCB+11    ; Auxilliary byte 2
+    38
+    39 = E456			CIOV = $E456   ; the classic location
+    40
+    41 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    42 				;
+    43 				; OS Equates
+    44 				;
+    45
+    46 = 1481			RAMIO    = $1481     ; address of FMS RAMIO
+    47 = 0304			DISKBUF  = $0304     ; buffer address for read/write
+    48 = 030A			DCBSEC   = $030a     ; DAUX1,DAUX2 containing sector number
+    49
+    50 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    51 				; 
+    52 				; RAMIO test switching with The!Cart
+    53 				;
+    54
+    55 				        org $4000 
+    56 				start                    ; Start of code
+    57 				; check for The!Cart
+    58 FFFF> 4000-42AD> AD A6 +         lda TCMOSL
+    59 4003 C9 FF		        cmp #TCMOSL.XLLOCK
+    60 4005 F0 04		        beq start.locked
+    61 4007 C9 D5		        cmp #TCMOSL.XELOCK
+    62 4009 D0 0A		        bne start.ok
+    63 400B			start.locked
+    64 400B A2 C9		        ldx #<start.lock
+    65 400D A0 40		        ldy #>start.lock
+    66 400F A9 13		        lda #start.lock.end-start.lock
+    67 4011 20 15 42		        jsr print        
+    68 4014 60			        rts
+    69 				        
+    70 4015			start.ok
+    71 				; let's go
+    72 4015 A2 DC		        ldx #<start.letsgo
+    73 4017 A0 40		        ldy #>start.letsgo
+    74 4019 A9 19		        lda #start.letsgo.end-start.letsgo
+    75 401B 20 15 42		        jsr print                
+    76
+    77 				; write message
+    78 401E A2 F5		        ldx #<start.write
+    79 4020 A0 40		        ldy #>start.write
+    80 4022 A9 06		        lda #start.write.end-start.write
+    81 4024 20 15 42		        jsr print        
+    82
+    83 				; set buffer address for test frame
+    84 4027 A9 2E		        lda #<RAMIO.SECBUF  ; set zero page address
+    85 4029 85 CB		        sta RAMIO.SECPTR    ; to sector buffer
+    86 402B A9 42		        lda #>RAMIO.SECBUF
+    87 402D 85 CC		        sta RAMIO.SECPTR+1
+    88
+    89 				; set buffer address for RAMIO
+    90 402F A9 2E		        lda #<RAMIO.SECBUF  ; buffer address for read/write
+    91 4031 8D 04 03		        sta DISKBUF         ; to sector buffer
+    92 4034 A9 42		        lda #>RAMIO.SECBUF
+    93 4036 8D 05 03		        sta DISKBUF+1
+    94 				        
+    95 				; init write loop message
+    96 4039 A9 00		        lda #$00            ; start sector is 0
+    97 403B 8D 0A 03		        sta DCBSEC
+    98 403E 8D 0B 03		        sta DCBSEC+1
+    99
+   100 4041 A2 0A		        ldx #<start.counter.init ; init msg
+   101 4043 A0 41		        ldy #>start.counter.init
+   102 4045 A9 0B		        lda #start.counter.init.end-start.counter.init
+   103 4047 20 15 42		        jsr print        
+   104
+   105 				; ************************************************************
+   106 404A			start.write.loop
+   107 				; print sector number
+   108 404A 20 D4 41		        jsr print.sector
+   109 				; generate test data for sector
+   110 404D 20 23 41		        jsr testdata.generate
+   111 				; call RAMIO to write sector to RAM disk
+   112 4050 38			        sec
+   113 4051 20 81 14		        jsr RAMIO
+   114 				; increment sector count
+   115 4054 18			        clc
+   116 4055 A9 01		        lda #$01
+   117 4057 6D 0A 03		        adc DCBSEC
+   118 405A 8D 0A 03		        sta DCBSEC
+   119 405D A9 00		        lda #$00 
+   120 405F 6D 0B 03		        adc DCBSEC+1
+   121 4062 8D 0B 03		        sta DCBSEC+1
+   122
+   123 				; check sector count
+   124 4065 A9 00		        lda #$00
+   125 4067 CD 0A 03		        cmp DCBSEC
+   126 406A D0 DE		        bne start.write.loop
+   127 406C A9 10		        lda #$10
+   128 406E CD 0B 03		        cmp DCBSEC+1
+   129 4071 D0 D7		        bne start.write.loop
+   130 				; ************************************************************
+   131
+   132 				; write lf
+   133 4073 A2 15		        ldx #<start.counter.lf
+   134 4075 A0 41		        ldy #>start.counter.lf
+   135 4077 A9 01		        lda #start.counter.lf.end-start.counter.lf
+   136 4079 20 15 42		        jsr print        
+   137 				;*
+   138 				;*
+   139 				; ************************************************************
+   140
+   141 				; end of write, start read check
+   142
+   143 				; ************************************************************
+   144 				;*
+   145 				;*
+   146
+   147 				; check message
+   148 407C A2 FB		        ldx #<start.check
+   149 407E A0 40		        ldy #>start.check
+   150 4080 A9 0F		        lda #start.check.end-start.check
+   151 4082 20 15 42		        jsr print        
+   152
+   153 				; init check loop message
+   154 4085 A9 00		        lda #$00            ; start sector is 0
+   155 4087 8D 0A 03		        sta DCBSEC
+   156 408A 8D 0B 03		        sta DCBSEC+1
+   157
+   158 408D A2 0A		        ldx #<start.counter.init ; init msg
+   159 408F A0 41		        ldy #>start.counter.init
+   160 4091 A9 0B		        lda #start.counter.init.end-start.counter.init
+   161 4093 20 15 42		        jsr print        
+   162
+   163 				; ************************************************************
+   164 4096			start.check.loop
+   165 				; print sector number
+   166 4096 20 D4 41		        jsr print.sector
+   167 				; call RAMIO to read sector from RAM disk
+   168 4099 18			        clc
+   169 409A 20 81 14		        jsr RAMIO
+   170 				; check test data for sector
+   171 409D 20 3F 41		        jsr testdata.check
+   172
+   173 				; increment sector count
+   174 40A0 18			        clc
+   175 40A1 A9 01		        lda #$01
+   176 40A3 6D 0A 03		        adc DCBSEC
+   177 40A6 8D 0A 03		        sta DCBSEC
+   178 40A9 A9 00		        lda #$00 
+   179 40AB 6D 0B 03		        adc DCBSEC+1
+   180 40AE 8D 0B 03		        sta DCBSEC+1
+   181
+   182 				; check sector count
+   183 40B1 A9 00		        lda #$00
+   184 40B3 CD 0A 03		        cmp DCBSEC
+   185 40B6 D0 DE		        bne start.check.loop
+   186 40B8 A9 10		        lda #$10
+   187 40BA CD 0B 03		        cmp DCBSEC+1
+   188 40BD D0 D7		        bne start.check.loop
+   189 				; ************************************************************
+   190
+   191 				; write lf
+   192 40BF A2 15		        ldx #<start.counter.lf
+   193 40C1 A0 41		        ldy #>start.counter.lf
+   194 40C3 A9 01		        lda #start.counter.lf.end-start.counter.lf
+   195 40C5 20 15 42		        jsr print        
+   196
+   197 40C8 60			        rts
+   198
+   199 40C9			start.lock
+   200 40C9 54 48 45 21 43 41 +         .byte 'THE!CART NOT FOUND'
+   201 40DB 9B			        .byte $9b
+   202 40DC			start.lock.end
+   203
+   204 40DC			start.letsgo
+   205 40DC 54 48 45 21 54 45 +         .byte 'THE!TEST FOR THE!RAMDISK'
+   206 40F4 9B			        .byte $9b
+   207 40F5			start.letsgo.end
+   208
+   209 40F5			start.write
+   210 40F5 57 52 49 54 45	        .byte 'WRITE'
+   211 40FA 9B			        .byte $9b
+   212 40FB			start.write.end
+   213
+   214 40FB			start.check
+   215 40FB 52 45 41 44 20 41 +         .byte 'READ AND CHECK'
+   216 4109 9B			        .byte $9b
+   217 410A			start.check.end
+   218
+   219 410A			start.counter.init
+   220 410A 53 45 43 54 4F 52 +         .byte 'SECTOR ____'
+   221 4115			start.counter.init.end
+   222 4115			start.counter.lf
+   223 4115 9B			        .byte $9b
+   224 4116			start.counter.lf.end
+   225
+   226 4116			start.error
+   227 4116 20 45 52 52 4F 52 +         .byte ' ERROR DUMP:'
+   228 4122 9B			        .byte $9b
+   229 4123			start.error.end
+   230
+   231 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   232 				; 
+   233 				; Generate Test Date for Sector in 
+   234 				;    IN    DCBSEC sector number
+   235 				;        RAMIO.SECPTR buffer to sector buffer
+   236 				;
+   237
+   238 4123			testdata.generate
+   239 4123 A0 00		        ldy #$00            ; set begin byte
+   240 4125 A9 BB		        lda #$BB
+   241 4127 91 CB		        sta (RAMIO.SECPTR),y
+   242 				        
+   243 4129 C8			        iny                 ; set high sec num (once)
+   244 412A AD 0B 03		        lda DCBSEC+1
+   245 412D 91 CB		        sta (RAMIO.SECPTR),y
+   246
+   247 412F C8			        iny                 ; set fill bytes (low sec num)
+   248 4130 AD 0A 03		        lda DCBSEC
+   249 4133			testdata.generate.loop
+   250 4133 91 CB		        sta (RAMIO.SECPTR),y
+   251 4135 C8			        iny
+   252 4136 C0 7F		        cpy #$7f
+   253 4138 D0 F9		        bne testdata.generate.loop
+   254 				        
+   255 413A A9 EE		        lda #$EE            ; set end byte
+   256 413C 91 CB		        sta (RAMIO.SECPTR),y
+   257
+   258 413E 60			        rts
+   259
+   260 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   261 				; 
+   262 				; Check Test Date for Sector in 
+   263 				;    IN    DCBSEC sector number
+   264 				;        RAMIO.SECPTR buffer to sector buffer
+   265 				;
+   266
+   267 413F			testdata.check
+   268 413F A0 00		        ldy #$00            ; check begin byte
+   269 4141 B1 CB		        lda (RAMIO.SECPTR),y
+   270 4143 C9 BB		        cmp #$BB
+   271 4145 D0 1C		        bne testdata.check.error
+   272 				        
+   273 4147 C8			        iny                 ; check high byte (sec num)
+   274 4148 B1 CB		        lda (RAMIO.SECPTR),y
+   275 414A CD 0B 03		        cmp DCBSEC+1
+   276 414D D0 14		        bne testdata.check.error
+   277 				        
+   278 414F C8			        iny                 ; check fill bytes (low sec num)
+   279 4150			testdata.check.loop
+   280 4150 B1 CB		        lda (RAMIO.SECPTR),y
+   281 4152 CD 0A 03		        cmp DCBSEC
+   282 4155 D0 0C		        bne testdata.check.error
+   283 4157 C8			        iny
+   284 4158 C0 7F		        cpy #$7f
+   285 415A D0 F4		        bne testdata.check.loop
+   286 				        
+   287 415C B1 CB		        lda (RAMIO.SECPTR),y ; check end byte
+   288 415E C9 EE		        cmp #$EE
+   289 4160 D0 01		        bne testdata.check.error
+   290
+   291 4162 60			        rts
+   292
+   293 4163			testdata.check.error
+   294 				; write error
+   295 4163 A2 16		        ldx #<start.error
+   296 4165 A0 41		        ldy #>start.error
+   297 4167 A9 0D		        lda #start.error.end-start.error
+   298 4169 20 15 42		        jsr print        
+   299 				; write sector data
+   300 416C 20 79 41		        jsr print.data
+   301 				; init next sector check msg
+   302 416F A2 0A		        ldx #<start.counter.init
+   303 4171 A0 41		        ldy #>start.counter.init
+   304 4173 A9 0B		        lda #start.counter.init.end-start.counter.init
+   305 4175 20 15 42		        jsr print        
+   306
+   307 4178 60			        rts
+   308
+   309
+   310 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   311 				; 
+   312 				; Print Data
+   313 				;
+   314
+   315 4179			print.data
+   316 4179 A9 00		        lda #$00
+   317 417B 8D B2 41		        sta print.data.loop.cnt
+   318
+   319 417E			print.data.loop
+   320 				; get byte, conv ,and push
+   321 417E AC B2 41		        ldy print.data.loop.cnt
+   322 4181 B1 CB		        lda (RAMIO.SECPTR),y
+   323 4183 20 FE 41		        jsr convha
+   324 4186 8A			        txa    ;save chars on stack
+   325 4187 48			        pha
+   326 4188 98			        tya
+   327 4189 48			        pha
+   328 				; set text and print line
+   329 418A AD B2 41		        lda print.data.loop.cnt
+   330 418D 29 0F		        and #$0f
+   331 418F 0A			        asl
+   332 4190 AA			        tax
+   333 4191 68			        pla
+   334 4192 9D B3 41		        sta print.data.line,x
+   335 4195 E8			        inx
+   336 4196 68			        pla
+   337 4197 9D B3 41		        sta print.data.line,x
+   338 419A E0 1F		        cpx #$1f
+   339 419C D0 09		        bne print.data.loop.next
+   340 419E A2 B3		        ldx #<print.data.line
+   341 41A0 A0 41		        ldy #>print.data.line
+   342 41A2 A9 21		        lda #print.data.line.end-print.data.line
+   343 41A4 20 15 42		        jsr print
+   344 41A7			print.data.loop.next
+   345 				; increment and check
+   346 41A7 EE B2 41		        inc print.data.loop.cnt
+   347 41AA A9 80		        lda #$80
+   348 41AC CD B2 41		        cmp print.data.loop.cnt
+   349 41AF D0 CD		        bne print.data.loop
+   350 				        
+   351 41B1 60			        rts
+   352
+   353 41B2			print.data.loop.cnt
+   354 41B2 00			        .byte $00        
+   355 41B3			print.data.line
+   356 41B3 23 23 23 23 23 23 + :16     .byte '##'
+   357 41D3 9B			        .byte $9b
+   358 41D4			print.data.line.end
+   359
+   360 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   361 				; 
+   362 				; Print Sector
+   363 				;
+   364
+   365 41D4			print.sector
+   366 41D4 AD 0B 03		        lda DCBSEC+1    ;get high byte
+   367 41D7 20 FE 41		        jsr convha
+   368 41DA 8E FA 41		        stx print.sector.sec.num
+   369 41DD 8C FB 41		        sty print.sector.sec.num+1
+   370
+   371 41E0 AD 0A 03		        lda DCBSEC      ;get low byte
+   372 41E3 20 FE 41		        jsr convha
+   373 41E6 8E FC 41		        stx print.sector.sec.num+2
+   374 41E9 8C FD 41		        sty print.sector.sec.num+3
+   375
+   376 41EC A2 F6		        ldx #<print.sector.sec ; print
+   377 41EE A0 41		        ldy #>print.sector.sec
+   378 41F0 A9 08		        lda #print.sector.sec.end-print.sector.sec
+   379 41F2 20 15 42		        jsr print        
+   380
+   381 41F5 60			        rts
+   382
+   383 41F6			print.sector.sec
+   384 41F6 1E 1E 1E 1E		:4      .byte $1e
+   385 41FA			print.sector.sec.num
+   386 41FA 58 58 58 58		        .byte 'XXXX'
+   387 41FE			print.sector.sec.end
+   388
+   389 				        
+   390 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   391 				; 
+   392 				; Convert Hex to ATASCII
+   393 				;
+   394 				; IN    A    byte
+   395 				; OUT X,Y    two ATASCII codes of hex representation
+   396 				;
+   397
+   398 41FE			convha ; conv hex to atascii
+   399 41FE 48			        pha                    
+   400 41FF 4A			        lsr
+   401 4200 4A			        lsr
+   402 4201 4A			        lsr
+   403 4202 4A			        lsr
+   404 4203 F8			        sed        
+   405 4204 18			        clc
+   406 4205 69 90		        adc #$90
+   407 4207 69 40		        adc #$40
+   408 4209 AA			        tax
+   409 420A 68			        pla
+   410 420B 29 0F		        and #$0f
+   411 420D 18			        clc
+   412 420E 69 90		        adc #$90
+   413 4210 69 40		        adc #$40
+   414 4212 A8			        tay
+   415 4213 D8			        cld            
+   416 4214 60			        rts
+   417
+   418
+   419 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   420 				; 
+   421 				; Print Message
+   422 				;
+   423 				; IN    X,Y    low, high byte of address to message
+   424 				;        A    length of message
+   425
+   426 4215			print ; print message
+   427 4215 8D 48 03		        sta IOCB.BUFLEN
+   428 4218 A9 00		        lda #$00
+   429 421A 8D 49 03		        sta IOCB.BUFLEN+1
+   430 421D 8E 44 03		        stx IOCB.BUF
+   431 4220 8C 45 03		        sty IOCB.BUF+1
+   432 4223 A9 0B		        lda #XIO.PUT
+   433 4225 8D 42 03		        sta IOCB.CMD
+   434 4228 A2 00		        ldx #$00
+   435 422A 20 56 E4		        jsr CIOV
+   436 422D 60			        rts
+   437
+   438 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   439 				; 
+   440 				; Data for RAMIO 
+   441 = 00CB			RAMIO.SECPTR = $cb      ; address to buffer
+   442 422E			RAMIO.SECBUF            ; input read/write buffer
+   443 422E EE EE EE EE EE EE + :$80    .byte $ee    
+   444
+   445 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   446 				; 
+   447 				; Run address
+   448 02E0-02E1> 00 40		        run start        ;Define run address

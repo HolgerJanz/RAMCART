@@ -1,0 +1,2978 @@
+mads 1.9.9
+     1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     2 				;
+     3 				; Modified DUP.SYS MyDOS 4.55beta4 for The!Cart
+     4 				;
+     5 				; Changed lines are commented out
+     6 				; followed by substitutes lines 
+     7 				;
+     8
+     9 				;
+    10 				; System equates
+    11 				; 
+    12 				; IO EQUATES
+    13 				; 
+    14 = 0000			ICHID       = $0000
+    15 = 0001			ICDNO       = $0001
+    16 = 0002			ICCOM       = $0002
+    17 = 0003			ICSTA       = $0003
+    18 = 0004			ICBAL       = $0004
+    19 = 0005			ICBAH       = $0005
+    20 = 0006			ICPTL       = $0006
+    21 = 0007			ICPTH       = $0007
+    22 = 0008			ICBLL       = $0008
+    23 = 0009			ICBLH       = $0009
+    24 = 000A			ICAX1       = $000A
+    25 = 000B			ICAX2       = $000B
+    26 = 000C			ICAX3       = $000C
+    27 = 000D			ICAX4       = $000D
+    28 = 000E			ICAX5       = $000E
+    29 = 000F			ICAX6       = $000F
+    30 				; 
+    31 				; OS VARIABLES FOR XL/XE
+    32 				; 
+    33 				; PAGE 0
+    34 				; 
+    35 = 0001			NGFLAG      = $0001
+    36 = 0002			CASINI      = $0002
+    37 = 0004			RAMLO       = $0004
+    38 = 0006			TRAMSZ      = $0006
+    39 = 0007			CMCMD       = $0007
+    40 = 0008			WARMST      = $0008
+    41 = 0009			BOOT        = $0009
+    42 = 000A			DOSVEC      = $000A
+    43 = 000C			DOSINI      = $000C
+    44 = 000E			APPMHI      = $000E
+    45 = 0010			POKMSK      = $0010
+    46 = 0011			BRKKEY      = $0011
+    47 = 0012			RTCLOK      = $0012
+    48 = 0015			BUFADR      = $0015
+    49 = 0017			ICCOMT      = $0017
+    50 = 0018			DSKFMS      = $0018
+    51 = 001A			DSKUTL      = $001A
+    52 = 001C			ABUFPT      = $001C
+    53 = 0020			ICHIDZ      = $0020
+    54 = 0021			ICDNOZ      = $0021
+    55 = 0022			ICCOMZ      = $0022
+    56 = 0023			ICSTAZ      = $0023
+    57 = 0024			ICBALZ      = $0024
+    58 = 0025			ICBAHZ      = $0025
+    59 = 0026			ICPTLZ      = $0026
+    60 = 0027			ICPTHZ      = $0027
+    61 = 0028			ICBLLZ      = $0028
+    62 = 0029			ICBLHZ      = $0029
+    63 = 002A			ICAX1Z      = $002A
+    64 = 002B			ICAX2Z      = $002B
+    65 = 002C			ICAX3Z      = $002C
+    66 = 002D			ICAX4Z      = $002D
+    67 = 002E			ICAX5Z      = $002E
+    68 = 002F			ICAX6Z      = $002F
+    69 = 0030			STATUS      = $0030
+    70 = 0031			CHKSUM      = $0031
+    71 = 0032			BUFRLO      = $0032
+    72 = 0033			BUFRHI      = $0033
+    73 = 0034			BFENLO      = $0034
+    74 = 0035			BFENHI      = $0035
+    75 = 0036			LTEMP       = $0036
+    76 = 0038			BUFRFL      = $0038
+    77 = 0039			RECVDN      = $0039
+    78 = 003A			XMTDON      = $003A
+    79 = 003B			CHKSNT      = $003B
+    80 = 003C			NOCKSM      = $003C
+    81 = 003D			BPTR        = $003D
+    82 = 003E			FTYPE       = $003E
+    83 = 003F			FEOF        = $003F
+    84 = 0040			FREQ        = $0040
+    85 = 0041			SOUNDR      = $0041
+    86 = 0042			CRITIC      = $0042
+    87 = 0043			FMSZPG      = $0043
+    88 = 004A			ZCHAIN      = $004A
+    89 = 004C			DSTAT       = $004C
+    90 = 004D			ATRACT      = $004D
+    91 = 004E			DRKMSK      = $004E
+    92 = 004F			COLRSH      = $004F
+    93 = 0050			TEMP        = $0050
+    94 = 0051			HOLD1       = $0051
+    95 = 0052			LMARGN      = $0052
+    96 = 0053			RMARGN      = $0053
+    97 = 0054			ROWCRS      = $0054
+    98 = 0055			COLCRS      = $0055
+    99 = 0057			DINDEX      = $0057
+   100 = 0058			SAVMSC      = $0058
+   101 = 005A			OLDROW      = $005A
+   102 = 005B			OLDCOL      = $005B
+   103 = 005D			OLDCHR      = $005D
+   104 = 005E			OLDADR      = $005E
+   105 = 0060			FKDEF       = $0060
+   106 = 0062			PALNTS      = $0062
+   107 = 0063			LOGCOL      = $0063
+   108 = 0064			ADRESS      = $0064
+   109 = 0066			MLTTMP      = $0066
+   110 = 0068			SAVADR      = $0068
+   111 = 006A			RAMTOP      = $006A
+   112 = 006B			BUFCNT      = $006B
+   113 = 006C			BUFSTR      = $006C
+   114 = 006E			BITMSK      = $006E
+   115 = 006F			SHFAMT      = $006F
+   116 = 0070			ROWAC       = $0070
+   117 = 0072			COLAC       = $0072
+   118 = 0074			ENDPT       = $0074
+   119 = 0076			DELTAR      = $0076
+   120 = 0077			DELTAC      = $0077
+   121 = 0079			KEYDEF      = $0079
+   122 = 007B			SWPFLG      = $007B
+   123 = 007C			HOLDCH      = $007C
+   124 = 007D			INSDAT      = $007D
+   125 = 007E			COUNTR      = $007E
+   126 = 0080			LOMEM       = $0080
+   127 				; 
+   128 				; PAGE 2
+   129 				; 
+   130 = 0200			VDSLST      = $0200
+   131 = 0202			VPRCED      = $0202
+   132 = 0204			VINTER      = $0204
+   133 = 0206			VBREAK      = $0206
+   134 = 0208			VKEYBD      = $0208
+   135 = 020A			VSERIN      = $020A
+   136 = 020C			VSEROR      = $020C
+   137 = 020E			VSEROC      = $020E
+   138 = 0210			VTIMR1      = $0210
+   139 = 0212			VTIMR2      = $0212
+   140 = 0214			VTIMR4      = $0214
+   141 = 0216			VIMIRQ      = $0216
+   142 = 0218			CDTMV1      = $0218
+   143 = 021A			CDTMV2      = $021A
+   144 = 021C			CDTMV3      = $021C
+   145 = 021E			CDTMV4      = $021E
+   146 = 0220			CDTMV5      = $0220
+   147 = 0222			VVBLKI      = $0222
+   148 = 0224			VVBLKD      = $0224
+   149 = 0226			CDTMA1      = $0226
+   150 = 0228			CDTMA2      = $0228
+   151 = 022A			CDTMF3      = $022A
+   152 = 022B			SRTIMR      = $022B
+   153 = 022C			CDTMF4      = $022C
+   154 = 022D			INTEMP      = $022D
+   155 = 022E			CDTMF5      = $022E
+   156 = 022F			SDMCTL      = $022F
+   157 = 0230			SDLSTL      = $0230
+   158 = 0231			SDLSTH      = $0231
+   159 = 0232			SSKCTL      = $0232
+   160 = 0233			SPARE       = $0233
+   161 = 0234			LPENH       = $0234
+   162 = 0235			LPENV       = $0235
+   163 = 0236			BRKKY       = $0236
+   164 = 0238			VPIRQ       = $0238
+   165 = 023A			CDEVIC      = $023A
+   166 = 023B			CCOMND      = $023B
+   167 = 023C			CAUX1       = $023C
+   168 = 023D			CAUX2       = $023D
+   169 = 023E			TMPSIO      = $023E
+   170 = 023F			ERRFLG      = $023F
+   171 = 0240			DFLAGS      = $0240
+   172 = 0241			DBSECT      = $0241
+   173 = 0242			BOOTAD      = $0242
+   174 = 0244			COLDST      = $0244
+   175 = 0245			RECLEN      = $0245
+   176 = 0246			DSKTIM      = $0246
+   177 = 0247			PDVMSK      = $0247
+   178 = 0248			SHPDVS      = $0248
+   179 = 0249			PDMSK       = $0249
+   180 = 024A			RELADR      = $024A
+   181 = 024C			PPTMPA      = $024C
+   182 = 024D			PPTMPX      = $024D
+   183 = 026B			CHSALT      = $026B
+   184 = 026C			VSFLAG      = $026C
+   185 = 026D			KEYDIS      = $026D
+   186 = 026E			FINE        = $026E
+   187 = 026F			GPRIOR      = $026F
+   188 = 0270			PADDL0      = $0270
+   189 = 0271			PADDL1      = $0271
+   190 = 0272			PADDL2      = $0272
+   191 = 0273			PADDL3      = $0273
+   192 = 0274			PADDL4      = $0274
+   193 = 0275			PADDL5      = $0275
+   194 = 0276			PADDL6      = $0276
+   195 = 0277			PADDL7      = $0277
+   196 = 0278			STICK0      = $0278
+   197 = 0279			STICK1      = $0279
+   198 = 027A			STICK2      = $027A
+   199 = 027B			STICK3      = $027B
+   200 = 027C			PTRIG0      = $027C
+   201 = 027D			PTRIG1      = $027D
+   202 = 027E			PTRIG2      = $027E
+   203 = 027F			PTRIG3      = $027F
+   204 = 0280			PTRIG4      = $0280
+   205 = 0281			PTRIG5      = $0281
+   206 = 0282			PTRIG6      = $0282
+   207 = 0283			PTRIG7      = $0283
+   208 = 0284			STRIG0      = $0284
+   209 = 0285			STRIG1      = $0285
+   210 = 0286			STRIG2      = $0286
+   211 = 0287			STRIG3      = $0287
+   212 = 0288			HIBYTE      = $0288
+   213 = 0289			WMODE       = $0289
+   214 = 028A			BLIM        = $028A
+   215 = 028B			IMASK       = $028B
+   216 = 028C			JVECK       = $028C
+   217 = 028E			NEWADR      = $028E
+   218 = 0290			TXTROW      = $0290
+   219 = 0291			TXTCOL      = $0291
+   220 = 0293			TINDEX      = $0293
+   221 = 0294			TXTMSC      = $0294
+   222 = 0296			TXTOLD      = $0296
+   223 = 029C			CRETRY      = $029C
+   224 = 029D			HOLD3       = $029D
+   225 = 029E			SUBTMP      = $029E
+   226 = 029F			HOLD2       = $029F
+   227 = 02A0			DMASK       = $02A0
+   228 = 02A1			TMPLBT      = $02A1
+   229 = 02A2			ESCFLG      = $02A2
+   230 = 02A3			TABMAP      = $02A3
+   231 = 02B2			LOGMAP      = $02B2
+   232 = 02B6			INVFLG      = $02B6
+   233 = 02B7			FILFLG      = $02B7
+   234 = 02B8			TMPROW      = $02B8
+   235 = 02B9			TMPCOL      = $02B9
+   236 = 02BB			SCRFLG      = $02BB
+   237 = 02BC			HOLD4       = $02BC
+   238 = 02BD			DRETRY      = $02BD
+   239 = 02BE			SHFLOC      = $02BE
+   240 = 02BF			BOTSCR      = $02BF
+   241 = 02C0			PCOLR0      = $02C0
+   242 = 02C1			PCOLR1      = $02C1
+   243 = 02C2			PCOLR2      = $02C2
+   244 = 02C3			PCOLR3      = $02C3
+   245 = 02C4			COLOR0      = $02C4
+   246 = 02C5			COLOR1      = $02C5
+   247 = 02C6			COLOR2      = $02C6
+   248 = 02C7			COLOR3      = $02C7
+   249 = 02C8			COLOR4      = $02C8
+   250 = 02C9			RUNADR      = $02C9
+   251 = 02CB			HIUSED      = $02CB
+   252 = 02CD			ZHIUSE      = $02CD
+   253 = 02CF			GBYTEA      = $02CF
+   254 = 02D1			LOADAD      = $02D1
+   255 = 02D3			ZLOADA      = $02D3
+   256 = 02D5			DSCTLN      = $02D5
+   257 = 02D7			ACMISR      = $02D7
+   258 = 02D9			KRPDER      = $02D9
+   259 = 02DA			KEYREP      = $02DA
+   260 = 02DB			NOCLIK      = $02DB
+   261 = 02DC			HELPFG      = $02DC
+   262 = 02DD			DMASAV      = $02DD
+   263 = 02DE			PBPNT       = $02DE
+   264 = 02DF			PBUFSZ      = $02DF
+   265 = 02E0			RUNAD       = $02E0
+   266 = 02E2			INITAD      = $02E2
+   267 = 02E4			RAMSIZ      = $02E4
+   268 = 02E5			MEMTOP      = $02E5
+   269 = 02E7			MEMLO       = $02E7
+   270 = 02E9			HNDLOD      = $02E9
+   271 = 02EA			DVSTAT      = $02EA
+   272 = 02EE			CBAUDL      = $02EE
+   273 = 02EF			CBAUDH      = $02EF
+   274 = 02F0			CRSINH      = $02F0
+   275 = 02F1			KEYDEL      = $02F1
+   276 = 02F2			CH1         = $02F2
+   277 = 02F3			CHACT       = $02F3
+   278 = 02F4			CHBAS       = $02F4
+   279 = 02F5			NEWROW      = $02F5
+   280 = 02F6			NEWCOL      = $02F6
+   281 = 02F8			ROWINC      = $02F8
+   282 = 02F9			COLINC      = $02F9
+   283 = 02FA			CHAR        = $02FA
+   284 = 02FB			ATACHR      = $02FB
+   285 = 02FC			CH          = $02FC
+   286 = 02FD			FILDAT      = $02FD
+   287 = 02FE			DSPFLG      = $02FE
+   288 = 02FF			SSFLAG      = $02FF
+   289 				; 
+   290 				; PAGE 3
+   291 				; 
+   292 = 0300			DDEVIC      = $0300
+   293 = 0301			DUNIT       = $0301
+   294 = 0302			DCOMND      = $0302
+   295 = 0303			DSTATS      = $0303
+   296 = 0304			DBUFLO      = $0304
+   297 = 0305			DBUFHI      = $0305
+   298 = 0306			DTIMLO      = $0306
+   299 = 0307			DUNUSE      = $0307
+   300 = 0308			DBYTLO      = $0308
+   301 = 0309			DBYTHI      = $0309
+   302 = 030A			DAUX1       = $030A
+   303 = 030B			DAUX2       = $030B
+   304 = 030C			TIMER1      = $030C
+   305 = 030E			ADDCOR      = $030E
+   306 = 030F			CASFLG      = $030F
+   307 = 0310			TIMER2      = $0310
+   308 = 0312			TEMP1       = $0312
+   309 = 0314			TEMP2       = $0314
+   310 = 0315			TEMP3       = $0315
+   311 = 0316			SAVIO       = $0316
+   312 = 0317			TIMFLG      = $0317
+   313 = 0318			STACKP      = $0318
+   314 = 0319			TSTAT       = $0319
+   315 = 031A			HATABS      = $031A
+   316 = 033D			PUPBT1      = $033D
+   317 = 033E			PUPBT2      = $033E
+   318 = 033F			PUPBT3      = $033F
+   319 = 0340			IOCB0       = $0340
+   320 = 0350			IOCB1       = $0350
+   321 = 0360			IOCB2       = $0360
+   322 = 0370			IOCB3       = $0370
+   323 = 0380			IOCB4       = $0380
+   324 = 0390			IOCB5       = $0390
+   325 = 03A0			IOCB6       = $03A0
+   326 = 03B0			IOCB7       = $03B0
+   327 = 03C0			PRNBUF      = $03C0
+   328 = 03E8			SUPERF      = $03E8
+   329 = 03E9			CKEY        = $03E9
+   330 = 03EA			CASSBT      = $03EA
+   331 = 03EB			CARTCK      = $03EB
+   332 = 03EC			DERRF       = $03EC
+   333 = 03ED			ACMVAR      = $03ED
+   334 = 03F8			BASICF      = $03F8
+   335 = 03F9			MINTLK      = $03F9
+   336 = 03FA			GINTLK      = $03FA
+   337 = 03FB			CHLINK      = $03FB
+   338 = 03FD			CASBUF      = $03FD
+   339 				; 
+   340 				; HARDWARE REGISTERS
+   341 				; 
+   342 				; 
+   343 				; POKEY
+   344 				; 
+   345 = D20E			IRQEN       = $D20E
+   346 				; 
+   347 				; PIA
+   348 				; 
+   349 = D300			PORTA       = $D300
+   350 = D301			PORTB       = $D301
+   351 = D302			PACTL       = $D302
+   352 = D303			PBCTL       = $D303
+   353 				; 
+   354 				; ANTIC
+   355 				; 
+   356 = D40E			NMIEN       = $D40E
+   357 				; 
+   358 				; FLOATING POINT ROUTINES
+   359 				; 
+   360 = D800			AFP         = $D800
+   361 = D8E6			FASC        = $D8E6
+   362 = D9AA			IFP         = $D9AA
+   363 = D9D2			FPI         = $D9D2
+   364 = DA44			ZFR0        = $DA44
+   365 = DA46			ZF1         = $DA46
+   366 = DA60			FSUB        = $DA60
+   367 = DA66			FADD        = $DA66
+   368 = DADB			FMUL        = $DADB
+   369 = DB28			FDIV        = $DB28
+   370 = DD40			PLYEVL      = $DD40
+   371 = DD89			FLD0R       = $DD89
+   372 = DD8D			FLD0P       = $DD8D
+   373 = DD98			FLD1R       = $DD98
+   374 = DD9C			FLD1P       = $DD9C
+   375 = DDA7			FSTOR       = $DDA7
+   376 = DDAB			FSTOP       = $DDAB
+   377 = DDB6			FMOVE       = $DDB6
+   378 = DDC0			EXP         = $DDC0
+   379 = DDCC			EXP10       = $DDCC
+   380 = DECD			LOG         = $DECD
+   381 = DED1			LOG10       = $DED1
+   382 				; 
+   383 				; ROM VECTORS
+   384 				; 
+   385 = E453			DSKINV      = $E453
+   386 = E456			CIOV        = $E456
+   387 = E459			SIOV        = $E459
+   388 = E45C			SETVBV      = $E45C
+   389 = E45F			SYSVBV      = $E45F
+   390 = E462			XITVBV      = $E462
+   391 = E465			SIOINV      = $E465
+   392 = E468			SENDEV      = $E468
+   393 = E46B			INTINV      = $E46B
+   394 = E46E			CIOINV      = $E46E
+   395 = E471			SELFSV      = $E471
+   396 = E474			WARMSV      = $E474
+   397 = E477			COLDSV      = $E477
+   398 = E47A			RBLOKV      = $E47A
+   399 = E47D			CSOPIV      = $E47D
+   400 = E480			PUPDIV      = $E480
+   401 = E483			SELFTSV     = $E483
+   402 = E486			PENTV       = $E486
+   403 = E489			PHUNLV      = $E489
+   404 = E48C			PHINIV      = $E48C
+   405 = E48F			GPDVV       = $E48F
+   406
+   407 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   408 				; 
+   409 				; The!Cart Register (from-to,default)
+   410 				;
+   411
+   412 				; Mode Select
+   413 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+   414 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
+   415 				; other than the ones listed here are reserved (and result
+   416 				; in "cartridge off"):
+   417 				; $00: off, cartridge disabled
+   418 				; $01: 8k banks at $A000
+   419 				; $02: AtariMax 1MBit / 128k
+   420 				; $03: Atarimax 8MBit / 1MB
+   421 				; $04: OSS M091
+   422 				; $08: SDX 64k cart, $D5Ex banking
+   423 				; $09: Diamond GOS 64k cart, $D5Dx banking
+   424 				; $0A: Express 64k cart, $D57x banking
+   425 				; $0C: Atrax 128k cart
+   426 				; $0D: Williams 64k cart
+   427 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
+   428 				; $21: standard 16k cart at $8000-$BFFF
+   429 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+   430 				; $23: Blizzard 16k
+   431 				; $24: Sic!Cart 512k
+   432 				; $28: 16k Mega cart
+   433 				; $29: 32k Mega cart
+   434 				; $2A: 64k Mega cart
+   435 				; $2B: 128k Mega cart
+   436 				; $2C: 256k Mega cart
+   437 				; $2D: 512k Mega cart
+   438 				; $2E: 1024k Mega cart
+   439 				; $2F: 2048k Mega cart
+   440 				; $30: 32k XEGS cart
+   441 				; $31: 64k XEGS cart
+   442 				; $32: 128k XEGS cart
+   443 				; $33: 256k XEGS cart
+   444 				; $34: 512k XEGS cart
+   445 				; $35: 1024k XEGS cart
+   446 				; $38: 32k SWXEGS cart
+   447 				; $39: 64k SWXEGS cart
+   448 				; $3A: 128k SWXEGS cart
+   449 				; $3B: 256k SWXEGS cart
+   450 				; $3C: 512k SWXEGS cart
+   451 				; $3D: 1024k SWXEGS cart
+   452 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
+   453 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
+   454 = 0021			TCMOSL.FLEXI = $21    ; flexi mode,
+   455 				                         ; separate 8k banks at $A000 and $8000
+   456 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+   457
+   458 				; how to figure out that The!Cart is not active?
+   459 				; If the address is not used then the XL returns $ff but
+   460 				; the XE (and old 800) return $d5 (high byte of address,
+   461 				; the value of the last bus cycle)
+   462 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+   463 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+   464
+   465 				; Mode Flash/RAM Select
+   466 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+   467 				; bit 0: primary bank write enable (0=readOnly, 1=write)
+   468 				; bit 1: primary bank source (0=flash, 1=RAM)
+   469 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
+   470 				; bit 3: secondary bank source (0=flash, 1=RAM)
+   471 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
+   472 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
+   473
+   474 				; Primary Bank
+   475 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
+   476 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
+   477 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+   478
+   479 				; Secondary Bank 
+   480 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
+   481 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
+   482 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   483
+   484 				; SPI interface to EEPROM
+   485 = D5A8			TCINEP = $d5a8
+   486 				; bit 0: SPI CLK
+   487 				; bit 1: SPI CS
+   488 				; bit 7: SPI data in (on reads), SPI data out (on writes)
+   489
+   490 				; configuration lock
+   491 = D5AF			TCCOLO = $d5af
+   492 				; Writing to this register disables "The!Cart" registers
+   493 				; at $d5aX.
+   494
+   495
+   496
+   497 				;
+   498 				; Code equates
+   499 				;
+   500 = 00AE			L00AE       = $00AE
+   501 = 00D4			L00D4       = $00D4
+   502 = 00D5			L00D5       = $00D5
+   503 = 00D6			L00D6       = $00D6
+   504 = 00D7			L00D7       = $00D7
+   505 = 00D8			L00D8       = $00D8
+   506 = 00D9			L00D9       = $00D9
+   507 = 00DA			L00DA       = $00DA
+   508 = 00DB			L00DB       = $00DB
+   509 = 00DC			L00DC       = $00DC
+   510 = 00DD			L00DD       = $00DD
+   511 = 00DE			L00DE       = $00DE
+   512 = 00DF			L00DF       = $00DF
+   513 = 00E0			L00E0       = $00E0
+   514 = 00E1			L00E1       = $00E1
+   515 = 00F3			L00F3       = $00F3
+   516 = 00F4			L00F4       = $00F4
+   517 = 0709			L0709       = $0709
+   518 = 070A			L070A       = $070A
+   519 = 070B			L070B       = $070B
+   520 = 0769			L0769       = $0769
+   521 = 0779			L0779       = $0779
+   522 = 07BE			L07BE       = $07BE
+   523 = 07C3			L07C3       = $07C3
+   524 = 07CB			L07CB       = $07CB
+   525 = 07E0			L07E0       = $07E0
+   526 = 0908			L0908       = $0908
+   527 = 0A08			L0A08       = $0A08
+   528 = 0B14			L0B14       = $0B14
+   529 = 0B1C			L0B1C       = $0B1C
+   530 = 0B25			L0B25       = $0B25
+   531 = 0B2F			L0B2F       = $0B2F
+   532 = 0B9A			L0B9A       = $0B9A
+   533 = 0BB9			L0BB9       = $0BB9
+   534 = 0BBA			L0BBA       = $0BBA
+   535 = 0C0F			L0C0F       = $0C0F
+   536 = 0C10			L0C10       = $0C10
+   537 = 0C19			L0C19       = $0C19
+   538 = 0C1A			L0C1A       = $0C1A
+   539 = 0C3A			L0C3A       = $0C3A
+   540 = 0C4C			L0C4C       = $0C4C
+   541 = 0C4D			L0C4D       = $0C4D
+   542 = 14EE			L14EE       = $14EE
+   543 = 1B24			L1B24       = $1B24
+   544 = 1B27			L1B27       = $1B27
+   545 = 1B2C			L1B2C       = $1B2C
+   546 = 1B2E			L1B2E       = $1B2E
+   547 = 1B34			L1B34       = $1B34
+   548 = 1B36			L1B36       = $1B36
+   549 = 1B46			L1B46       = $1B46
+   550 = 1B48			L1B48       = $1B48
+   551 = 1BA8			L1BA8       = $1BA8
+   552 = 1BEE			L1BEE       = $1BEE
+   553 = 1BF1			L1BF1       = $1BF1
+   554 = 1C29			L1C29       = $1C29
+   555 = 1C58			L1C58       = $1C58
+   556 = 1C65			L1C65       = $1C65
+   557 = 1C6F			L1C6F       = $1C6F
+   558 = 1C70			L1C70       = $1C70
+   559 = 1C71			L1C71       = $1C71
+   560 = 1C72			L1C72       = $1C72
+   561 = 1C73			L1C73       = $1C73
+   562 = 1C75			L1C75       = $1C75
+   563 = 279F			L279F       = $279F
+   564 = 27A0			L27A0       = $27A0
+   565 = 27A1			L27A1       = $27A1
+   566 = 27A2			L27A2       = $27A2
+   567 = 27A3			L27A3       = $27A3
+   568 = 27A4			L27A4       = $27A4
+   569 = 27A5			L27A5       = $27A5
+   570 = 27A9			L27A9       = $27A9
+   571 = 27EF			L27EF       = $27EF
+   572 = 27F0			L27F0       = $27F0
+   573 = 281F			L281F       = $281F
+   574 = 283F			L283F       = $283F
+   575 = 2840			L2840       = $2840
+   576 = 2841			L2841       = $2841
+   577 = 2842			L2842       = $2842
+   578 = 2843			L2843       = $2843
+   579 = 285F			L285F       = $285F
+   580 = 289E			L289E       = $289E
+   581 = 289F			L289F       = $289F
+   582 = 2978			L2978       = $2978
+   583 = 2979			L2979       = $2979
+   584 = 298A			L298A       = $298A
+   585 = 298B			L298B       = $298B
+   586 = 298E			L298E       = $298E
+   587 = 299F			L299F       = $299F
+   588 = 29A0			L29A0       = $29A0
+   589 = 29A1			L29A1       = $29A1
+   590 = 29A2			L29A2       = $29A2
+   591 = 29A3			L29A3       = $29A3
+   592 = 29A4			L29A4       = $29A4
+   593 = 29A5			L29A5       = $29A5
+   594 = 29A6			L29A6       = $29A6
+   595 = 29A7			L29A7       = $29A7
+   596 = 29A8			L29A8       = $29A8
+   597 = 29A9			L29A9       = $29A9
+   598 = 29AA			L29AA       = $29AA
+   599 = 29AB			L29AB       = $29AB
+   600 = 29AC			L29AC       = $29AC
+   601 = 29AD			L29AD       = $29AD
+   602 = 29AE			L29AE       = $29AE
+   603 = 29AF			L29AF       = $29AF
+   604 = 29B0			L29B0       = $29B0
+   605 = 29B1			L29B1       = $29B1
+   606 = 29B2			L29B2       = $29B2
+   607 = 29B3			L29B3       = $29B3
+   608 = 29B4			L29B4       = $29B4
+   609 = 29B5			L29B5       = $29B5
+   610 = 2D8B			L2D8B       = $2D8B
+   611 = 2DB2			L2DB2       = $2DB2
+   612 = 2DCC			L2DCC       = $2DCC
+   613 = 2EDD			L2EDD       = $2EDD
+   614 = 30A4			L30A4       = $30A4
+   615 = 3734			L3734       = $3734
+   616 = 3735			L3735       = $3735
+   617 = 3748			L3748       = $3748
+   618 = 3749			L3749       = $3749
+   619 = 3750			L3750       = $3750
+   620 = 3751			L3751       = $3751
+   621 = 3777			L3777       = $3777
+   622 = 3778			L3778       = $3778
+   623 = 3AAC			L3AAC       = $3AAC
+   624 = 3AC3			L3AC3       = $3AC3
+   625 = 3E07			L3E07       = $3E07
+   626 = 3E50			L3E50       = $3E50
+   627 = 3FB1			L3FB1       = $3FB1
+   628 = 4000			L4000       = $4000
+   629 = 4172			L4172       = $4172
+   630 = 52A9			L52A9       = $52A9
+   631 = 6A33			L6A33       = $6A33
+   632 = 8B3C			L8B3C       = $8B3C
+   633 = A900			LA900       = $A900
+   634 = B28D			LB28D       = $B28D
+   635 = BFFA			LBFFA       = $BFFA
+   636 = BFFB			LBFFB       = $BFFB
+   637 = BFFC			LBFFC       = $BFFC
+   638 = BFFD			LBFFD       = $BFFD
+   639 = D03D			LD03D       = $D03D
+   640
+   641 				;
+   642 				; MyDOS equates
+   643 				;
+   644
+   645 = 0C3A			RDKLMT      = $0C3A
+   646
+   647 				;
+   648 				; Start of code
+   649 				;
+   650 				            org $2A00
+   651 				;
+   652 FFFF> 2A00-4439> 44	            .byte 'D'
+   653 2A01 35 3A 44 4F 53 2E + L2A01       .byte '5:DOS.SYS'
+   654 2A0A 9B			            .byte $9B
+   655 2A0B 20 6E E4		L2A0B       jsr CIOINV
+   656 2A0E A2 00		            ldx #$00
+   657 2A10 20 46 1B		            jsr L1B46
+   658 2A13 0C 03 62 1C		            .byte $0C,$03,$62,$1C
+   659 2A17 8E 1C 02		            stx CDTMV3
+   660 2A1A 8E 1D 02		            stx CDTMV3+1
+   661 2A1D A0 01		            ldy #$01
+   662 2A1F A9 03		            lda #$03
+   663 2A21 8D 2A 02		            sta CDTMF3
+   664 2A24 20 5C E4		            jsr SETVBV
+   665 2A27 AD 2A 02		L2A27       lda CDTMF3
+   666 2A2A D0 FB		            bne L2A27
+   667 2A2C 60			            rts
+   668 2A2D 18			L2A2D       clc
+   669 2A2E D8			            cld
+   670 2A2F A2 FF		            ldx #$FF
+   671 2A31 86 11		            stx BRKKEY
+   672 2A33 A9 07		            lda #$07
+   673 2A35 85 0D		            sta DOSINI+1
+   674 2A37 A9 E0		            lda #$E0
+   675 2A39 85 0C		            sta DOSINI
+   676 2A3B A9 02		            lda #$02
+   677 2A3D 85 52		            sta LMARGN
+   678 2A3F A9 27		            lda #$27
+   679 2A41 85 53		            sta RMARGN
+   680 2A43 AD 70 1C		            lda L1C70
+   681 2A46 0D BE 07		            ora L07BE
+   682 2A49 29 C1		            and #$C1
+   683 2A4B C9 80		            cmp #$80
+   684 2A4D D0 02		            bne L2A51
+   685 2A4F 85 08		            sta WARMST
+   686 2A51 A9 40		L2A51       lda #$40
+   687 2A53 0D BE 07		            ora L07BE
+   688 2A56 8D BE 07		            sta L07BE
+   689 2A59 A9 80		            lda #$80
+   690 2A5B 05 10		            ora POKMSK
+   691 2A5D 85 10		            sta POKMSK
+   692 2A5F 8D 0E D2		            sta IRQEN
+   693 2A62 20 0B 2A		            jsr L2A0B
+   694 2A65 AD BE 07		            lda L07BE
+   695 2A68 29 01		            and #$01
+   696 2A6A F0 25		            beq L2A91
+   697 2A6C 20 2E 44		            jsr L442E
+   698 2A6F 45 72 72 6F 72 20 +             .byte 'Error loading MEM.SA'
+   699 2A83 56 20 6F 72 20 6D +             .byte 'V or memory!'
+   700 2A8F 9B 00		            .byte $9B,$00
+   701 2A91 AD 0B 07		L2A91       lda L070B
+   702 2A94 09 30		            ora #$30
+   703 2A96 8D 75 1C		            sta L1C75
+   704 2A99 A2 1C		            ldx #$1C
+   705 2A9B A0 08		            ldy #$08
+   706 2A9D A9 20		L2A9D       lda #$20
+   707 2A9F 9D 4B 2B		            sta L2B4B,X
+   708 2AA2 9D 4C 2B		            sta L2B4C,X
+   709 2AA5 9D 4D 2B		            sta L2B4D,X
+   710 2AA8 9D 4E 2B		            sta L2B4E,X
+   711 2AAB CC 0A 07		            cpy L070A
+   712 2AAE D0 04		            bne L2AB4
+   713 2AB0 A9 52		            lda #$52
+   714 2AB2 D0 07		            bne L2ABB
+   715 2AB4 B9 1C 0B		L2AB4       lda L0B1C,Y
+   716 2AB7 F0 07		            beq L2AC0
+   717 2AB9 A9 48		            lda #$48
+   718 2ABB 9D 4D 2B		L2ABB       sta L2B4D,X
+   719 2ABE D0 44		            bne L2B04
+   720 2AC0 B9 C3 07		L2AC0       lda L07C3,Y
+   721 2AC3 F0 45		            beq L2B0A
+   722 2AC5 A9 53		            lda #$53
+   723 2AC7 8D 02 03		            sta DCOMND
+   724 2ACA 8C 01 03		            sty DUNIT
+   725 2ACD 86 48		            stx FMSZPG+5
+   726 2ACF 20 53 E4		            jsr DSKINV
+   727 2AD2 0E EA 02		            asl DVSTAT
+   728 2AD5 A9 00		            lda #$00
+   729 2AD7 69 00		            adc #$00
+   730 2AD9 F0 04		            beq L2ADF
+   731 2ADB A9 45		            lda #$45
+   732 2ADD D0 10		            bne L2AEF
+   733 2ADF 0E EA 02		L2ADF       asl DVSTAT
+   734 2AE2 0E EA 02		            asl DVSTAT
+   735 2AE5 69 00		            adc #$00
+   736 2AE7 F0 04		            beq L2AED
+   737 2AE9 A9 44		            lda #$44
+   738 2AEB D0 02		            bne L2AEF
+   739 2AED A9 53		L2AED       lda #$53
+   740 2AEF AC 01 03		L2AEF       ldy DUNIT
+   741 2AF2 A6 48		            ldx FMSZPG+5
+   742 2AF4 9D 4D 2B		            sta L2B4D,X
+   743 2AF7 B9 CB 07		            lda L07CB,Y
+   744 2AFA 4A			            lsr
+   745 2AFB A9 2D		            lda #$2D
+   746 2AFD 90 02		            bcc L2B01
+   747 2AFF A9 3D		            lda #$3D
+   748 2B01 9D 4E 2B		L2B01       sta L2B4E,X
+   749 2B04 98			L2B04       tya
+   750 2B05 09 30		            ora #$30
+   751 2B07 9D 4C 2B		            sta L2B4C,X
+   752 2B0A CA			L2B0A       dex
+   753 2B0B CA			            dex
+   754 2B0C CA			            dex
+   755 2B0D CA			            dex
+   756 2B0E 88			            dey
+   757 2B0F D0 8C		            bne L2A9D
+   758 2B11 0E F2 2C		            asl L2CF2
+   759 2B14 AD 79 07		            lda L0779
+   760 2B17 C9 55		            cmp #$55
+   761 2B19 6E F2 2C		            ror L2CF2
+   762 2B1C 20 C8 3E		            jsr L3EC8
+   763 				; add invers TC to version
+   764 2B1F 7D 4D 79 44 4F 53 +             .byte $7d,'MyDOS 4.55beta4 ',$d4,$c3,'42' 
+   765 2B34 20 28 43 29 31 39 +             .byte ' (C)1989 '
+   766 2B3D D7 CF D2 C4 CD C1 +             .byte $D7,$CF,$D2,$C4,$CD,$C1,$D2,$CB
+   767 2B45 9B			            .byte $9B
+   768 2B46 44 69 73 6B 73	            .byte 'Disks'
+   769 2B4B 20			L2B4B       .byte ' '
+   770 2B4C 31			L2B4C       .byte '1'
+   771 2B4D 53			L2B4D       .byte 'S'
+   772 2B4E 2D 20 20 20 20 20 + L2B4E       .byte '-                   '
+   773 2B62 20 20 20 20 20 20 +             .byte '         '
+   774 2B6B 9B			            .byte $9B
+   775 2B6C 44 3A 20 3D 20	            .byte 'D: = '
+   776 2B71 00			            .byte $00
+   777 2B72 A9 74		            lda #$74
+   778 2B74 A2 1C		            ldx #$1C
+   779 2B76 20 B2 3E		            jsr L3EB2
+   780 2B79 20 C8 3E		            jsr L3EC8
+   781 2B7C 9B 9B		            .byte $9B,$9B
+   782 2B7E 31 2D 38 2E 44 69 +             .byte '1-8.Dir of D1:-D8: *'
+   783 2B92 2E 20 44 69 72 20 +             .byte '. Dir of D:'
+   784 2B9D 9B			            .byte $9B
+   785 2B9E 41 2E 20 44 69 73 +             .byte 'A. Disk Directory  K'
+   786 2BB2 2E 20 53 61 76 65 +             .byte '. Save Memory'
+   787 2BBF 9B			            .byte $9B
+   788 2BC0 42 2E 20 52 75 6E +             .byte 'B. Run Cartridge   L'
+   789 2BD4 2E 20 4C 6F 61 64 +             .byte '. Load Memory'
+   790 2BE1 9B			            .byte $9B
+   791 2BE2 43 2E 20 43 6F 70 +             .byte 'C. Copy File(s)    M'
+   792 2BF6 2E 20 52 75 6E 20 +             .byte '. Run at Address'
+   793 2C06 9B			            .byte $9B
+   794 2C07 44 2E 20 44 65 6C +             .byte 'D. Delete File(s)  N'
+   795 2C1B 2E 20 4C 6F 61 64 +             .byte '. Load MEM.SAV'
+   796 2C29 9B			            .byte $9B
+   797 2C2A 45 2E 20 52 65 6E +             .byte 'E. Rename File(s)  O'
+   798 2C3E 2E 20 43 68 61 6E +             .byte '. Change Config.'
+   799 2C4E 9B			            .byte $9B
+   800 2C4F 46 2E 20 4C 6F 63 +             .byte 'F. Lock File(s)    P'
+   801 2C63 2E 20 53 65 74 20 +             .byte '. Set Density'
+   802 2C70 9B			            .byte $9B
+   803 2C71 47 2E 20 55 6E 6C +             .byte 'G. Unlock File(s)  Q'
+   804 2C85 2E 20 4D 61 6B 65 +             .byte '. Make Directory'
+   805 2C95 9B			            .byte $9B
+   806 2C96 48 2E 20 57 72 69 +             .byte 'H. Write DOS Files R'
+   807 2CAA 2E 20 50 69 63 6B +             .byte '. Pick Directory'
+   808 2CBA 9B			            .byte $9B
+   809 2CBB 49 2E 20 49 6E 69 +             .byte 'I. Initialize Disk S'
+   810 2CCF 2E 20 53 65 74 20 +             .byte '. Set RAMdisk #'
+   811 2CDE 9B			            .byte $9B
+   812 2CDF 4A 2E 20 44 75 70 +             .byte 'J. Duplicate Disk  '
+   813 2CF2 56 2E 20 53 65 74 + L2CF2       .byte 'V. Set Verify Flag'
+   814 2D04 9B			            .byte $9B
+   815 2D05 20			            .byte ' '
+   816 2D06 9B 00		            .byte $9B,$00
+   817 2D08 AC 73 1C		            ldy L1C73
+   818 2D0B 10 03		            bpl L2D10
+   819 2D0D 20 36 41		            jsr L4136
+   820 2D10 A2 FF		L2D10       ldx #$FF
+   821 2D12 9A			            txs
+   822 2D13 E8			            inx
+   823 2D14 8E 6F 1C		            stx L1C6F
+   824 2D17 8E AA 29		            stx L29AA
+   825 2D1A 8E 73 1C		            stx L1C73
+   826 2D1D 20 24 1B		            jsr L1B24
+   827 2D20 A2 30		            ldx #$30
+   828 2D22 20 2C 1B		            jsr L1B2C
+   829 2D25 A9 15		            lda #$15
+   830 2D27 8D B0 3F		            sta L3FB0
+   831 2D2A 20 C8 3E		            jsr L3EC8
+   832 2D2D 53 65 6C 65 63 74 +             .byte 'Select Item ('
+   833 2D3A D2 C5 D4 D5 D2 CE	            .byte $D2,$C5,$D4,$D5,$D2,$CE
+   834 2D40 20 66 6F 72 20 6D +             .byte ' for menu):'
+   835 2D4B 00			            .byte $00
+   836 2D4C A9 40		            lda #$40
+   837 2D4E 8D BE 02		            sta SHFLOC
+   838 2D51 0D BE 07		            ora L07BE
+   839 2D54 8D BE 07		            sta L07BE
+   840 2D57 20 D8 3E		            jsr L3ED8
+   841 2D5A C9 9B		            cmp #$9B
+   842 2D5C D0 11		            bne L2D6F
+   843 2D5E 4C 91 2A		            jmp L2A91
+   844 2D61 C9 31		L2D61       cmp #$31
+   845 2D63 90 03		            bcc L2D68
+   846 2D65 4C D6 2D		            jmp L2DD6
+   847 2D68 C9 2A		L2D68       cmp #$2A
+   848 2D6A D0 0F		            bne L2D7B
+   849 2D6C 4C CC 2D		            jmp L2DCC
+   850 2D6F C9 3A		L2D6F       cmp #$3A
+   851 2D71 90 EE		            bcc L2D61
+   852 2D73 C9 57		            cmp #$57
+   853 2D75 B0 04		            bcs L2D7B
+   854 2D77 E9 40		            sbc #$40
+   855 2D79 B0 02		            bcs L2D7D
+   856 2D7B A9 16		L2D7B       lda #$16
+   857 2D7D 0A			L2D7D       asl
+   858 2D7E A8			            tay
+   859 2D7F B9 9E 2D		            lda L2D9E,Y
+   860 2D82 85 1A		            sta DSKUTL
+   861 2D84 B9 9F 2D		            lda L2D9F,Y
+   862 2D87 85 1B		            sta DSKUTL+1
+   863 2D89 4C CE 3E		            jmp L3ECE
+   864 2D8C 4E 6F 20 73 75 63 +             .byte 'No such item!'
+   865 2D99 9B 00		            .byte $9B,$00
+   866 2D9B 4C 10 2D		            jmp L2D10
+   867 2D9E F7			L2D9E       .byte $F7
+   868 2D9F 2D 07 3E		L2D9F       and L3E07
+   869 2DA2 7F			            .byte $7F
+   870 2DA3 30 0D		            bmi L2DB2
+   871 2DA5 2F			            .byte $2F
+   872 2DA6 A0 2F		            ldy #$2F
+   873 2DA8 C3			            .byte $C3
+   874 2DA9 2E DD 2E		            rol L2EDD
+   875 2DAC F0 32		            beq L2DE0
+   876 2DAE 55 32		            eor BUFRLO,X
+   877 2DB0 79 33 6A		            adc L6A33,Y
+   878 2DB3 3C			            .byte $3C
+   879 2DB4 9A			            txs
+   880 2DB5 3D 50 3E		            and L3E50,X
+   881 2DB8 6D 3D D0		            adc LD03D
+   882 2DBB 3A			            .byte $3A
+   883 2DBC C5 36		            cmp LTEMP
+   884 2DBE E6 2F		            inc ICAX6Z
+   885 2DC0 06 30		            asl STATUS
+   886 2DC2 13 3C 8B		            .byte $13,$3C,$8B
+   887 2DC5 2D 8B 2D		            and L2D8B
+   888 2DC8 2C 3C 8B		            bit L8B3C
+   889 2DCB 2D 8D B2		            and LB28D
+   890 2DCE 29 A9		            and #$A9
+   891 2DD0 3A			            .byte $3A
+   892 2DD1 8D B1 29		            sta L29B1
+   893 2DD4 D0 08		            bne L2DDE
+   894 2DD6 8D B1 29		L2DD6       sta L29B1
+   895 2DD9 A9 3A		            lda #$3A
+   896 2DDB 8D B2 29		            sta L29B2
+   897 2DDE A9 2A		L2DDE       lda #$2A
+   898 2DE0 8D B3 29		L2DE0       sta L29B3
+   899 2DE3 8D B4 29		            sta L29B4
+   900 2DE6 A9 44		            lda #$44
+   901 2DE8 8D B0 29		            sta L29B0
+   902 2DEB A9 9B		            lda #$9B
+   903 2DED 8D B5 29		            sta L29B5
+   904 2DF0 8D A9 29		            sta L29A9
+   905 2DF3 8D EF 27		            sta L27EF
+   906 2DF6 D0 28		            bne L2E20
+   907 2DF8 46 69 6C 65 73 20 +             .byte 'Files to list, Desti'
+   908 2E0C 6E 61 74 69 6F 6E +             .byte 'nation?'
+   909 2E13 9B 00		            .byte $9B,$00
+   910 2E15 A9 9B		            lda #$9B
+   911 2E17 8D A9 29		            sta L29A9
+   912 2E1A 20 E2 41		            jsr L41E2
+   913 2E1D 20 E5 43		            jsr L43E5
+   914 2E20 A9 B0		L2E20       lda #$B0
+   915 2E22 A0 29		            ldy #$29
+   916 2E24 20 34 1B		            jsr L1B34
+   917 2E27 A2 10		            ldx #$10
+   918 2E29 8E A7 29		            stx L29A7
+   919 2E2C 20 C4 43		            jsr L43C4
+   920 2E2F A9 29		            lda #$29
+   921 2E31 85 DB		            sta L00DB
+   922 2E33 A9 79		            lda #$79
+   923 2E35 85 DA		            sta L00DA
+   924 2E37 A9 26		            lda #$26
+   925 2E39 85 DC		            sta L00DC
+   926 2E3B A9 00		            lda #$00
+   927 2E3D 85 DD		            sta L00DD
+   928 2E3F A2 00		            ldx #$00
+   929 2E41 AD EF 27		            lda L27EF
+   930 2E44 30 14		            bmi L2E5A
+   931 2E46 AD EF 27		            lda L27EF
+   932 2E49 30 09		            bmi L2E54
+   933 2E4B 20 EC 41		            jsr L41EC
+   934 2E4E 8C 64 03		            sty IOCB2+ICBAL
+   935 2E51 8D 65 03		            sta IOCB2+ICBAH
+   936 2E54 A2 20		L2E54       ldx #$20
+   937 2E56 A9 07		            lda #$07
+   938 2E58 D0 02		            bne L2E5C
+   939 2E5A A9 05		L2E5A       lda #$05
+   940 2E5C 8E A8 29		L2E5C       stx L29A8
+   941 2E5F 20 3E 40		            jsr L403E
+   942 2E62 4C 10 2D		            jmp L2D10
+   943 2E65 20 2E 44		L2E65       jsr L442E
+   944 2E68 4E 65 65 64 20 6E +             .byte 'Need new file name!'
+   945 2E7B 9B 00		            .byte $9B,$00
+   946 2E7D 20 2E 44		L2E7D       jsr L442E
+   947 2E80 4E 6F 20 64 72 69 +             .byte 'No drive or director'
+   948 2E94 69 65 73 20 61 6C +             .byte 'ies allowed in new n'
+   949 2EA8 61 6D 65 21		            .byte 'ame!'
+   950 2EAC 9B 00		            .byte $9B,$00
+   951 2EAE 4C 6F 63 6B 20	            .byte 'Lock '
+   952 2EB3 00			            .byte $00
+   953 2EB4 55 6E 6C 6F 63 6B +             .byte 'Unlock '
+   954 2EBB 00			            .byte $00
+   955 2EBC 44 65 6C 65 74 65 +             .byte 'Delete '
+   956 2EC3 00			            .byte $00
+   957 2EC4 4C 6F 63 6B 20 77 +             .byte 'Lock which file?'
+   958 2ED4 9B 00		            .byte $9B,$00
+   959 2ED6 A0 AE		            ldy #$AE
+   960 2ED8 A2 2E		            ldx #$2E
+   961 2EDA A9 23		            lda #$23
+   962 2EDC D0 1A		            bne L2EF8
+   963 2EDE 55 6E 6C 6F 63 6B +             .byte 'Unlock which file?'
+   964 2EF0 9B 00		            .byte $9B,$00
+   965 2EF2 A0 B4		            ldy #$B4
+   966 2EF4 A2 2E		            ldx #$2E
+   967 2EF6 A9 24		            lda #$24
+   968 2EF8 8C AC 29		L2EF8       sty L29AC
+   969 2EFB 8E AD 29		            stx L29AD
+   970 2EFE 48			            pha
+   971 2EFF 20 E2 41		            jsr L41E2
+   972 2F02 20 FF 42		            jsr L42FF
+   973 2F05 AE 6F 1C		            ldx L1C6F
+   974 2F08 E0 51		            cpx #$51
+   975 2F0A F0 2F		            beq L2F3B
+   976 2F0C D0 77		            bne L2F85
+   977 2F0E 44 65 6C 65 74 65 +             .byte 'Delete what file?'
+   978 2F1F 9B 00		            .byte $9B,$00
+   979 2F21 A0 BC		            ldy #$BC
+   980 2F23 A2 2E		            ldx #$2E
+   981 2F25 A9 21		            lda #$21
+   982 2F27 8C AC 29		            sty L29AC
+   983 2F2A 8E AD 29		            stx L29AD
+   984 2F2D 48			            pha
+   985 2F2E 20 E2 41		            jsr L41E2
+   986 2F31 20 FF 42		            jsr L42FF
+   987 2F34 AE 6F 1C		            ldx L1C6F
+   988 2F37 E0 4E		            cpx #$4E
+   989 2F39 F0 4A		            beq L2F85
+   990 2F3B 20 C8 3E		L2F3B       jsr L3EC8
+   991 2F3E 41 6E 73 77 65 72 +             .byte 'Answer ''Y'' or ''N'''
+   992 2F4F 9B 00		            .byte $9B,$00
+   993 2F51 68			            pla
+   994 2F52 20 B2 43		            jsr L43B2
+   995 2F55 20 9E 40		L2F55       jsr L409E
+   996 2F58 B0 3B		            bcs L2F95
+   997 2F5A AD AC 29		            lda L29AC
+   998 2F5D AE AD 29		            ldx L29AD
+   999 2F60 20 B2 3E		            jsr L3EB2
+  1000 2F63 A9 B0		            lda #$B0
+  1001 2F65 A2 29		            ldx #$29
+  1002 2F67 20 B2 3E		            jsr L3EB2
+  1003 2F6A 20 C8 3E		            jsr L3EC8
+  1004 2F6D 3F			            .byte $3F
+  1005 2F6E 00			            brk
+  1006 2F6F 20 D8 3E		            jsr L3ED8
+  1007 2F72 C9 59		            cmp #$59
+  1008 2F74 D0 05		            bne L2F7B
+  1009 2F76 A2 20		            ldx #$20
+  1010 2F78 20 2F 41		            jsr L412F
+  1011 2F7B 4C 55 2F		L2F7B       jmp L2F55
+  1012 2F7E 48			L2F7E       pha
+  1013 2F7F 20 E2 41		            jsr L41E2
+  1014 2F82 20 FF 42		            jsr L42FF
+  1015 2F85 68			L2F85       pla
+  1016 2F86 8D 52 03		L2F86       sta IOCB1+ICCOM
+  1017 2F89 A2 10		            ldx #$10
+  1018 2F8B 20 2F 41		            jsr L412F
+  1019 2F8E AD 52 03		            lda IOCB1+ICCOM
+  1020 2F91 C9 29		            cmp #$29
+  1021 2F93 F0 03		            beq L2F98
+  1022 2F95 4C 10 2D		L2F95       jmp L2D10
+  1023 2F98 4C 38 30		L2F98       jmp L3038
+  1024 2F9B 4C 7D 2E		L2F9B       jmp L2E7D
+  1025 2F9E 4C 65 2E		L2F9E       jmp L2E65
+  1026 2FA1 46 69 6C 65 20 74 +             .byte 'File to rename, new '
+  1027 2FB5 6E 61 6D 65 3F	            .byte 'name?'
+  1028 2FBA 9B 00		            .byte $9B,$00
+  1029 2FBC 20 E2 41		            jsr L41E2
+  1030 2FBF 20 FF 42		            jsr L42FF
+  1031 2FC2 AC A0 29		            ldy L29A0
+  1032 2FC5 AD EF 27		            lda L27EF
+  1033 2FC8 C9 2C		            cmp #$2C
+  1034 2FCA F0 04		            beq L2FD0
+  1035 2FCC C9 20		            cmp #$20
+  1036 2FCE D0 CE		            bne L2F9E
+  1037 2FD0 C8			L2FD0       iny
+  1038 2FD1 B1 DE		            lda (L00DE),Y
+  1039 2FD3 C9 3A		            cmp #$3A
+  1040 2FD5 F0 C4		            beq L2F9B
+  1041 2FD7 C9 3E		            cmp #$3E
+  1042 2FD9 F0 C0		            beq L2F9B
+  1043 2FDB C9 30		            cmp #$30
+  1044 2FDD 90 04		            bcc L2FE3
+  1045 2FDF C9 7B		            cmp #$7B
+  1046 2FE1 90 ED		            bcc L2FD0
+  1047 2FE3 A9 20		L2FE3       lda #$20
+  1048 2FE5 D0 9F		            bne L2F86
+  1049 2FE7 46 75 6C 6C 20 64 +             .byte 'Full directory name?'
+  1050 2FFB 9B 00		            .byte $9B,$00
+  1051 2FFD A2 08		            ldx #$08
+  1052 2FFF 8E 5A 03		            stx IOCB1+ICAX1
+  1053 3002 A9 22		            lda #$22
+  1054 3004 4C 7E 2F		            jmp L2F7E
+  1055 3007 44 69 72 65 63 74 +             .byte 'Directory to be used'
+  1056 301B 20 61 73 20 27 44 +             .byte ' as ''D:''?'
+  1057 3024 9B 00		            .byte $9B,$00
+  1058 3026 20 E2 41		            jsr L41E2
+  1059 3029 20 FF 42		            jsr L42FF
+  1060 302C AC A0 29		            ldy L29A0
+  1061 302F C0 04		            cpy #$04
+  1062 3031 90 22		            bcc L3055
+  1063 3033 A9 29		            lda #$29
+  1064 3035 4C 86 2F		            jmp L2F86
+  1065 3038 A0 03		L3038       ldy #$03
+  1066 303A B1 24		            lda (ICBALZ),Y
+  1067 303C C9 3A		            cmp #$3A
+  1068 303E D0 12		            bne L3052
+  1069 3040 20 27 1B		            jsr L1B27
+  1070 3043 A9 74		            lda #$74
+  1071 3045 8D 54 03		            sta IOCB1+ICBAL
+  1072 3048 A9 1C		            lda #$1C
+  1073 304A 8D 55 03		            sta IOCB1+ICBAH
+  1074 304D A9 29		            lda #$29
+  1075 304F 4C 86 2F		            jmp L2F86
+  1076 3052 4C 10 2D		L3052       jmp L2D10
+  1077 3055 20 2E 44		L3055       jsr L442E
+  1078 3058 49 6E 76 61 6C 69 +             .byte 'Invalid directory!'
+  1079 306A 9B 00		            .byte $9B,$00
+  1080 306C 4C 36 41		L306C       jmp L4136
+  1081 306F A2 10		L306F       ldx #$10
+  1082 3071 8E A7 29		            stx L29A7
+  1083 3074 20 46 1B		            jsr L1B46
+  1084 3077 04 03		            .byte $04,$03
+  1085 3079 B0 29		            bcs L30A4
+  1086 307B 30 EF		            bmi L306C
+  1087 307D 4C 54 2E		            jmp L2E54
+  1088 3080 46 69 6C 65 20 73 +             .byte 'File source, destina'
+  1089 3094 74 69 6F 6E 3F	            .byte 'tion?'
+  1090 3099 9B 00		            .byte $9B,$00
+  1091 309B A9 20		            lda #$20
+  1092 309D 8D 42 28		            sta L2842
+  1093 30A0 A9 9B		            lda #$9B
+  1094 30A2 8D A9 29		            sta L29A9
+  1095 30A5 20 E2 41		            jsr L41E2
+  1096 30A8 A9 44		            lda #$44
+  1097 30AA 85 DB		            sta L00DB
+  1098 30AC A9 3A		            lda #$3A
+  1099 30AE 85 DA		            sta L00DA
+  1100 30B0 AD E5 02		            lda MEMTOP
+  1101 30B3 38			            sec
+  1102 30B4 E9 3A		            sbc #$3A
+  1103 30B6 85 DC		            sta L00DC
+  1104 30B8 AD E6 02		            lda MEMTOP+1
+  1105 30BB E9 44		            sbc #$44
+  1106 30BD 85 DD		            sta L00DD
+  1107 30BF 20 E5 43		            jsr L43E5
+  1108 30C2 AD EF 27		            lda L27EF
+  1109 30C5 30 03		            bmi L30CA
+  1110 30C7 20 EC 41		            jsr L41EC
+  1111 30CA 06 08		L30CA       asl WARMST
+  1112 30CC A5 DF		            lda L00DF
+  1113 30CE 8D 65 03		            sta IOCB2+ICBAH
+  1114 30D1 A5 DE		            lda L00DE
+  1115 30D3 8D 64 03		            sta IOCB2+ICBAL
+  1116 30D6 AD B0 29		            lda L29B0
+  1117 30D9 C9 44		            cmp #$44
+  1118 30DB D0 92		            bne L306F
+  1119 30DD A9 B0		            lda #$B0
+  1120 30DF A0 29		            ldy #$29
+  1121 30E1 20 34 1B		            jsr L1B34
+  1122 30E4 A9 3F		            lda #$3F
+  1123 30E6 A0 0B		            ldy #$0B
+  1124 30E8 99 EF 27		L30E8       sta L27EF,Y
+  1125 30EB 88			            dey
+  1126 30EC D0 FA		            bne L30E8
+  1127 30EE 20 22 43		            jsr L4322
+  1128 30F1 A2 10		            ldx #$10
+  1129 30F3 20 C4 43		            jsr L43C4
+  1130 30F6 A0 FF		            ldy #$FF
+  1131 30F8 C8			L30F8       iny
+  1132 30F9 B1 DE		            lda (L00DE),Y
+  1133 30FB 99 40 28		            sta L2840,Y
+  1134 30FE D0 F8		            bne L30F8
+  1135 3100 88			L3100       dey
+  1136 3101 B1 DE		            lda (L00DE),Y
+  1137 3103 C9 3A		            cmp #$3A
+  1138 3105 F0 04		            beq L310B
+  1139 3107 C9 3E		            cmp #$3E
+  1140 3109 D0 F5		            bne L3100
+  1141 310B C8			L310B       iny
+  1142 310C 8C AF 29		            sty L29AF
+  1143 310F B1 DE		            lda (L00DE),Y
+  1144 3111 F0 43		            beq L3156
+  1145 3113 A2 00		            ldx #$00
+  1146 3115 B1 DE		L3115       lda (L00DE),Y
+  1147 3117 30 4A		            bmi L3163
+  1148 3119 C9 2A		            cmp #$2A
+  1149 311B F0 0D		            beq L312A
+  1150 311D C9 2E		            cmp #$2E
+  1151 311F 90 42		            bcc L3163
+  1152 3121 D0 03		            bne L3126
+  1153 3123 A9 20		            lda #$20
+  1154 3125 88			            dey
+  1155 3126 9D F0 27		L3126       sta L27F0,X
+  1156 3129 C8			            iny
+  1157 312A E8			L312A       inx
+  1158 312B E0 08		            cpx #$08
+  1159 312D 90 E6		            bcc L3115
+  1160 312F C8			L312F       iny
+  1161 3130 B1 DE		L3130       lda (L00DE),Y
+  1162 3132 F0 2F		            beq L3163
+  1163 3134 C9 2E		            cmp #$2E
+  1164 3136 F0 F7		            beq L312F
+  1165 3138 C9 2A		            cmp #$2A
+  1166 313A F0 1A		            beq L3156
+  1167 313C C9 20		            cmp #$20
+  1168 313E F0 23		            beq L3163
+  1169 3140 C9 2C		            cmp #$2C
+  1170 3142 F0 1F		            beq L3163
+  1171 3144 C9 9B		            cmp #$9B
+  1172 3146 F0 1B		            beq L3163
+  1173 3148 C8			            iny
+  1174 3149 9D F0 27		L3149       sta L27F0,X
+  1175 314C E8			            inx
+  1176 314D E0 0B		            cpx #$0B
+  1177 314F 90 DF		            bcc L3130
+  1178 3151 B0 03		            bcs L3156
+  1179 3153 20 22 43		L3153       jsr L4322
+  1180 3156 20 9E 40		L3156       jsr L409E
+  1181 3159 2C A4 29		            bit L29A4
+  1182 315C 30 F8		            bmi L3156
+  1183 315E 90 07		            bcc L3167
+  1184 3160 4C 10 2D		            jmp L2D10
+  1185 3163 A9 20		L3163       lda #$20
+  1186 3165 D0 E2		            bne L3149
+  1187 3167 A9 28		L3167       lda #$28
+  1188 3169 8D 75 03		            sta IOCB3+ICBAH
+  1189 316C A9 40		            lda #$40
+  1190 316E 8D 74 03		            sta IOCB3+ICBAL
+  1191 3171 A2 00		            ldx #$00
+  1192 3173 AC AF 29		            ldy L29AF
+  1193 3176 BD F0 27		L3176       lda L27F0,X
+  1194 3179 F0 33		            beq L31AE
+  1195 317B C9 3F		            cmp #$3F
+  1196 317D D0 03		            bne L3182
+  1197 317F BD A1 27		            lda L27A1,X
+  1198 3182 99 40 28		L3182       sta L2840,Y
+  1199 3185 C9 20		            cmp #$20
+  1200 3187 F0 01		            beq L318A
+  1201 3189 C8			            iny
+  1202 318A E8			L318A       inx
+  1203 318B E0 08		            cpx #$08
+  1204 318D 90 E7		            bcc L3176
+  1205 318F A9 2E		            lda #$2E
+  1206 3191 99 40 28		            sta L2840,Y
+  1207 3194 C8			            iny
+  1208 3195 BD F0 27		L3195       lda L27F0,X
+  1209 3198 F0 14		            beq L31AE
+  1210 319A C9 3F		            cmp #$3F
+  1211 319C D0 03		            bne L31A1
+  1212 319E BD A1 27		            lda L27A1,X
+  1213 31A1 99 40 28		L31A1       sta L2840,Y
+  1214 31A4 C9 20		            cmp #$20
+  1215 31A6 F0 01		            beq L31A9
+  1216 31A8 C8			            iny
+  1217 31A9 E8			L31A9       inx
+  1218 31AA E0 0B		            cpx #$0B
+  1219 31AC 90 E7		            bcc L3195
+  1220 31AE A9 2E		L31AE       lda #$2E
+  1221 31B0 D9 3F 28		            cmp L283F,Y
+  1222 31B3 D0 01		            bne L31B6
+  1223 31B5 88			            dey
+  1224 31B6 A9 9B		L31B6       lda #$9B
+  1225 31B8 AE 6F 1C		            ldx L1C6F
+  1226 31BB E0 51		            cpx #$51
+  1227 31BD D0 02		            bne L31C1
+  1228 31BF A9 3F		            lda #$3F
+  1229 31C1 99 40 28		L31C1       sta L2840,Y
+  1230 31C4 A9 00		            lda #$00
+  1231 31C6 99 41 28		            sta L2841,Y
+  1232 31C9 AD A9 29		            lda L29A9
+  1233 31CC D0 24		            bne L31F2
+  1234 31CE A9 B0		            lda #$B0
+  1235 31D0 A2 29		            ldx #$29
+  1236 31D2 20 B2 3E		            jsr L3EB2
+  1237 31D5 20 C8 3E		            jsr L3EC8
+  1238 31D8 2D 2D 3E		            and L3E2D
+  1239 31DB 20 00 A9		            jsr LA900
+  1240 31DE 40			            rti
+  1241 31DF A2 28		            ldx #$28
+  1242 31E1 20 B2 3E		            jsr L3EB2
+  1243 31E4 AD 6F 1C		            lda L1C6F
+  1244 31E7 C9 51		            cmp #$51
+  1245 31E9 D0 07		            bne L31F2
+  1246 31EB 20 D8 3E		            jsr L3ED8
+  1247 31EE C9 59		            cmp #$59
+  1248 31F0 D0 52		            bne L3244
+  1249 31F2 AD 5F 03		L31F2       lda IOCB1+ICAX6
+  1250 31F5 8D 6F 03		            sta IOCB2+ICAX6
+  1251 31F8 A2 20		            ldx #$20
+  1252 31FA 8E A7 29		            stx L29A7
+  1253 31FD A9 04		            lda #$04
+  1254 31FF 9D 4A 03		            sta IOCB0+ICAX1,X
+  1255 3202 A9 B0		            lda #$B0
+  1256 3204 A0 29		            ldy #$29
+  1257 3206 20 36 1B		            jsr L1B36
+  1258 3209 A9 03		            lda #$03
+  1259 320B 20 2E 1B		            jsr L1B2E
+  1260 320E 30 3F		            bmi L324F
+  1261 3210 A2 07		            ldx #$07
+  1262 3212 BD 25 44		L3212       lda L4425,X
+  1263 3215 DD 42 28		            cmp L2842,X
+  1264 3218 D0 11		            bne L322B
+  1265 321A CA			            dex
+  1266 321B D0 F5		            bne L3212
+  1267 321D AD 41 28		            lda L2841
+  1268 3220 8D 1C 44		            sta L441C
+  1269 3223 8D 01 2A		            sta L2A01
+  1270 3226 A9 60		            lda #$60
+  1271 3228 8D 43 28		            sta L2843
+  1272 322B A9 28		L322B       lda #$28
+  1273 322D 8D 75 03		            sta IOCB3+ICBAH
+  1274 3230 A9 40		            lda #$40
+  1275 3232 8D 74 03		            sta IOCB3+ICBAL
+  1276 3235 A2 08		            ldx #$08
+  1277 3237 8E 7A 03		            stx IOCB3+ICAX1
+  1278 323A A2 30		            ldx #$30
+  1279 323C 8E A8 29		            stx L29A8
+  1280 323F A9 07		            lda #$07
+  1281 3241 20 3E 40		            jsr L403E
+  1282 3244 AD A9 29		L3244       lda L29A9
+  1283 3247 D0 03		            bne L324C
+  1284 3249 4C 53 31		            jmp L3153
+  1285 324C 4C 10 2D		L324C       jmp L2D10
+  1286 324F 4C 36 41		L324F       jmp L4136
+  1287 3252 A9 01		L3252       lda #$01
+  1288 3254 D0 6E		            bne L32C4
+  1289 3256 44 69 73 6B 20 74 +             .byte 'Disk to FORMAT:'
+  1290 3265 00			            .byte $00
+  1291 3266 20 AB 42		            jsr L42AB
+  1292 3269 20 E5 43		            jsr L43E5
+  1293 326C A9 29		            lda #$29
+  1294 326E 8D 55 03		            sta IOCB1+ICBAH
+  1295 3271 A9 B0		            lda #$B0
+  1296 3273 8D 54 03		            sta IOCB1+ICBAL
+  1297 3276 A0 01		            ldy #$01
+  1298 3278 B1 DE		            lda (L00DE),Y
+  1299 327A 8D B6 32		            sta L32B6
+  1300 327D 20 C8 3E		            jsr L3EC8
+  1301 3280 28 50 72 65 73 73 +             .byte '(Press '
+  1302 3287 DB C1 DD		            .byte $DB,$C1,$DD
+  1303 328A 20 66 6F 72 20 45 +             .byte ' for Enhanced Dns)'
+  1304 329C 9B			            .byte $9B
+  1305 329D 54 79 70 65 20	            .byte 'Type '
+  1306 32A2 DB D9 DD		            .byte $DB,$D9,$DD
+  1307 32A5 20 74 6F 20 46 6F +             .byte ' to Format Drive '
+  1308 32B6 30 3A		L32B6       .byte '0:'
+  1309 32B8 00			            .byte $00
+  1310 32B9 20 D8 3E		            jsr L3ED8
+  1311 32BC C9 41		            cmp #$41
+  1312 32BE F0 92		            beq L3252
+  1313 32C0 49 59		            eor #$59
+  1314 32C2 D0 1F		            bne L32E3
+  1315 32C4 8D 5A 03		L32C4       sta IOCB1+ICAX1
+  1316 32C7 A9 00		            lda #$00
+  1317 32C9 AE 6F 1C		            ldx L1C6F
+  1318 32CC E0 4E		            cpx #$4E
+  1319 32CE D0 01		            bne L32D1
+  1320 32D0 6A			            ror
+  1321 32D1 8D 5B 03		L32D1       sta IOCB1+ICAX2
+  1322 32D4 A9 FE		            lda #$FE
+  1323 32D6 8D 52 03		            sta IOCB1+ICCOM
+  1324 32D9 A2 10		            ldx #$10
+  1325 32DB 20 56 E4		            jsr CIOV
+  1326 32DE 10 03		            bpl L32E3
+  1327 32E0 4C 36 41		            jmp L4136
+  1328 32E3 4C 10 2D		L32E3       jmp L2D10
+  1329 32E6 44			            .byte 'D'
+  1330 32E7 35 3A 44 55 50 2E + L32E7       .byte '5:DUP.SYS'
+  1331 32F0 9B			            .byte $9B
+  1332 32F1 44 72 69 76 65 20 +             .byte 'Drive to write DOS f'
+  1333 3305 69 6C 65 73 20 74 +             .byte 'iles to?'
+  1334 330D 00			            .byte $00
+  1335 330E 20 AB 42		            jsr L42AB
+  1336 3311 AD 65 1C		            lda L1C65
+  1337 3314 48			            pha
+  1338 3315 A9 31		            lda #$31
+  1339 3317 8D 65 1C		            sta L1C65
+  1340 331A 8D 58 1C		            sta L1C58
+  1341 331D A0 01		            ldy #$01
+  1342 331F B1 DE		            lda (L00DE),Y
+  1343 3321 C9 3A		            cmp #$3A
+  1344 3323 D0 03		            bne L3328
+  1345 3325 AD 75 1C		            lda L1C75
+  1346 3328 8D 01 2A		L3328       sta L2A01
+  1347 332B 8D E7 32		            sta L32E7
+  1348 332E 88			            dey
+  1349 332F 8C 6F 1C		            sty L1C6F
+  1350 3332 A9 80		            lda #$80
+  1351 3334 8D BE 07		            sta L07BE
+  1352 3337 A9 00		            lda #$00
+  1353 3339 A0 2A		            ldy #$2A
+  1354 333B 20 34 1B		            jsr L1B34
+  1355 333E A9 08		            lda #$08
+  1356 3340 8D 5A 03		            sta IOCB1+ICAX1
+  1357 3343 20 C9 43		            jsr L43C9
+  1358 3346 20 27 1B		            jsr L1B27
+  1359 3349 68			            pla
+  1360 334A 8D 58 1C		            sta L1C58
+  1361 334D 8D 65 1C		            sta L1C65
+  1362 3350 A0 70		            ldy #$70
+  1363 3352 A9 00		            lda #$00
+  1364 3354 A2 2A		            ldx #$2A
+  1365 3356 20 66 3D		            jsr L3D66
+  1366 3359 A9 32		            lda #$32
+  1367 335B 8D 55 03		            sta IOCB1+ICBAH
+  1368 335E A9 E6		            lda #$E6
+  1369 3360 8D 54 03		            sta IOCB1+ICBAL
+  1370 3363 A9 44		            lda #$44
+  1371 3365 85 D9		            sta L00D9
+  1372 3367 A9 39		            lda #$39
+  1373 3369 85 D8		            sta L00D8
+  1374 336B A9 1A		            lda #$1A
+  1375 336D 85 DB		            sta L00DB
+  1376 336F A9 3A		            lda #$3A
+  1377 3371 85 DA		            sta L00DA
+  1378 3373 A9 00		            lda #$00
+  1379 3375 85 E0		            sta L00E0
+  1380 3377 4C 11 3D		            jmp L3D11
+  1381 337A 53 6F 75 72 63 65 +             .byte 'Source, Destination '
+  1382 338E 28 53 65 63 74 6F +             .byte '(Sectors)?'
+  1383 3398 9B 00		            .byte $9B,$00
+  1384 339A 20 AB 42		            jsr L42AB
+  1385 339D A0 01		            ldy #$01
+  1386 339F B1 DE		            lda (L00DE),Y
+  1387 33A1 29 0F		            and #$0F
+  1388 33A3 8D A7 29		            sta L29A7
+  1389 33A6 8D A8 29		            sta L29A8
+  1390 33A9 AD EF 27		            lda L27EF
+  1391 33AC C9 28		            cmp #$28
+  1392 33AE F0 16		            beq L33C6
+  1393 33B0 20 A5 42		            jsr L42A5
+  1394 33B3 A0 01		            ldy #$01
+  1395 33B5 B1 DE		            lda (L00DE),Y
+  1396 33B7 29 0F		            and #$0F
+  1397 33B9 8D A8 29		            sta L29A8
+  1398 33BC CD A7 29		            cmp L29A7
+  1399 33BF D0 05		            bne L33C6
+  1400 33C1 A2 9B		            ldx #$9B
+  1401 33C3 8E AA 29		            stx L29AA
+  1402 33C6 AA			L33C6       tax
+  1403 33C7 AC A7 29		            ldy L29A7
+  1404 33CA AD AA 29		            lda L29AA
+  1405 33CD 09 40		            ora #$40
+  1406 33CF 8D AA 29		            sta L29AA
+  1407 33D2 30 25		            bmi L33F9
+  1408 33D4 20 C8 3E		            jsr L3EC8
+  1409 33D7 49 6E 73 65 72 74 +             .byte 'Insert both disks, t'
+  1410 33EB 79 70 65 20		            .byte 'ype '
+  1411 33EF D2 C5 D4 D5 D2 CE +             .byte $D2,$C5,$D4,$D5,$D2,$CE,$00
+  1412 33F6 20 D8 3E		            jsr L3ED8
+  1413 33F9 20 22 43		L33F9       jsr L4322
+  1414 33FC AD A7 29		            lda L29A7
+  1415 33FF 20 DB 42		            jsr L42DB
+  1416 3402 0E EA 02		            asl DVSTAT
+  1417 3405 A9 00		            lda #$00
+  1418 3407 69 00		            adc #$00
+  1419 3409 8D 6A 03		            sta IOCB2+ICAX1
+  1420 340C AC A8 29		            ldy L29A8
+  1421 340F AE A7 29		            ldx L29A7
+  1422 3412 BD C3 07		            lda L07C3,X
+  1423 3415 D9 C3 07		            cmp L07C3,Y
+  1424 3418 F0 2F		            beq L3449
+  1425 341A 8C 9F 29		            sty L299F
+  1426 341D 20 66 43		            jsr L4366
+  1427 3420 AC A8 29		            ldy L29A8
+  1428 3423 AE A7 29		            ldx L29A7
+  1429 3426 BD C3 07		            lda L07C3,X
+  1430 3429 D9 C3 07		            cmp L07C3,Y
+  1431 342C F0 1B		            beq L3449
+  1432 342E 20 2E 44		            jsr L442E
+  1433 3431 44 72 69 76 65 73 +             .byte 'Drives not compatibl'
+  1434 3445 65 21		            .byte 'e!'
+  1435 3447 9B 00		            .byte $9B,$00
+  1436 3449 06 08		L3449       asl WARMST
+  1437 344B 4A			            lsr
+  1438 344C 8D AD 29		            sta L29AD
+  1439 344F 6A			            ror
+  1440 3450 8D AC 29		            sta L29AC
+  1441 3453 8E 01 03		            stx DUNIT
+  1442 3456 AD EF 27		            lda L27EF
+  1443 3459 48			            pha
+  1444 345A A9 FF		            lda #$FF
+  1445 345C AA			            tax
+  1446 345D 9D 1F 28		L345D       sta L281F,X
+  1447 3460 9D 9F 28		            sta L289F,X
+  1448 3463 CA			            dex
+  1449 3464 D0 F7		            bne L345D
+  1450 3466 68			            pla
+  1451 3467 C9 28		            cmp #$28
+  1452 3469 F0 19		            beq L3484
+  1453 346B C9 9B		            cmp #$9B
+  1454 346D F0 79		            beq L34E8
+  1455 346F 20 2E 44		L346F       jsr L442E
+  1456 3472 49 6E 76 61 6C 69 +             .byte 'Invalid options!'
+  1457 3482 9B 00		            .byte $9B,$00
+  1458 3484 20 70 41		L3484       jsr L4170
+  1459 3487 C0 2D		            cpy #$2D
+  1460 3489 D0 E4		            bne L346F
+  1461 348B 8D A2 27		            sta L27A2
+  1462 348E 8E A3 27		            stx L27A3
+  1463 3491 20 70 41		            jsr L4170
+  1464 3494 C0 29		            cpy #$29
+  1465 3496 D0 D7		            bne L346F
+  1466 3498 8D A0 27		            sta L27A0
+  1467 349B 8E A1 27		            stx L27A1
+  1468 349E A0 00		            ldy #$00
+  1469 34A0 8C A0 29		            sty L29A0
+  1470 34A3 8C A5 27		            sty L27A5
+  1471 34A6 8C A4 27		            sty L27A4
+  1472 34A9 A9 27		            lda #$27
+  1473 34AB 85 DB		            sta L00DB
+  1474 34AD A9 A9		            lda #$A9
+  1475 34AF 85 DA		            sta L00DA
+  1476 34B1 A9 FE		            lda #$FE
+  1477 34B3 AE A5 27		L34B3       ldx L27A5
+  1478 34B6 EC A3 27		            cpx L27A3
+  1479 34B9 D0 08		            bne L34C3
+  1480 34BB AE A4 27		            ldx L27A4
+  1481 34BE EC A2 27		            cpx L27A2
+  1482 34C1 B0 07		            bcs L34CA
+  1483 34C3 38			L34C3       sec
+  1484 34C4 2A			            rol
+  1485 34C5 20 1A 35		            jsr L351A
+  1486 34C8 D0 E9		            bne L34B3
+  1487 34CA AE A1 27		L34CA       ldx L27A1
+  1488 34CD EC A5 27		            cpx L27A5
+  1489 34D0 90 10		            bcc L34E2
+  1490 34D2 D0 08		            bne L34DC
+  1491 34D4 AE A0 27		            ldx L27A0
+  1492 34D7 EC A4 27		            cpx L27A4
+  1493 34DA 90 06		            bcc L34E2
+  1494 34DC 0A			L34DC       asl
+  1495 34DD 20 1A 35		            jsr L351A
+  1496 34E0 D0 E8		            bne L34CA
+  1497 34E2 38			L34E2       sec
+  1498 34E3 2A			            rol
+  1499 34E4 B0 FC		            bcs L34E2
+  1500 34E6 91 DA		            sta (L00DA),Y
+  1501 34E8 38			L34E8       sec
+  1502 34E9 AD E5 02		            lda MEMTOP
+  1503 34EC ED AC 29		            sbc L29AC
+  1504 34EF 85 DC		            sta L00DC
+  1505 34F1 AD E6 02		            lda MEMTOP+1
+  1506 34F4 ED AD 29		            sbc L29AD
+  1507 34F7 85 DD		            sta L00DD
+  1508 34F9 A5 DC		            lda L00DC
+  1509 34FB C9 3A		            cmp #$3A
+  1510 34FD A5 DD		            lda L00DD
+  1511 34FF E9 44		            sbc #$44
+  1512 3501 B0 2C		            bcs L352F
+  1513 3503 20 2E 44		            jsr L442E
+  1514 3506 4E 6F 74 20 65 6E +             .byte 'Not enough memory!'
+  1515 3518 9B 00		            .byte $9B,$00
+  1516 351A B0 0A		L351A       bcs L3526
+  1517 351C 91 DA		            sta (L00DA),Y
+  1518 351E A9 FE		            lda #$FE
+  1519 3520 E6 DA		            inc L00DA
+  1520 3522 D0 02		            bne L3526
+  1521 3524 E6 DB		            inc L00DB
+  1522 3526 EE A4 27		L3526       inc L27A4
+  1523 3529 D0 03		            bne L352E
+  1524 352B EE A5 27		            inc L27A5
+  1525 352E 60			L352E       rts
+  1526 352F AD A0 29		L352F       lda L29A0
+  1527 3532 F0 4D		            beq L3581
+  1528 3534 A9 68		            lda #$68
+  1529 3536 A2 01		            ldx #$01
+  1530 3538 8D 0A 03		            sta DAUX1
+  1531 353B 8E 0B 03		            stx DAUX2
+  1532 353E A9 9F		            lda #$9F
+  1533 3540 A2 27		            ldx #$27
+  1534 3542 8D 04 03		            sta DBUFLO
+  1535 3545 8E 05 03		            stx DBUFHI
+  1536 3548 20 28 3F		            jsr L3F28
+  1537 354B 10 03		            bpl L3550
+  1538 354D 4C 36 41		            jmp L4136
+  1539 3550 18			L3550       clc
+  1540 3551 AD A0 27		            lda L27A0
+  1541 3554 69 0C		            adc #$0C
+  1542 3556 8D A0 27		            sta L27A0
+  1543 3559 90 03		            bcc L355E
+  1544 355B EE A1 27		            inc L27A1
+  1545 355E AD 9F 27		L355E       lda L279F
+  1546 3561 C9 04		            cmp #$04
+  1547 3563 90 1C		            bcc L3581
+  1548 3565 EE A0 27		            inc L27A0
+  1549 3568 18			            clc
+  1550 3569 AD 04 03		            lda DBUFLO
+  1551 356C 6D 08 03		            adc DBYTLO
+  1552 356F 8D 04 03		            sta DBUFLO
+  1553 3572 AD 05 03		            lda DBUFHI
+  1554 3575 6D 09 03		            adc DBYTHI
+  1555 3578 8D 05 03		            sta DBUFHI
+  1556 357B CE 0A 03		            dec DAUX1
+  1557 357E 20 28 3F		            jsr L3F28
+  1558 3581 A9 00		L3581       lda #$00
+  1559 3583 8D 0B 03		            sta DAUX2
+  1560 3586 A9 01		            lda #$01
+  1561 3588 8D 0A 03		            sta DAUX1
+  1562 358B AD A9 27		            lda L27A9
+  1563 358E 8D A4 29		            sta L29A4
+  1564 3591 A9 08		            lda #$08
+  1565 3593 8D A2 29		            sta L29A2
+  1566 3596 A9 27		            lda #$27
+  1567 3598 85 D5		            sta L00D5
+  1568 359A A9 A9		            lda #$A9
+  1569 359C 85 D4		            sta L00D4
+  1570 359E A5 D4		L359E       lda L00D4
+  1571 35A0 8D A1 29		            sta L29A1
+  1572 35A3 A5 D5		            lda L00D5
+  1573 35A5 8D A0 29		            sta L29A0
+  1574 35A8 AD A2 29		            lda L29A2
+  1575 35AB 8D A3 29		            sta L29A3
+  1576 35AE AD A4 29		            lda L29A4
+  1577 35B1 8D 73 1C		            sta L1C73
+  1578 35B4 AD 0A 03		            lda DAUX1
+  1579 35B7 8D A5 29		            sta L29A5
+  1580 35BA AD 0B 03		            lda DAUX2
+  1581 35BD 8D A6 29		            sta L29A6
+  1582 35C0 A9 00		            lda #$00
+  1583 35C2 8D A9 29		            sta L29A9
+  1584 35C5 A9 44		L35C5       lda #$44
+  1585 35C7 8D 05 03		            sta DBUFHI
+  1586 35CA A9 3A		            lda #$3A
+  1587 35CC 8D 04 03		            sta DBUFLO
+  1588 35CF 0E A4 29		L35CF       asl L29A4
+  1589 35D2 CE A2 29		            dec L29A2
+  1590 35D5 D0 12		            bne L35E9
+  1591 35D7 E6 D4		            inc L00D4
+  1592 35D9 D0 02		            bne L35DD
+  1593 35DB E6 D5		            inc L00D5
+  1594 35DD A0 00		L35DD       ldy #$00
+  1595 35DF B1 D4		            lda (L00D4),Y
+  1596 35E1 8D A4 29		            sta L29A4
+  1597 35E4 A2 08		            ldx #$08
+  1598 35E6 8E A2 29		            stx L29A2
+  1599 35E9 2C A4 29		L35E9       bit L29A4
+  1600 35EC 30 22		            bmi L3610
+  1601 35EE AD A9 29		            lda L29A9
+  1602 35F1 0A			            asl
+  1603 35F2 AD A7 29		            lda L29A7
+  1604 35F5 90 03		            bcc L35FA
+  1605 35F7 AD A8 29		            lda L29A8
+  1606 35FA 20 2C 3F		L35FA       jsr L3F2C
+  1607 35FD 18			            clc
+  1608 35FE AD 04 03		            lda DBUFLO
+  1609 3601 6D AC 29		            adc L29AC
+  1610 3604 8D 04 03		            sta DBUFLO
+  1611 3607 AD 05 03		            lda DBUFHI
+  1612 360A 6D AD 29		            adc L29AD
+  1613 360D 8D 05 03		            sta DBUFHI
+  1614 3610 AD 0A 03		L3610       lda DAUX1
+  1615 3613 CD A0 27		            cmp L27A0
+  1616 3616 AD 0B 03		            lda DAUX2
+  1617 3619 ED A1 27		            sbc L27A1
+  1618 361C 90 08		            bcc L3626
+  1619 361E AD A9 29		            lda L29A9
+  1620 3621 10 22		            bpl L3645
+  1621 3623 4C 10 2D		            jmp L2D10
+  1622 3626 EE 0A 03		L3626       inc DAUX1
+  1623 3629 D0 03		            bne L362E
+  1624 362B EE 0B 03		            inc DAUX2
+  1625 362E A5 DC		L362E       lda L00DC
+  1626 3630 CD 04 03		            cmp DBUFLO
+  1627 3633 A5 DD		            lda L00DD
+  1628 3635 ED 05 03		            sbc DBUFHI
+  1629 3638 B0 95		            bcs L35CF
+  1630 363A AD A9 29		            lda L29A9
+  1631 363D 10 06		            bpl L3645
+  1632 363F 20 22 43		            jsr L4322
+  1633 3642 4C 9E 35		            jmp L359E
+  1634 3645 2C AA 29		L3645       bit L29AA
+  1635 3648 10 2C		            bpl L3676
+  1636 364A 20 C8 3E		            jsr L3EC8
+  1637 364D 49 6E 73 65 72 74 +             .byte 'Insert DESTINATION d'
+  1638 3661 69 73 6B 2C 20 70 +             .byte 'isk, press '
+  1639 366C D2 C5 D4 D5 D2 CE +             .byte $D2,$C5,$D4,$D5,$D2,$CE,$00
+  1640 3673 20 D8 3E		            jsr L3ED8
+  1641 3676 A9 4E		L3676       lda #$4E
+  1642 3678 CD 6F 1C		            cmp L1C6F
+  1643 367B F0 1C		            beq L3699
+  1644 367D 8D 6F 1C		            sta L1C6F
+  1645 3680 A2 20		            ldx #$20
+  1646 3682 A9 00		            lda #$00
+  1647 3684 A0 2A		            ldy #$2A
+  1648 3686 20 36 1B		            jsr L1B36
+  1649 3689 A9 FE		            lda #$FE
+  1650 368B 8D 62 03		            sta IOCB2+ICCOM
+  1651 368E AD A8 29		            lda L29A8
+  1652 3691 09 30		            ora #$30
+  1653 3693 8D 01 2A		            sta L2A01
+  1654 3696 20 2F 41		            jsr L412F
+  1655 3699 A9 00		L3699       lda #$00
+  1656 369B 8D 6A 03		            sta IOCB2+ICAX1
+  1657 369E CE A9 29		            dec L29A9
+  1658 36A1 AD A1 29		            lda L29A1
+  1659 36A4 85 D4		            sta L00D4
+  1660 36A6 AD A0 29		            lda L29A0
+  1661 36A9 85 D5		            sta L00D5
+  1662 36AB AD A5 29		            lda L29A5
+  1663 36AE 8D 0A 03		            sta DAUX1
+  1664 36B1 AD A6 29		            lda L29A6
+  1665 36B4 8D 0B 03		            sta DAUX2
+  1666 36B7 AD A3 29		            lda L29A3
+  1667 36BA 8D A2 29		            sta L29A2
+  1668 36BD AD 73 1C		            lda L1C73
+  1669 36C0 8D A4 29		            sta L29A4
+  1670 36C3 4C C5 35		            jmp L35C5
+  1671 36C6 44 72 69 76 65 2C +             .byte 'Drive, new density:'
+  1672 36D9 00			            .byte $00
+  1673 36DA 20 AB 42		            jsr L42AB
+  1674 36DD AD EF 27		            lda L27EF
+  1675 36E0 C9 9B		            cmp #$9B
+  1676 36E2 D0 15		            bne L36F9
+  1677 36E4 20 2E 44		L36E4       jsr L442E
+  1678 36E7 44 72 69 76 65 20 +             .byte 'Drive unchanged.'
+  1679 36F7 9B 00		            .byte $9B,$00
+  1680 36F9 AC A0 29		L36F9       ldy L29A0
+  1681 36FC B1 DE		            lda (L00DE),Y
+  1682 36FE AA			            tax
+  1683 36FF A0 01		            ldy #$01
+  1684 3701 B1 DE		            lda (L00DE),Y
+  1685 3703 C9 39		            cmp #$39
+  1686 3705 B0 DD		            bcs L36E4
+  1687 3707 E9 30		            sbc #$30
+  1688 3709 90 D9		            bcc L36E4
+  1689 370B A8			            tay
+  1690 370C C8			            iny
+  1691 370D 8C 9F 29		            sty L299F
+  1692 3710 A9 01		            lda #$01
+  1693 3712 E0 53		            cpx #$53
+  1694 3714 F0 05		            beq L371B
+  1695 3716 E0 44		            cpx #$44
+  1696 3718 D0 CA		            bne L36E4
+  1697 371A 0A			            asl
+  1698 371B 99 C3 07		L371B       sta L07C3,Y
+  1699 371E 20 93 43		            jsr L4393
+  1700 3721 4C 91 2A		            jmp L2A91
+  1701 3724			CHKBANKS    
+  1702 3724 AD A6 D5		        lda TCMOSL
+  1703 3727 C9 FF		        cmp #TCMOSL.XLLOCK
+  1704 3729 F0 04		        beq CHKB.NO
+  1705 372B C9 D5		        cmp #TCMOSL.XELOCK
+  1706 372D D0 06		        bne CHKB.YE
+  1707 372F A9 00		CHKB.NO lda #$00
+  1708 3731 8D 3A 0C		        sta RDKLMT
+  1709 3734 60			        rts
+  1710 3735 A9 20		CHKB.YE lda #$20
+  1711 3737 8D 3A 0C		        sta RDKLMT
+  1712 373A 60			        rts
+  1713 373B EA			L3733   nop ; just for valid L3733
+  1714 				;            sei
+  1715 				;            ldy #$00
+  1716 				;            sty NMIEN
+  1717 				;            sty IRQEN
+  1718 				;            lda PORTB
+  1719 				;            pha
+  1720 				;            ldx #$FF
+  1721 				;L3733       sty PORTB
+  1722 				;            lda L4000
+  1723 				;            sta L0908,Y
+  1724 373C 8E 00 40		            stx L4000
+  1725 373F 8A			            txa
+  1726 3740 99 08 0A		            sta L0A08,Y
+  1727 3743 C8			            iny
+  1728 3744 D0 F5		            bne L3733
+  1729 3746 CA			            dex
+  1730 3747 8E 01 D3		            stx PORTB
+  1731 374A 8E 00 40		            stx L4000
+  1732 374D A2 00		            ldx #$00
+  1733 374F 8C 01 D3		L374F       sty PORTB
+  1734 3752 AD 00 40		            lda L4000
+  1735 3755 C9 FF		            cmp #$FF
+  1736 3757 D0 05		            bne L375E
+  1737 3759 E8			            inx
+  1738 375A 8E 00 40		            stx L4000
+  1739 375D 8A			            txa
+  1740 375E 99 08 0A		L375E       sta L0A08,Y
+  1741 3761 C8			            iny
+  1742 3762 D0 EB		            bne L374F
+  1743 3764 8E 3A 0C		            stx L0C3A
+  1744 3767 A2 01		            ldx #$01
+  1745 3769 8A			L3769       txa
+  1746 376A A0 FF		            ldy #$FF
+  1747 376C D9 08 0A		L376C       cmp L0A08,Y
+  1748 376F F0 23		            beq L3794
+  1749 3771 88			            dey
+  1750 3772 C0 FF		            cpy #$FF
+  1751 3774 D0 F6		            bne L376C
+  1752 3776 8C 01 D3		L3776       sty PORTB
+  1753 3779 B9 08 09		            lda L0908,Y
+  1754 377C 8D 00 40		            sta L4000
+  1755 377F 88			            dey
+  1756 3780 C0 FF		            cpy #$FF
+  1757 3782 D0 F2		            bne L3776
+  1758 3784 68			            pla
+  1759 3785 8D 01 D3		            sta PORTB
+  1760 3788 A9 C0		            lda #$C0
+  1761 378A 8D 0E D4		            sta NMIEN
+  1762 378D A5 10		            lda POKMSK
+  1763 378F 8D 0E D2		            sta IRQEN
+  1764 3792 58			            cli
+  1765 3793 60			            rts
+  1766 3794 98			L3794       tya
+  1767 3795 9D B9 0B		            sta L0BB9,X
+  1768 3798 E8			            inx
+  1769 3799 E0 41		            cpx #$41
+  1770 379B 90 CC		            bcc L3769
+  1771 379D A0 FE		            ldy #$FE
+  1772 379F D0 D5		            bne L3776
+  1773 37A1 20 C8 3E		L37A1       jsr L3EC8
+  1774 37A4 52 41 4D 20 64 69 +             .byte 'RAM disk present?'
+  1775 37B5 00			            .byte $00
+  1776 37B6 20 D8 3E		            jsr L3ED8
+  1777 37B9 A0 00		            ldy #$00
+  1778 37BB C9 59		            cmp #$59
+  1779 37BD F0 03		            beq L37C2
+  1780 37BF 4C 2F 39		            jmp L392F
+  1781 37C2 4C 2C 38		L37C2       jmp CHKRDBN ; jump over AXLON/XE question
+  1782 				;             jsr L3EC8
+  1783 37C5 DB C1 DD		            .byte $DB,$C1,$DD
+  1784 37C8 78 6C 6F 6E 20 6F +             .byte 'xlon or '
+  1785 37D0 DB D8 DD		            .byte $DB,$D8,$DD
+  1786 37D3 45 20 74 79 70 65 +             .byte 'E type RAMdisk?'
+  1787 37E2 00			            .byte $00
+  1788 37E3 20 D8 3E		            jsr L3ED8
+  1789 37E6 A0 01		            ldy #$01
+  1790 37E8 A2 D3		            ldx #$D3
+  1791 37EA C9 58		            cmp #$58
+  1792 37EC F0 08		            beq L37F6
+  1793 37EE A0 FF		            ldy #$FF
+  1794 37F0 A2 CF		            ldx #$CF
+  1795 37F2 C9 41		            cmp #$41
+  1796 37F4 D0 CC		            bne L37C2
+  1797 37F6 8C 19 0C		L37F6       sty L0C19
+  1798 37F9 8C 4C 0C		            sty L0C4C
+  1799 37FC 8C 34 37		            sty L3734
+  1800 37FF 8C 48 37		            sty L3748
+  1801 3802 8C 50 37		            sty L3750
+  1802 3805 8C 77 37		            sty L3777
+  1803 3808 8E 1A 0C		            stx L0C1A
+  1804 380B 8E 4D 0C		            stx L0C4D
+  1805 380E 8E 35 37		            stx L3735
+  1806 3811 8E 49 37		            stx L3749
+  1807 3814 8E 51 37		            stx L3751
+  1808 3817 8E 78 37		            stx L3778
+  1809 381A A0 EA		            ldy #$EA
+  1810 381C A2 EA		            ldx #$EA
+  1811 381E C9 58		            cmp #$58
+  1812 3820 F0 04		            beq L3826
+  1813 3822 A0 A9		            ldy #$A9
+  1814 3824 A2 00		            ldx #$00
+  1815 3826 8C 0F 0C		L3826       sty L0C0F
+  1816 3829 8E 10 0C		            stx L0C10
+  1817 382C 20 24 37		CHKRDBN     jsr CHKBANKS
+  1818 382F AD 3A 0C		            lda L0C3A
+  1819 3832 D0 27		            bne L385B
+  1820 3834 20 C8 3E		            jsr L3EC8
+  1821 3837 4E 6F 20 65 78 74 +             .byte 'No extended memory i'
+  1822 384B 6E 73 74 61 6C 6C +             .byte 'nstalled!'
+  1823 3854 9B 00		            .byte $9B,$00
+  1824 3856 A0 00		            ldy #$00
+  1825 3858 4C 2F 39		            jmp L392F
+  1826 385B A2 00		L385B       ldx #$00
+  1827 385D 86 D5		            stx L00D5
+  1828 385F 0A			            asl
+  1829 3860 0A			            asl
+  1830 3861 26 D5		            rol L00D5
+  1831 3863 0A			            asl
+  1832 3864 26 D5		            rol L00D5
+  1833 3866 0A			            asl
+  1834 3867 85 D4		            sta L00D4
+  1835 3869 26 D5		            rol L00D5
+  1836 386B 20 AA D9		            jsr IFP
+  1837 386E 20 E6 D8		            jsr FASC
+  1838 3871 20 C8 3E		            jsr L3EC8
+  1839 3874 55 73 65 20 64 65 +             .byte 'Use default config f'
+  1840 3888 6F 72 20		            .byte 'or '
+  1841 388B 00			            .byte $00
+  1842 388C A0 00		            ldy #$00
+  1843 388E B1 F3		L388E       lda (L00F3),Y
+  1844 3890 30 03		            bmi L3895
+  1845 3892 C8			            iny
+  1846 3893 D0 F9		            bne L388E
+  1847 3895 29 7F		L3895       and #$7F
+  1848 3897 91 F3		            sta (L00F3),Y
+  1849 3899 C8			            iny
+  1850 389A A9 00		            lda #$00
+  1851 389C 91 F3		            sta (L00F3),Y
+  1852 389E A5 F3		            lda L00F3
+  1853 38A0 A6 F4		            ldx L00F4
+  1854 38A2 20 B2 3E		            jsr L3EB2
+  1855 38A5 20 C8 3E		            jsr L3EC8
+  1856 38A8 4B 3F		            .byte $4B,$3F
+  1857 38AA 00			            .byte $00
+  1858 38AB 20 D8 3E		            jsr L3ED8
+  1859 38AE C9 4E		            cmp #$4E
+  1860 38B0 F0 03		            beq L38B5
+  1861 38B2 4C F8 38		            jmp L38F8
+  1862 38B5 20 C8 3E		L38B5       jsr L3EC8
+  1863 38B8 53 69 7A 65 28 34 +             .byte 'Size(48-511K)?'
+  1864 38C6 00			            .byte $00
+  1865 38C7 20 0E 41		            jsr L410E
+  1866 38CA 20 70 41		            jsr L4170
+  1867 38CD 46 D5		            lsr L00D5
+  1868 38CF 6A			            ror
+  1869 38D0 46 D5		            lsr L00D5
+  1870 38D2 6A			            ror
+  1871 38D3 46 D5		            lsr L00D5
+  1872 38D5 6A			            ror
+  1873 38D6 46 D5		            lsr L00D5
+  1874 38D8 6A			            ror
+  1875 				;            bne L38D7
+  1876
+  1877 				; check bank number between $03 and $1f
+  1878 38D9 C9 03		            cmp #$03
+  1879 38DB 90 D8		            bcc L38B5
+  1880 38DD C9 20		            cmp #$20
+  1881 38DF B0 D4		            bcs L38B5
+  1882 				            
+  1883 				;            lda #$04
+  1884 38E1 8D 3A 0C		L38D7       sta L0C3A
+  1885 38E4 4C F8 38		L38DA       jmp l38F8 ; jump over page sequence
+  1886 				;            jsr L3EC8
+  1887 38E7 50 61 67 65		            .byte 'Page'  ; -4 because of patch: ' sequence?'
+  1888 38EB 00			            .byte $00
+  1889 38EC 20 0E 41		            jsr L410E
+  1890 38EF 20 72 41		            jsr L4172
+  1891 38F2 C0 9B		            cpy #$9B
+  1892 38F4 D0 7D		            bne L3973
+  1893 38F6 F0 3B		            beq L3933
+  1894 38F8 20 C8 3E		L38F8       jsr L3EC8
+  1895 38FB 52 41 4D 20 64 69 +             .byte 'RAM disk drive no?'
+  1896 390D 00			            .byte $00
+  1897 390E 4C 1F 39		            jmp L391F ; jump over MAPAGE munipulation
+  1898 				;            lda L0C1A
+  1899 3911 C9 CF		            cmp #$CF
+  1900 3913 D0 0A		            bne L391F
+  1901 3915 AE 3A 0C		            ldx L0C3A
+  1902 3918 8A			L3918       txa
+  1903 3919 9D B9 0B		            sta L0BB9,X
+  1904 391C CA			            dex
+  1905 391D D0 F9		            bne L3918
+  1906 391F 20 D8 3E		L391F       jsr L3ED8
+  1907 3922 A0 08		            ldy #$08
+  1908 3924 C9 30		            cmp #$30
+  1909 3926 90 07		            bcc L392F
+  1910 3928 C9 39		            cmp #$39
+  1911 392A B0 03		            bcs L392F
+  1912 392C 29 0F		            and #$0F
+  1913 392E A8			            tay
+  1914 392F 8C 0A 07		L392F       sty L070A
+  1915 3932 60			            rts
+  1916 3933 A8			L3933       tay
+  1917 3934 BE FD 39		            ldx L39FD,Y
+  1918 3937 C0 03		            cpy #$03
+  1919 3939 B0 2D		            bcs L3968
+  1920 393B B9 03 3A		            lda L3A03,Y
+  1921 393E A2 00		            ldx #$00
+  1922 3940 2A			L3940       rol
+  1923 3941 2A			            rol
+  1924 3942 48			            pha
+  1925 3943 2A			            rol
+  1926 3944 2A			            rol
+  1927 3945 2A			            rol
+  1928 3946 29 0C		            and #$0C
+  1929 3948 A8			            tay
+  1930 3949 B9 09 3A		L3949       lda L3A09,Y
+  1931 394C 9D BA 0B		            sta L0BBA,X
+  1932 394F E8			            inx
+  1933 3950 C8			            iny
+  1934 3951 8A			            txa
+  1935 3952 29 03		            and #$03
+  1936 3954 D0 F3		            bne L3949
+  1937 3956 68			            pla
+  1938 3957 E0 10		            cpx #$10
+  1939 3959 D0 E5		            bne L3940
+  1940 395B BD 09 3A		L395B       lda L3A09,X
+  1941 395E 9D BA 0B		            sta L0BBA,X
+  1942 3961 E8			            inx
+  1943 3962 E0 40		            cpx #$40
+  1944 3964 D0 F5		            bne L395B
+  1945 3966 F0 90		            beq L38F8
+  1946 3968 A2 40		L3968       ldx #$40
+  1947 396A CA			L396A       dex
+  1948 396B 8A			            txa
+  1949 396C 9D BA 0B		            sta L0BBA,X
+  1950 396F D0 F9		            bne L396A
+  1951 3971 F0 85		            beq L38F8
+  1952 3973 A2 00		L3973       ldx #$00
+  1953 3975 48			            pha
+  1954 3976 8A			            txa
+  1955 3977 9D 9F 28		L3977       sta L289F,X
+  1956 397A E8			            inx
+  1957 397B D0 FA		            bne L3977
+  1958 397D 68			            pla
+  1959 397E 8E 9F 29		L397E       stx L299F
+  1960 3981 C0 9B		            cpy #$9B
+  1961 3983 F0 23		            beq L39A8
+  1962 3985 9D 5F 28		            sta L285F,X
+  1963 3988 AA			            tax
+  1964 3989 BD 9F 28		            lda L289F,X
+  1965 398C D0 2C		            bne L39BA
+  1966 398E DE 9F 28		            dec L289F,X
+  1967 3991 AC A0 29		            ldy L29A0
+  1968 3994 B1 DE		            lda (L00DE),Y
+  1969 3996 C9 9B		            cmp #$9B
+  1970 3998 D0 03		            bne L399D
+  1971 399A 20 0E 41		            jsr L410E
+  1972 399D 20 72 41		L399D       jsr L4172
+  1973 39A0 AE 9F 29		            ldx L299F
+  1974 39A3 E8			            inx
+  1975 39A4 E0 40		            cpx #$40
+  1976 39A6 D0 D6		            bne L397E
+  1977 39A8 EC 3A 0C		L39A8       cpx L0C3A
+  1978 39AB D0 30		            bne L39DD
+  1979 39AD CA			L39AD       dex
+  1980 39AE BD 5F 28		            lda L285F,X
+  1981 39B1 9D BA 0B		            sta L0BBA,X
+  1982 39B4 8A			            txa
+  1983 39B5 D0 F6		            bne L39AD
+  1984 39B7 4C F8 38		            jmp L38F8
+  1985 39BA 20 C8 3E		L39BA       jsr L3EC8
+  1986 39BD 44 75 70 6C 69 63 +             .byte 'Duplicated sequence '
+  1987 39D1 6E 75 6D 62 65 72 +             .byte 'number!'
+  1988 39D8 9B 00		            .byte $9B,$00
+  1989 39DA 4C E4 38		            jmp L38DA
+  1990 39DD 20 C8 3E		L39DD       jsr L3EC8
+  1991 39E0 57 72 6F 6E 67 20 +             .byte 'Wrong number of entr'
+  1992 39F4 69 65 73 21		            .byte 'ies!'
+  1993 39F8 9B 00		            .byte $9B,$00
+  1994 39FA 4C E4 38		            jmp L38DA
+  1995 39FD 00 00 00 FF FF FF	L39FD       .byte $00,$00,$00,$FF,$FF,$FF
+  1996 3A03 9C D8 4B FF FF 00	L3A03       .byte $9C,$D8,$4B,$FF,$FF,$00
+  1997 3A09 A3 A7 AB AF C3 C7 + L3A09       .byte $A3,$A7,$AB,$AF,$C3,$C7,$CB,$CF
+  1998 3A11 E3 E7 EB EF 83 87 +             .byte $E3,$E7,$EB,$EF,$83,$87,$8B,$8F
+  1999 3A19 A1 A5 A9 AD C1 C5 +             .byte $A1,$A5,$A9,$AD,$C1,$C5,$C9,$CD
+  2000 3A21 E1 E5 E9 ED 81 85 +             .byte $E1,$E5,$E9,$ED,$81,$85,$89,$8D
+  2001 3A29 A2 A6 AA AE C2 C6 +             .byte $A2,$A6,$AA,$AE,$C2,$C6,$CA,$CE
+  2002 3A31 E2 E6 EA EE 82 86 +             .byte $E2,$E6,$EA,$EE,$82,$86,$8A,$8E
+  2003 3A39 A0 A4 A8 AC C0 C4 +             .byte $A0,$A4,$A8,$AC,$C0,$C4,$C8,$CC
+  2004 3A41 E0 E4 E8 EC 80 84 +             .byte $E0,$E4,$E8,$EC,$80,$84,$88,$8C
+  2005 3A49 20 C8 3E		L3A49       jsr L3EC8
+  2006 3A4C 4E 75 6D 62 65 72 +             .byte 'Number of File Buffe'
+  2007 3A60 72 73 3F		            .byte 'rs?'
+  2008 3A63 00			            .byte $00
+  2009 3A64 20 0E 41		            jsr L410E
+  2010 3A67 20 70 41		            jsr L4170
+  2011 3A6A F0 07		            beq L3A73
+  2012 3A6C C9 11		            cmp #$11
+  2013 3A6E B0 03		            bcs L3A73
+  2014 3A70 8D 09 07		            sta L0709
+  2015 3A73 20 C8 3E		L3A73       jsr L3EC8
+  2016 3A76 33 20 6F 72 20 34 +             .byte '3 or 4 digit directo'
+  2017 3A8A 72 79 3F		            .byte 'ry?'
+  2018 3A8D 00			            .byte $00
+  2019 3A8E 20 0E 41		            jsr L410E
+  2020 3A91 20 70 41		            jsr L4170
+  2021 3A94 A0 00		            ldy #$00
+  2022 3A96 C9 03		            cmp #$03
+  2023 3A98 F0 0B		            beq L3AA5
+  2024 3A9A C9 04		            cmp #$04
+  2025 3A9C F0 0B		            beq L3AA9
+  2026 3A9E D0 17		            bne L3AB7
+  2027 3AA0 C9 31		L3AA0       cmp #$31
+  2028 3AA2 68			            pla
+  2029 3AA3 D0 07		            bne L3AAC
+  2030 3AA5 A2 00		L3AA5       ldx #$00
+  2031 3AA7 F0 02		            beq L3AAB
+  2032 3AA9 A2 02		L3AA9       ldx #$02
+  2033 3AAB BD A0 3A		L3AAB       lda L3AA0,X
+  2034 3AAE 99 EE 14		            sta L14EE,Y
+  2035 3AB1 E8			            inx
+  2036 3AB2 C8			            iny
+  2037 3AB3 C0 03		            cpy #$03
+  2038 3AB5 D0 F4		            bne L3AAB
+  2039 3AB7 20 A1 37		L3AB7       jsr L37A1
+  2040 3ABA 20 E0 07		            jsr L07E0
+  2041 3ABD 4C 2D 2A		            jmp L2A2D
+  2042 3AC0 A9 D2		L3AC0       lda #$D2
+  2043 3AC2 2C A9 52		            bit L52A9
+  2044 3AC5 AC 9F 29		            ldy L299F
+  2045 3AC8 99 CB 07		            sta L07CB,Y
+  2046 3ACB 20 5B 3C		            jsr L3C5B
+  2047 3ACE 4C 10 2D		            jmp L2D10
+  2048 3AD1 44 72 69 76 65 20 +             .byte 'Drive number or '
+  2049 3AE1 D2 C5 D4 D5 D2 CE	            .byte $D2,$C5,$D4,$D5,$D2,$CE
+  2050 3AE7 3A			            .byte ':'
+  2051 3AE8 00			            .byte $00
+  2052 3AE9 20 D8 3E		            jsr L3ED8
+  2053 3AEC C9 9B		            cmp #$9B
+  2054 3AEE D0 03		            bne L3AF3
+  2055 3AF0 4C 49 3A		            jmp L3A49
+  2056 3AF3 C9 39		L3AF3       cmp #$39
+  2057 3AF5 90 03		            bcc L3AFA
+  2058 3AF7 4C E4 36		L3AF7       jmp L36E4
+  2059 3AFA E9 30		L3AFA       sbc #$30
+  2060 3AFC 90 F9		            bcc L3AF7
+  2061 3AFE A8			            tay
+  2062 3AFF C8			            iny
+  2063 3B00 8C 9F 29		            sty L299F
+  2064 3B03 A9 00		            lda #$00
+  2065 3B05 99 CB 07		            sta L07CB,Y
+  2066 3B08 20 C8 3E		            jsr L3EC8
+  2067 3B0B 52 65 6D 6F 76 65 +             .byte 'Remove drive?'
+  2068 3B18 00			            .byte $00
+  2069 3B19 20 D8 3E		            jsr L3ED8
+  2070 3B1C C9 59		            cmp #$59
+  2071 3B1E F0 A0		            beq L3AC0
+  2072 3B20 20 C8 3E		            jsr L3EC8
+  2073 3B23 49 73 20 64 72 69 +             .byte 'Is drive configurabl'
+  2074 3B37 65 3F		            .byte 'e?'
+  2075 3B39 00			            .byte $00
+  2076 3B3A 20 D8 3E		            jsr L3ED8
+  2077 3B3D C9 59		            cmp #$59
+  2078 3B3F D0 82		            bne L3AC3
+  2079 3B41 20 C8 3E		            jsr L3EC8
+  2080 3B44 48 69 67 68 20 63 +             .byte 'High capacity drive?'
+  2081 3B58 00			            .byte $00
+  2082 3B59 20 D8 3E		            jsr L3ED8
+  2083 3B5C C9 59		            cmp #$59
+  2084 3B5E F0 79		            beq L3BD9
+  2085 3B60 20 C8 3E		            jsr L3EC8
+  2086 3B63 49 73 20 64 72 69 +             .byte 'Is drive double side'
+  2087 3B77 64 3F		            .byte 'd?'
+  2088 3B79 00			            .byte $00
+  2089 3B7A 20 D8 3E		            jsr L3ED8
+  2090 3B7D C9 59		            cmp #$59
+  2091 3B7F D0 05		            bne L3B86
+  2092 3B81 A9 01		            lda #$01
+  2093 3B83 20 51 3C		            jsr L3C51
+  2094 3B86 20 C8 3E		L3B86       jsr L3EC8
+  2095 3B89 54 72 61 63 6B 73 +             .byte 'Tracks/side?'
+  2096 3B95 00			            .byte $00
+  2097 3B96 20 0E 41		            jsr L410E
+  2098 3B99 20 70 41		            jsr L4170
+  2099 3B9C C9 23		            cmp #$23
+  2100 3B9E F0 16		            beq L3BB6
+  2101 3BA0 A8			            tay
+  2102 3BA1 A9 30		            lda #$30
+  2103 3BA3 C0 4D		            cpy #$4D
+  2104 3BA5 F0 0C		            beq L3BB3
+  2105 3BA7 A9 20		            lda #$20
+  2106 3BA9 C0 50		            cpy #$50
+  2107 3BAB F0 06		            beq L3BB3
+  2108 3BAD A9 10		            lda #$10
+  2109 3BAF C0 28		            cpy #$28
+  2110 3BB1 D0 D3		            bne L3B86
+  2111 3BB3 20 51 3C		L3BB3       jsr L3C51
+  2112 3BB6 20 C8 3E		L3BB6       jsr L3EC8
+  2113 3BB9 53 74 65 70 20 72 +             .byte 'Step rate?'
+  2114 3BC3 00			            .byte $00
+  2115 3BC4 20 D8 3E		            jsr L3ED8
+  2116 3BC7 C9 34		            cmp #$34
+  2117 3BC9 B0 EB		            bcs L3BB6
+  2118 3BCB E9 2F		            sbc #$2F
+  2119 3BCD 90 E7		            bcc L3BB6
+  2120 3BCF 0A			            asl
+  2121 3BD0 20 51 3C		            jsr L3C51
+  2122 3BD3 20 5B 3C		            jsr L3C5B
+  2123 3BD6 4C 10 2D		            jmp L2D10
+  2124 3BD9 20 C8 3E		L3BD9       jsr L3EC8
+  2125 3BDC 44 72 69 76 65 20 +             .byte 'Drive size (in secto'
+  2126 3BF0 72 73 29 3F		            .byte 'rs)?'
+  2127 3BF4 00			            .byte $00
+  2128 3BF5 20 0E 41		            jsr L410E
+  2129 3BF8 20 70 41		            jsr L4170
+  2130 3BFB E0 00		            cpx #$00
+  2131 3BFD F0 DA		            beq L3BD9
+  2132 3BFF 48			            pha
+  2133 3C00 AC 9F 29		            ldy L299F
+  2134 3C03 A9 12		            lda #$12
+  2135 3C05 99 CB 07		            sta L07CB,Y
+  2136 3C08 A9 02		            lda #$02
+  2137 3C0A 99 C3 07		            sta L07C3,Y
+  2138 3C0D 68			            pla
+  2139 3C0E 20 5E 3C		            jsr L3C5E
+  2140 3C11 4C 10 2D		            jmp L2D10
+  2141 3C14 52 41 4D 20 64 69 +             .byte 'RAM disk drive no?'
+  2142 3C26 00			            .byte $00
+  2143 3C27 20 1F 39		            jsr L391F
+  2144 3C2A 4C 10 2D		            jmp L2D10
+  2145 3C2D 56 65 72 69 66 79 +             .byte 'Verify WRITEs?'
+  2146 3C3B 00			            .byte $00
+  2147 3C3C 20 42 3C		            jsr L3C42
+  2148 3C3F 4C 10 2D		            jmp L2D10
+  2149 3C42 20 D8 3E		L3C42       jsr L3ED8
+  2150 3C45 A2 50		            ldx #$50
+  2151 3C47 C9 59		            cmp #$59
+  2152 3C49 D0 02		            bne L3C4D
+  2153 3C4B A2 57		            ldx #$57
+  2154 3C4D 8E 79 07		L3C4D       stx L0779
+  2155 3C50 60			            rts
+  2156 3C51 AC 9F 29		L3C51       ldy L299F
+  2157 3C54 19 CB 07		            ora L07CB,Y
+  2158 3C57 99 CB 07		            sta L07CB,Y
+  2159 3C5A 60			            rts
+  2160 3C5B A2 00		L3C5B       ldx #$00
+  2161 3C5D 8A			            txa
+  2162 3C5E AC 9F 29		L3C5E       ldy L299F
+  2163 3C61 99 14 0B		            sta L0B14,Y
+  2164 3C64 8A			            txa
+  2165 3C65 99 1C 0B		            sta L0B1C,Y
+  2166 3C68 4C 93 43		            jmp L4393
+  2167 3C6B 53 41 56 45 3A 66 +             .byte 'SAVE:filename,start,'
+  2168 3C7F 65 6E 64 28 2C 69 +             .byte 'end(,init(,run))'
+  2169 3C8F 9B 00		            .byte $9B,$00
+  2170 3C91 20 E2 41		            jsr L41E2
+  2171 3C94 8C 54 03		            sty IOCB1+ICBAL
+  2172 3C97 8D 55 03		            sta IOCB1+ICBAH
+  2173 3C9A AD 6F 1C		            lda L1C6F
+  2174 3C9D 48			            pha
+  2175 3C9E 20 72 41		            jsr L4172
+  2176 3CA1 E0 44		            cpx #$44
+  2177 3CA3 A0 70		            ldy #$70
+  2178 3CA5 B0 02		            bcs L3CA9
+  2179 3CA7 A0 80		            ldy #$80
+  2180 3CA9 20 66 3D		L3CA9       jsr L3D66
+  2181 3CAC 20 72 41		            jsr L4172
+  2182 3CAF 85 D8		            sta L00D8
+  2183 3CB1 86 D9		            stx L00D9
+  2184 3CB3 38			            sec
+  2185 3CB4 E5 D6		            sbc L00D6
+  2186 3CB6 85 DA		            sta L00DA
+  2187 3CB8 8A			            txa
+  2188 3CB9 E5 D7		            sbc L00D7
+  2189 3CBB 10 1D		            bpl L3CDA
+  2190 3CBD 20 2E 44		            jsr L442E
+  2191 3CC0 49 6E 76 61 6C 69 +             .byte 'Invalid START-END ra'
+  2192 3CD4 6E 67 65 21		            .byte 'nge!'
+  2193 3CD8 9B 00		            .byte $9B,$00
+  2194 3CDA 85 DB		L3CDA       sta L00DB
+  2195 3CDC E6 DA		            inc L00DA
+  2196 3CDE D0 02		            bne L3CE2
+  2197 3CE0 E6 DB		            inc L00DB
+  2198 3CE2 A9 00		L3CE2       lda #$00
+  2199 3CE4 C0 9B		            cpy #$9B
+  2200 3CE6 F0 10		            beq L3CF8
+  2201 3CE8 20 72 41		            jsr L4172
+  2202 3CEB 8D E2 02		            sta INITAD
+  2203 3CEE 8E E3 02		            stx INITAD+1
+  2204 3CF1 0D E3 02		            ora INITAD+1
+  2205 3CF4 F0 02		            beq L3CF8
+  2206 3CF6 A9 01		            lda #$01
+  2207 3CF8 85 E0		L3CF8       sta L00E0
+  2208 3CFA C0 9B		            cpy #$9B
+  2209 3CFC F0 12		            beq L3D10
+  2210 3CFE 20 72 41		            jsr L4172
+  2211 3D01 8D E0 02		            sta RUNAD
+  2212 3D04 8E E1 02		            stx RUNAD+1
+  2213 3D07 0D E1 02		            ora RUNAD+1
+  2214 3D0A F0 04		            beq L3D10
+  2215 3D0C E6 E0		            inc L00E0
+  2216 3D0E E6 E0		            inc L00E0
+  2217 3D10 68			L3D10       pla
+  2218 3D11 A0 00		L3D11       ldy #$00
+  2219 3D13 8C 6F 1C		            sty L1C6F
+  2220 3D16 88			            dey
+  2221 3D17 84 D4		            sty L00D4
+  2222 3D19 84 D5		            sty L00D5
+  2223 3D1B A0 08		            ldy #$08
+  2224 3D1D C9 41		            cmp #$41
+  2225 3D1F D0 04		            bne L3D25
+  2226 3D21 CE 6F 1C		            dec L1C6F
+  2227 3D24 C8			            iny
+  2228 3D25 8C 5A 03		L3D25       sty IOCB1+ICAX1
+  2229 3D28 A2 10		            ldx #$10
+  2230 3D2A 20 C9 43		            jsr L43C9
+  2231 3D2D 30 34		            bmi L3D63
+  2232 3D2F AD 6F 1C		            lda L1C6F
+  2233 3D32 F0 2A		            beq L3D5E
+  2234 3D34 20 48 1B		            jsr L1B48
+  2235 3D37 10 04		            bpl L3D3D
+  2236 3D39 00			            brk
+  2237 3D3A 0B			            .byte $0B
+  2238 3D3B D6 00		            dec $00,X
+  2239 3D3D 30 24		L3D3D       bmi L3D63
+  2240 3D3F A5 DA		L3D3F       lda L00DA
+  2241 3D41 8D 58 03		            sta IOCB1+ICBLL
+  2242 3D44 A5 DB		            lda L00DB
+  2243 3D46 8D 59 03		            sta IOCB1+ICBLH
+  2244 3D49 A5 D6		            lda L00D6
+  2245 3D4B 8D 54 03		            sta IOCB1+ICBAL
+  2246 3D4E A5 D7		            lda L00D7
+  2247 3D50 8D 55 03		            sta IOCB1+ICBAH
+  2248 3D53 2C BE 07		            bit L07BE
+  2249 3D56 30 03		            bmi L3D5B
+  2250 3D58 4C F1 1B		            jmp L1BF1
+  2251 3D5B 4C EE 1B		L3D5B       jmp L1BEE
+  2252 3D5E 20 29 1C		L3D5E       jsr L1C29
+  2253 3D61 10 DC		            bpl L3D3F
+  2254 3D63 4C 36 41		L3D63       jmp L4136
+  2255 3D66 85 D6		L3D66       sta L00D6
+  2256 3D68 86 D7		            stx L00D7
+  2257 3D6A 8C BE 07		            sty L07BE
+  2258 3D6D 60			            rts
+  2259 3D6E 4C 6F 61 64 20 4D +             .byte 'Load MEM.SAV from wh'
+  2260 3D82 61 74 20 66 69 6C +             .byte 'at file?'
+  2261 3D8A 9B 00		            .byte $9B,$00
+  2262 3D8C AD BE 07		            lda L07BE
+  2263 3D8F 09 80		            ora #$80
+  2264 3D91 30 23		            bmi L3DB6
+  2265 3D93 4C 10 2D		L3D93       jmp L2D10
+  2266 3D96 A0 B4		L3D96       ldy #$B4
+  2267 3D98 4C 36 41		L3D98       jmp L4136
+  2268 3D9B 4C 6F 61 64 20 66 +             .byte 'Load from what file?'
+  2269 3DAF 9B 00		            .byte $9B,$00
+  2270 3DB1 AD BE 07		            lda L07BE
+  2271 3DB4 29 7F		            and #$7F
+  2272 3DB6 8D BE 07		L3DB6       sta L07BE
+  2273 3DB9 20 E2 41		            jsr L41E2
+  2274 3DBC 8C 54 03		            sty IOCB1+ICBAL
+  2275 3DBF 8D 55 03		            sta IOCB1+ICBAH
+  2276 3DC2 AE A2 27		            ldx L27A2
+  2277 3DC5 F0 CC		            beq L3D93
+  2278 3DC7 A9 04		            lda #$04
+  2279 3DC9 8D 5A 03		            sta IOCB1+ICAX1
+  2280 3DCC A2 10		            ldx #$10
+  2281 3DCE 20 C9 43		            jsr L43C9
+  2282 3DD1 20 48 1B		            jsr L1B48
+  2283 3DD4 10 02		            bpl L3DD8
+  2284 3DD6 00			            brk
+  2285 3DD7 07			            .byte $07
+  2286 3DD8 9F 27		L3DD8       .byte $9F,$27
+  2287 3DDA 30 BC		            bmi L3D98
+  2288 3DDC AD 9F 27		            lda L279F
+  2289 3DDF 2D A0 27		            and L27A0
+  2290 3DE2 C9 FF		            cmp #$FF
+  2291 3DE4 D0 B0		            bne L3D96
+  2292 3DE6 AD A2 27		            lda L27A2
+  2293 3DE9 F0 A8		            beq L3D93
+  2294 3DEB AD 6F 1C		            lda L1C6F
+  2295 3DEE 49 4E		            eor #$4E
+  2296 3DF0 F0 06		            beq L3DF8
+  2297 3DF2 A9 00		            lda #$00
+  2298 3DF4 85 08		            sta WARMST
+  2299 3DF6 A9 03		            lda #$03
+  2300 3DF8 49 07		L3DF8       eor #$07
+  2301 3DFA 8D 5A 03		            sta IOCB1+ICAX1
+  2302 3DFD A9 27		            lda #$27
+  2303 3DFF 8D 52 03		            sta IOCB1+ICCOM
+  2304 3E02 A9 56		            lda #$56
+  2305 3E04 A2 E4		            ldx #$E4
+  2306 3E06 D0 30		            bne L3E38
+  2307 3E08 00			            brk
+  2308 3E09 AD FD BF		            lda LBFFD
+  2309 3E0C 49 AA		            eor #$AA
+  2310 3E0E 8D FD BF		            sta LBFFD
+  2311 3E11 CD FD BF		            cmp LBFFD
+  2312 3E14 D0 17		            bne L3E2D
+  2313 3E16 49 AA		            eor #$AA
+  2314 3E18 8D FD BF		            sta LBFFD
+  2315 3E1B 20 2E 44		L3E1B       jsr L442E
+  2316 3E1E 4E 4F 20 43 41 52 +             .byte 'NO CARTRIDGE!'
+  2317 3E2B 9B 00		            .byte $9B,$00
+  2318 3E2D AE FC BF		L3E2D       ldx LBFFC
+  2319 3E30 D0 E9		            bne L3E1B
+  2320 3E32 AD FA BF		            lda LBFFA
+  2321 3E35 AE FB BF		            ldx LBFFB
+  2322 3E38 85 D4		L3E38       sta L00D4
+  2323 3E3A 86 D5		            stx L00D5
+  2324 3E3C AD 71 1C		            lda L1C71
+  2325 3E3F 85 0C		            sta DOSINI
+  2326 3E41 AD 72 1C		            lda L1C72
+  2327 3E44 85 0D		            sta DOSINI+1
+  2328 3E46 AD BE 07		            lda L07BE
+  2329 3E49 29 BF		            and #$BF
+  2330 3E4B 8D BE 07		            sta L07BE
+  2331 3E4E 4C A8 1B		            jmp L1BA8
+  2332 3E51 52 75 6E 20 66 72 +             .byte 'Run from what addres'
+  2333 3E65 73 3F		            .byte 's?'
+  2334 3E67 00			            .byte $00
+  2335 3E68 20 0E 41		            jsr L410E
+  2336 3E6B B1 DE		            lda (L00DE),Y
+  2337 3E6D C9 9B		            cmp #$9B
+  2338 3E6F F0 0D		            beq L3E7E
+  2339 3E71 20 72 41		            jsr L4172
+  2340 3E74 C0 9B		            cpy #$9B
+  2341 3E76 D0 06		            bne L3E7E
+  2342 3E78 A0 00		            ldy #$00
+  2343 3E7A 84 08		            sty WARMST
+  2344 3E7C F0 BA		            beq L3E38
+  2345 3E7E 20 2E 44		L3E7E       jsr L442E
+  2346 3E81 41 64 64 72 65 73 +             .byte 'Address must be 1-4 '
+  2347 3E95 68 65 78 20 64 69 +             .byte 'hex digits!'
+  2348 3EA0 9B 00		            .byte $9B,$00
+  2349 3EA2 A2 0B		L3EA2       ldx #$0B
+  2350 3EA4 8E 42 03		            stx IOCB0+ICCOM
+  2351 3EA7 A2 00		            ldx #$00
+  2352 3EA9 8E 48 03		            stx IOCB0+ICBLL
+  2353 3EAC 8E 49 03		            stx IOCB0+ICBLH
+  2354 3EAF 4C 56 E4		            jmp CIOV
+  2355 3EB2 85 1A		L3EB2       sta DSKUTL
+  2356 3EB4 86 1B		            stx DSKUTL+1
+  2357 3EB6 A2 00		L3EB6       ldx #$00
+  2358 3EB8 A1 1A		            lda (DSKUTL,X)
+  2359 3EBA F0 0B		            beq L3EC7
+  2360 3EBC 20 A2 3E		            jsr L3EA2
+  2361 3EBF E6 1A		L3EBF       inc DSKUTL
+  2362 3EC1 D0 F3		            bne L3EB6
+  2363 3EC3 E6 1B		            inc DSKUTL+1
+  2364 3EC5 D0 EF		            bne L3EB6
+  2365 3EC7 60			L3EC7       rts
+  2366 3EC8 68			L3EC8       pla
+  2367 3EC9 85 1A		            sta DSKUTL
+  2368 3ECB 68			            pla
+  2369 3ECC 85 1B		            sta DSKUTL+1
+  2370 3ECE 20 BF 3E		L3ECE       jsr L3EBF
+  2371 3ED1 A5 1B		            lda DSKUTL+1
+  2372 3ED3 48			            pha
+  2373 3ED4 A5 1A		            lda DSKUTL
+  2374 3ED6 48			            pha
+  2375 3ED7 60			            rts
+  2376 3ED8 20 FE 3E		L3ED8       jsr L3EFE
+  2377 3EDB C0 00		            cpy #$00
+  2378 3EDD 30 19		            bmi L3EF8
+  2379 3EDF C9 7B		            cmp #$7B
+  2380 3EE1 B0 06		            bcs L3EE9
+  2381 3EE3 C9 61		            cmp #$61
+  2382 3EE5 90 02		            bcc L3EE9
+  2383 3EE7 E9 20		            sbc #$20
+  2384 3EE9 48			L3EE9       pha
+  2385 3EEA C9 9B		            cmp #$9B
+  2386 3EEC F0 05		            beq L3EF3
+  2387 3EEE 20 A2 3E		            jsr L3EA2
+  2388 3EF1 A9 9B		            lda #$9B
+  2389 3EF3 20 A2 3E		L3EF3       jsr L3EA2
+  2390 3EF6 68			            pla
+  2391 3EF7 60			            rts
+  2392 3EF8 20 A2 3E		L3EF8       jsr L3EA2
+  2393 3EFB 4C 10 2D		            jmp L2D10
+  2394 3EFE 20 1E 3F		L3EFE       jsr L3F1E
+  2395 3F01 20 46 1B		            jsr L1B46
+  2396 3F04 04 03 1B 3F		            .byte $04,$03,$1B,$3F
+  2397 3F08 20 48 1B		            jsr L1B48
+  2398 3F0B 70 00		            bvs L3F0D
+  2399 3F0D 00			L3F0D       brk
+  2400 3F0E 07			            .byte $07
+  2401 3F0F 00			            brk
+  2402 3F10 00			            brk
+  2403 3F11 48			            pha
+  2404 3F12 98			            tya
+  2405 3F13 48			            pha
+  2406 3F14 20 1E 3F		            jsr L3F1E
+  2407 3F17 68			            pla
+  2408 3F18 A8			            tay
+  2409 3F19 68			            pla
+  2410 3F1A 60			            rts
+  2411 3F1B 4B 3A 9B		            .byte $4B,$3A,$9B
+  2412 3F1E 20 48 1B		L3F1E       jsr L1B48
+  2413 3F21 70 00		            bvs L3F23
+  2414 3F23 00			L3F23       brk
+  2415 3F24 0C			            .byte $0C
+  2416 3F25 00			            brk
+  2417 3F26 00			            brk
+  2418 3F27 60			            rts
+  2419 3F28 AD A7 29		L3F28       lda L29A7
+  2420 3F2B 18			L3F2B       clc
+  2421 3F2C 8D 01 03		L3F2C       sta DUNIT
+  2422 3F2F A9 02		            lda #$02
+  2423 3F31 8D AB 29		            sta L29AB
+  2424 3F34 08			            php
+  2425 3F35 AE AD 29		L3F35       ldx L29AD
+  2426 3F38 E8			            inx
+  2427 3F39 28			            plp
+  2428 3F3A 08			            php
+  2429 3F3B 20 69 07		            jsr L0769
+  2430 3F3E 10 0D		            bpl L3F4D
+  2431 3F40 C9 80		            cmp #$80
+  2432 3F42 F0 05		            beq L3F49
+  2433 3F44 CE AB 29		            dec L29AB
+  2434 3F47 10 EC		            bpl L3F35
+  2435 3F49 28			L3F49       plp
+  2436 3F4A 4C 36 41		            jmp L4136
+  2437 3F4D 28			L3F4D       plp
+  2438 3F4E 60			            rts
+  2439 3F4F AE A7 29		L3F4F       ldx L29A7
+  2440 3F52 BD 42 03		            lda IOCB0+ICCOM,X
+  2441 3F55 C9 07		            cmp #$07
+  2442 3F57 F0 44		            beq L3F9D
+  2443 3F59 AD 79 29		            lda L2979
+  2444 3F5C C9 30		            cmp #$30
+  2445 3F5E B0 3E		            bcs L3F9E
+  2446 3F60 BC 48 03		            ldy IOCB0+ICBLL,X
+  2447 3F63 C0 14		            cpy #$14
+  2448 3F65 90 0E		            bcc L3F75
+  2449 3F67 DE 48 03		            dec IOCB0+ICBLL,X
+  2450 3F6A A0 E8		            ldy #$E8
+  2451 3F6C B9 9F 28		L3F6C       lda L289F,Y
+  2452 3F6F 99 9E 28		            sta L289E,Y
+  2453 3F72 C8			            iny
+  2454 3F73 D0 F7		            bne L3F6C
+  2455 3F75 AD B0 3F		L3F75       lda L3FB0
+  2456 3F78 49 17		            eor #$17
+  2457 3F7A 8D B0 3F		            sta L3FB0
+  2458 3F7D 85 55		            sta COLCRS
+  2459 3F7F AD AF 3F		            lda L3FAF
+  2460 3F82 49 BB		            eor #$BB
+  2461 3F84 8D AF 3F		            sta L3FAF
+  2462 3F87 C9 9B		            cmp #$9B
+  2463 3F89 F0 0F		            beq L3F9A
+  2464 3F8B AD 8A 29		            lda L298A
+  2465 3F8E C9 9B		            cmp #$9B
+  2466 3F90 D0 05		            bne L3F97
+  2467 3F92 A9 20		            lda #$20
+  2468 3F94 8D 8A 29		            sta L298A
+  2469 3F97 AD AF 3F		L3F97       lda L3FAF
+  2470 3F9A 8D 8B 29		L3F9A       sta L298B
+  2471 3F9D 60			L3F9D       rts
+  2472 3F9E A9 9B		L3F9E       lda #$9B
+  2473 3FA0 CD AF 3F		            cmp L3FAF
+  2474 3FA3 F0 F8		            beq L3F9D
+  2475 3FA5 DE 44 03		            dec IOCB0+ICBAL,X
+  2476 3FA8 FE 48 03		            inc IOCB0+ICBLL,X
+  2477 3FAB 8D 78 29		            sta L2978
+  2478 3FAE 60			            rts
+  2479 3FAF 9B			L3FAF       .byte $9B
+  2480 3FB0 15 AE		L3FB0       ora L00AE,X
+  2481 3FB2 A7			            .byte $A7
+  2482 3FB3 29 BD		            and #$BD
+  2483 3FB5 48			            pha
+  2484 3FB6 03			            .byte $03
+  2485 3FB7 1D 49 03		            ora IOCB0+ICBLH,X
+  2486 3FBA F0 60		            beq L401C
+  2487 3FBC AD AA 29		            lda L29AA
+  2488 3FBF 10 10		            bpl L3FD1
+  2489 3FC1 A9 4D		            lda #$4D
+  2490 3FC3 A2 36		            ldx #$36
+  2491 3FC5 20 B2 3E		            jsr L3EB2
+  2492 3FC8 20 D8 3E		            jsr L3ED8
+  2493 3FCB AE A8 29		            ldx L29A8
+  2494 3FCE 20 57 43		            jsr L4357
+  2495 3FD1 AE A8 29		L3FD1       ldx L29A8
+  2496 3FD4 D0 05		            bne L3FDB
+  2497 3FD6 20 4F 3F		            jsr L3F4F
+  2498 3FD9 A2 00		            ldx #$00
+  2499 3FDB BD 40 03		L3FDB       lda IOCB0,X
+  2500 3FDE 10 16		            bpl L3FF6
+  2501 3FE0 AE 6F 1C		            ldx L1C6F
+  2502 3FE3 A9 08		            lda #$08
+  2503 3FE5 E0 41		            cpx #$41
+  2504 3FE7 D0 02		            bne L3FEB
+  2505 3FE9 A9 09		            lda #$09
+  2506 3FEB AE A8 29		L3FEB       ldx L29A8
+  2507 3FEE 9D 4A 03		            sta IOCB0+ICAX1,X
+  2508 3FF1 20 C9 43		            jsr L43C9
+  2509 3FF4 30 78		            bmi L406E
+  2510 3FF6 AE A8 29		L3FF6       ldx L29A8
+  2511 3FF9 AC A7 29		            ldy L29A7
+  2512 3FFC B9 48 03		            lda IOCB0+ICBLL,Y
+  2513 3FFF 9D 48 03		            sta IOCB0+ICBLL,X
+  2514 4002 B9 49 03		            lda IOCB0+ICBLH,Y
+  2515 4005 9D 49 03		            sta IOCB0+ICBLH,X
+  2516 4008 B9 44 03		            lda IOCB0+ICBAL,Y
+  2517 400B 9D 44 03		            sta IOCB0+ICBAL,X
+  2518 400E B9 45 03		            lda IOCB0+ICBAH,Y
+  2519 4011 9D 45 03		            sta IOCB0+ICBAH,X
+  2520 4014 A9 0B		            lda #$0B
+  2521 4016 9D 42 03		            sta IOCB0+ICCOM,X
+  2522 4019 20 2F 41		            jsr L412F
+  2523 401C AE A7 29		L401C       ldx L29A7
+  2524 401F BD 43 03		            lda IOCB0+ICSTA,X
+  2525 4022 C9 88		            cmp #$88
+  2526 4024 F0 4B		            beq L4071
+  2527 4026 AD AA 29		            lda L29AA
+  2528 4029 10 1E		            bpl L4049
+  2529 402B A9 2B		            lda #$2B
+  2530 402D A2 43		            ldx #$43
+  2531 402F 20 B2 3E		            jsr L3EB2
+  2532 4032 20 D8 3E		            jsr L3ED8
+  2533 4035 AE A7 29		            ldx L29A7
+  2534 4038 20 57 43		            jsr L4357
+  2535 403B 4C 49 40		            jmp L4049
+  2536 403E AE A7 29		L403E       ldx L29A7
+  2537 4041 9D 42 03		            sta IOCB0+ICCOM,X
+  2538 4044 A9 9B		            lda #$9B
+  2539 4046 8D AF 3F		            sta L3FAF
+  2540 4049 AE A7 29		L4049       ldx L29A7
+  2541 404C A9 00		            lda #$00
+  2542 404E 8D 8E 29		            sta L298E
+  2543 4051 A5 DA		            lda L00DA
+  2544 4053 A4 DB		            ldy L00DB
+  2545 4055 20 36 1B		            jsr L1B36
+  2546 4058 A5 DC		            lda L00DC
+  2547 405A 9D 48 03		            sta IOCB0+ICBLL,X
+  2548 405D A5 DD		            lda L00DD
+  2549 405F 9D 49 03		            sta IOCB0+ICBLH,X
+  2550 4062 20 56 E4		            jsr CIOV
+  2551 4065 10 04		            bpl L406B
+  2552 4067 C0 88		            cpy #$88
+  2553 4069 D0 03		            bne L406E
+  2554 406B 4C B1 3F		L406B       jmp L3FB1
+  2555 406E 4C 36 41		L406E       jmp L4136
+  2556 4071 AE A8 29		L4071       ldx L29A8
+  2557 4074 F0 22		            beq L4098
+  2558 4076 20 2C 1B		            jsr L1B2C
+  2559 4079 AD 1C 44		            lda L441C
+  2560 407C F0 1A		            beq L4098
+  2561 407E 20 46 1B		            jsr L1B46
+  2562 4081 00			            brk
+  2563 4082 21 1B		            and (DSKUTL+1,X)
+  2564 4084 44			            .byte $44
+  2565 4085 20 46 1B		            jsr L1B46
+  2566 4088 08			            php
+  2567 4089 03			            .byte $03
+  2568 408A 00			            brk
+  2569 408B 2A			            rol
+  2570 408C 20 46 1B		            jsr L1B46
+  2571 408F 00			            brk
+  2572 4090 0C			            .byte $0C
+  2573 4091 00			            brk
+  2574 4092 00			            brk
+  2575 4093 A9 00		            lda #$00
+  2576 4095 8D 1C 44		            sta L441C
+  2577 4098 AE A7 29		L4098       ldx L29A7
+  2578 409B 4C 2C 1B		            jmp L1B2C
+  2579 409E A9 9F		L409E       lda #$9F
+  2580 40A0 A0 27		            ldy #$27
+  2581 40A2 20 34 1B		            jsr L1B34
+  2582 40A5 A9 05		            lda #$05
+  2583 40A7 8D 52 03		            sta IOCB1+ICCOM
+  2584 40AA A9 20		            lda #$20
+  2585 40AC 8D 58 03		            sta IOCB1+ICBLL
+  2586 40AF A9 00		            lda #$00
+  2587 40B1 8D 59 03		            sta IOCB1+ICBLH
+  2588 40B4 8D A4 29		            sta L29A4
+  2589 40B7 20 2F 41		            jsr L412F
+  2590 40BA AD A0 27		            lda L27A0
+  2591 40BD C9 3A		            cmp #$3A
+  2592 40BF B0 04		            bcs L40C5
+  2593 40C1 C9 30		            cmp #$30
+  2594 40C3 B0 48		            bcs L410D
+  2595 40C5 F0 08		L40C5       beq L40CF
+  2596 40C7 AD A9 27		            lda L27A9
+  2597 40CA CD 73 1C		            cmp L1C73
+  2598 40CD D0 03		            bne L40D2
+  2599 40CF CE A4 29		L40CF       dec L29A4
+  2600 40D2 AE AE 29		L40D2       ldx L29AE
+  2601 40D5 A0 02		            ldy #$02
+  2602 40D7 B9 9F 27		L40D7       lda L279F,Y
+  2603 40DA C9 20		            cmp #$20
+  2604 40DC F0 09		            beq L40E7
+  2605 40DE 9D B0 29		            sta L29B0,X
+  2606 40E1 E8			            inx
+  2607 40E2 C8			            iny
+  2608 40E3 C0 0A		            cpy #$0A
+  2609 40E5 90 F0		            bcc L40D7
+  2610 40E7 A9 2E		L40E7       lda #$2E
+  2611 40E9 9D B0 29		            sta L29B0,X
+  2612 40EC E8			            inx
+  2613 40ED A0 0A		            ldy #$0A
+  2614 40EF B9 9F 27		L40EF       lda L279F,Y
+  2615 40F2 C9 20		            cmp #$20
+  2616 40F4 F0 09		            beq L40FF
+  2617 40F6 9D B0 29		            sta L29B0,X
+  2618 40F9 C8			            iny
+  2619 40FA E8			            inx
+  2620 40FB C0 0D		            cpy #$0D
+  2621 40FD 90 F0		            bcc L40EF
+  2622 40FF A9 2E		L40FF       lda #$2E
+  2623 4101 DD AF 29		            cmp L29AF,X
+  2624 4104 D0 01		            bne L4107
+  2625 4106 CA			            dex
+  2626 4107 A9 00		L4107       lda #$00
+  2627 4109 9D B0 29		            sta L29B0,X
+  2628 410C 18			            clc
+  2629 410D 60			L410D       rts
+  2630 410E A9 A2		L410E       lda #$A2
+  2631 4110 85 DE		            sta L00DE
+  2632 4112 8D 44 03		            sta IOCB0+ICBAL
+  2633 4115 A9 27		            lda #$27
+  2634 4117 85 DF		            sta L00DF
+  2635 4119 8D 45 03		            sta IOCB0+ICBAH
+  2636 411C A9 05		            lda #$05
+  2637 411E 8D 42 03		            sta IOCB0+ICCOM
+  2638 4121 A2 01		            ldx #$01
+  2639 4123 8E 49 03		            stx IOCB0+ICBLH
+  2640 4126 CA			            dex
+  2641 4127 8E 48 03		            stx IOCB0+ICBLL
+  2642 412A A0 00		            ldy #$00
+  2643 412C 8C A0 29		            sty L29A0
+  2644 412F 20 56 E4		L412F       jsr CIOV
+  2645 4132 98			            tya
+  2646 4133 30 01		            bmi L4136
+  2647 4135 60			            rts
+  2648 4136 84 D4		L4136       sty L00D4
+  2649 4138 A9 00		            lda #$00
+  2650 413A 85 D5		            sta L00D5
+  2651 413C 20 AA D9		            jsr IFP
+  2652 413F 20 E6 D8		            jsr FASC
+  2653 4142 A0 00		            ldy #$00
+  2654 4144 B1 F3		            lda (L00F3),Y
+  2655 4146 8D 63 41		            sta L4163
+  2656 4149 C8			            iny
+  2657 414A B1 F3		            lda (L00F3),Y
+  2658 414C 8D 64 41		            sta L4164
+  2659 414F C8			            iny
+  2660 4150 B1 F3		            lda (L00F3),Y
+  2661 4152 29 7F		            and #$7F
+  2662 4154 8D 65 41		            sta L4165
+  2663 4157 20 2E 44		            jsr L442E
+  2664 415A 45 72 72 6F 72 20 +             .byte 'Error -- '
+  2665 4163 30			L4163       .byte '0'
+  2666 4164 30			L4164       .byte '0'
+  2667 4165 30			L4165       .byte '0'
+  2668 4166 9B 00		            .byte $9B,$00
+  2669 4168 AC A2 27		            ldy L27A2
+  2670 416B C0 9B		            cpy #$9B
+  2671 416D D0 03		            bne L4172
+  2672 416F 60			            rts
+  2673 4170 18			L4170       clc
+  2674 4171 24 38		            bit BUFRFL
+  2675 4173 66 E1		            ror L00E1
+  2676 4175 20 85 42		            jsr L4285
+  2677 4178 84 D4		            sty L00D4
+  2678 417A 84 D5		            sty L00D5
+  2679 417C B1 DE		L417C       lda (L00DE),Y
+  2680 417E C8			            iny
+  2681 417F C9 47		            cmp #$47
+  2682 4181 B0 13		            bcs L4196
+  2683 4183 E9 2F		            sbc #$2F
+  2684 4185 90 0C		            bcc L4193
+  2685 4187 C9 0A		            cmp #$0A
+  2686 4189 24 E1		            bit L00E1
+  2687 418B 10 12		            bpl L419F
+  2688 418D 90 3C		            bcc L41CB
+  2689 418F C9 11		            cmp #$11
+  2690 4191 B0 36		            bcs L41C9
+  2691 4193 38			L4193       sec
+  2692 4194 69 2F		            adc #$2F
+  2693 4196 8C A0 29		L4196       sty L29A0
+  2694 4199 A8			            tay
+  2695 419A A5 D4		            lda L00D4
+  2696 419C A6 D5		            ldx L00D5
+  2697 419E 60			            rts
+  2698 419F B0 F2		L419F       bcs L4193
+  2699 41A1 48			            pha
+  2700 41A2 06 D4		            asl L00D4
+  2701 41A4 26 D5		            rol L00D5
+  2702 41A6 A5 D4		            lda L00D4
+  2703 41A8 A6 D5		            ldx L00D5
+  2704 41AA 06 D4		            asl L00D4
+  2705 41AC 26 D5		            rol L00D5
+  2706 41AE 06 D4		            asl L00D4
+  2707 41B0 26 D5		            rol L00D5
+  2708 41B2 18			            clc
+  2709 41B3 65 D4		            adc L00D4
+  2710 41B5 85 D4		            sta L00D4
+  2711 41B7 68			            pla
+  2712 41B8 08			            php
+  2713 41B9 18			            clc
+  2714 41BA 65 D4		            adc L00D4
+  2715 41BC 85 D4		            sta L00D4
+  2716 41BE 8A			            txa
+  2717 41BF 65 D5		            adc L00D5
+  2718 41C1 28			            plp
+  2719 41C2 69 00		            adc #$00
+  2720 41C4 85 D5		            sta L00D5
+  2721 41C6 4C 7C 41		            jmp L417C
+  2722 41C9 E9 07		L41C9       sbc #$07
+  2723 41CB 06 D4		L41CB       asl L00D4
+  2724 41CD 26 D5		            rol L00D5
+  2725 41CF 06 D4		            asl L00D4
+  2726 41D1 26 D5		            rol L00D5
+  2727 41D3 06 D4		            asl L00D4
+  2728 41D5 26 D5		            rol L00D5
+  2729 41D7 06 D4		            asl L00D4
+  2730 41D9 26 D5		            rol L00D5
+  2731 41DB 05 D4		            ora L00D4
+  2732 41DD 85 D4		            sta L00D4
+  2733 41DF 4C 7C 41		            jmp L417C
+  2734 41E2 A9 00		L41E2       lda #$00
+  2735 41E4 8D 1C 44		            sta L441C
+  2736 41E7 20 0E 41		            jsr L410E
+  2737 41EA F0 03		            beq L41EF
+  2738 41EC 20 85 42		L41EC       jsr L4285
+  2739 41EF B1 DE		L41EF       lda (L00DE),Y
+  2740 41F1 C8			            iny
+  2741 41F2 C9 3F		            cmp #$3F
+  2742 41F4 F0 04		            beq L41FA
+  2743 41F6 C9 2A		            cmp #$2A
+  2744 41F8 D0 07		            bne L4201
+  2745 41FA A9 00		L41FA       lda #$00
+  2746 41FC 8D A9 29		            sta L29A9
+  2747 41FF F0 EE		            beq L41EF
+  2748 4201 C9 9B		L4201       cmp #$9B
+  2749 4203 F0 3A		            beq L423F
+  2750 4205 C9 2E		            cmp #$2E
+  2751 4207 F0 E6		            beq L41EF
+  2752 4209 C9 2F		            cmp #$2F
+  2753 420B 90 32		            bcc L423F
+  2754 420D D0 E0		            bne L41EF
+  2755 420F B1 DE		L420F       lda (L00DE),Y
+  2756 4211 C9 53		            cmp #$53
+  2757 4213 D0 05		            bne L421A
+  2758 4215 8D 73 1C		            sta L1C73
+  2759 4218 F0 0E		            beq L4228
+  2760 421A C9 58		L421A       cmp #$58
+  2761 421C D0 07		            bne L4225
+  2762 421E A9 80		            lda #$80
+  2763 4220 8D AA 29		            sta L29AA
+  2764 4223 30 03		            bmi L4228
+  2765 4225 8D 6F 1C		L4225       sta L1C6F
+  2766 4228 88			L4228       dey
+  2767 4229 A9 00		            lda #$00
+  2768 422B 91 DE		            sta (L00DE),Y
+  2769 422D C8			            iny
+  2770 422E C8			            iny
+  2771 422F B1 DE		            lda (L00DE),Y
+  2772 4231 C8			            iny
+  2773 4232 C9 2F		            cmp #$2F
+  2774 4234 F0 D9		            beq L420F
+  2775 4236 C9 2E		            cmp #$2E
+  2776 4238 90 05		            bcc L423F
+  2777 423A C9 9B		            cmp #$9B
+  2778 423C F0 01		            beq L423F
+  2779 423E 88			            dey
+  2780 423F 8C A0 29		L423F       sty L29A0
+  2781 4242 88			            dey
+  2782 4243 B1 DE		            lda (L00DE),Y
+  2783 4245 8D EF 27		            sta L27EF
+  2784 4248 A9 00		            lda #$00
+  2785 424A 91 DE		            sta (L00DE),Y
+  2786 424C A8			            tay
+  2787 424D B1 DE		            lda (L00DE),Y
+  2788 424F C9 30		            cmp #$30
+  2789 4251 90 23		            bcc L4276
+  2790 4253 C9 3A		            cmp #$3A
+  2791 4255 F0 1F		            beq L4276
+  2792 4257 C8			            iny
+  2793 4258 B0 0D		            bcs L4267
+  2794 425A AA			            tax
+  2795 425B A9 3A		            lda #$3A
+  2796 425D D1 DE		            cmp (L00DE),Y
+  2797 425F F0 1A		            beq L427B
+  2798 4261 88			            dey
+  2799 4262 91 DE		            sta (L00DE),Y
+  2800 4264 8A			            txa
+  2801 4265 D0 11		            bne L4278
+  2802 4267 B1 DE		L4267       lda (L00DE),Y
+  2803 4269 F0 0B		            beq L4276
+  2804 426B C9 3A		            cmp #$3A
+  2805 426D F0 11		            beq L4280
+  2806 426F C8			            iny
+  2807 4270 B1 DE		            lda (L00DE),Y
+  2808 4272 C9 3A		            cmp #$3A
+  2809 4274 F0 0A		            beq L4280
+  2810 4276 A9 3A		L4276       lda #$3A
+  2811 4278 20 95 42		L4278       jsr L4295
+  2812 427B A9 44		L427B       lda #$44
+  2813 427D 20 95 42		            jsr L4295
+  2814 4280 A4 DE		L4280       ldy L00DE
+  2815 4282 A5 DF		            lda L00DF
+  2816 4284 60			            rts
+  2817 4285 18			L4285       clc
+  2818 4286 AD A0 29		            lda L29A0
+  2819 4289 65 DE		            adc L00DE
+  2820 428B 85 DE		            sta L00DE
+  2821 428D A9 00		            lda #$00
+  2822 428F A8			            tay
+  2823 4290 65 DF		            adc L00DF
+  2824 4292 85 DF		            sta L00DF
+  2825 4294 60			            rts
+  2826 4295 A4 DE		L4295       ldy L00DE
+  2827 4297 D0 02		            bne L429B
+  2828 4299 C6 DF		            dec L00DF
+  2829 429B C6 DE		L429B       dec L00DE
+  2830 429D EE A0 29		            inc L29A0
+  2831 42A0 A0 00		            ldy #$00
+  2832 42A2 91 DE		            sta (L00DE),Y
+  2833 42A4 60			L42A4       rts
+  2834 42A5 20 EC 41		L42A5       jsr L41EC
+  2835 42A8 4C AE 42		            jmp L42AE
+  2836 42AB 20 E2 41		L42AB       jsr L41E2
+  2837 42AE 8C 54 03		L42AE       sty IOCB1+ICBAL
+  2838 42B1 8D 55 03		            sta IOCB1+ICBAH
+  2839 42B4 A0 FF		            ldy #$FF
+  2840 42B6 C8			L42B6       iny
+  2841 42B7 AA			            tax
+  2842 42B8 B1 DE		            lda (L00DE),Y
+  2843 42BA D0 FA		            bne L42B6
+  2844 42BC E0 3A		            cpx #$3A
+  2845 42BE F0 E4		            beq L42A4
+  2846 42C0 20 2E 44		            jsr L442E
+  2847 42C3 46 69 6C 65 20 6E +             .byte 'File name not allowe'
+  2848 42D7 64 21		            .byte 'd!'
+  2849 42D9 9B 00		            .byte $9B,$00
+  2850 42DB C9 3A		L42DB       cmp #$3A
+  2851 42DD D0 03		            bne L42E2
+  2852 42DF AD 0B 07		            lda L070B
+  2853 42E2 29 0F		L42E2       and #$0F
+  2854 42E4 A2 00		            ldx #$00
+  2855 42E6 8E 0B 03		            stx DAUX2
+  2856 42E9 E8			            inx
+  2857 42EA 8E 0A 03		            stx DAUX1
+  2858 42ED A2 1F		            ldx #$1F
+  2859 42EF 8E 04 03		            stx DBUFLO
+  2860 42F2 A2 29		            ldx #$29
+  2861 42F4 8E 05 03		            stx DBUFHI
+  2862 42F7 20 2B 3F		            jsr L3F2B
+  2863 42FA 30 2B		            bmi L4327
+  2864 42FC 4C 9A 0B		            jmp L0B9A
+  2865 42FF 8C 54 03		L42FF       sty IOCB1+ICBAL
+  2866 4302 8D 55 03		            sta IOCB1+ICBAH
+  2867 4305 A0 00		            ldy #$00
+  2868 4307 B1 DE		            lda (L00DE),Y
+  2869 4309 C9 44		            cmp #$44
+  2870 430B F0 1A		            beq L4327
+  2871 430D 20 2E 44		            jsr L442E
+  2872 4310 4E 6F 74 20 61 20 +             .byte 'Not a disk file!'
+  2873 4320 9B 00		            .byte $9B,$00
+  2874 4322 AD AA 29		L4322       lda L29AA
+  2875 4325 30 01		            bmi L4328
+  2876 4327 60			L4327       rts
+  2877 4328 20 C8 3E		L4328       jsr L3EC8
+  2878 432B 49 6E 73 65 72 74 +             .byte 'Insert SOURCE disk, '
+  2879 433F 70 72 65 73 73 20	            .byte 'press '
+  2880 4345 D2 C5 D4 D5 D2 CE +             .byte $D2,$C5,$D4,$D5,$D2,$CE,$00
+  2881 434C 20 D8 3E		            jsr L3ED8
+  2882 434F 2C AA 29		            bit L29AA
+  2883 4352 70 D3		            bvs L4327
+  2884 4354 AE A7 29		            ldx L29A7
+  2885 4357 BC 41 03		L4357       ldy IOCB0+ICDNO,X
+  2886 435A 8C 9F 29		            sty L299F
+  2887 435D BD 4F 03		            lda IOCB0+ICAX6,X
+  2888 4360 F0 20		            beq L4382
+  2889 4362 C9 03		            cmp #$03
+  2890 4364 B0 1C		            bcs L4382
+  2891 4366 99 C3 07		L4366       sta L07C3,Y
+  2892 4369 A2 0F		            ldx #$0F
+  2893 436B BD 08 09		L436B       lda L0908,X
+  2894 436E 9D 83 43		            sta L4383,X
+  2895 4371 CA			            dex
+  2896 4372 10 F7		            bpl L436B
+  2897 4374 20 93 43		            jsr L4393
+  2898 4377 A2 0F		            ldx #$0F
+  2899 4379 BD 83 43		L4379       lda L4383,X
+  2900 437C 9D 08 09		            sta L0908,X
+  2901 437F CA			            dex
+  2902 4380 10 F7		            bpl L4379
+  2903 4382 60			L4382       rts
+  2904 4383 00 00 00 00 00 00 + L4383       .byte $00,$00,$00,$00,$00,$00,$00,$00
+  2905 438B 00 00 00 00 00 00 +             .byte $00,$00,$00,$00,$00,$00,$00,$00
+  2906 4393 A2 09		L4393       ldx #$09
+  2907 4395 BD 25 0B		L4395       lda L0B25,X
+  2908 4398 9D 02 03		            sta DCOMND,X
+  2909 439B CA			            dex
+  2910 439C 10 F7		            bpl L4395
+  2911 439E A2 31		            ldx #$31
+  2912 43A0 8E 00 03		            stx DDEVIC
+  2913 43A3 AE 9F 29		            ldx L299F
+  2914 43A6 8E 01 03		            stx DUNIT
+  2915 43A9 BC C3 07		            ldy L07C3,X
+  2916 43AC BD CB 07		            lda L07CB,X
+  2917 43AF 4C 2F 0B		            jmp L0B2F
+  2918 43B2 8D 62 03		L43B2       sta IOCB2+ICCOM
+  2919 43B5 A9 B0		            lda #$B0
+  2920 43B7 A2 29		            ldx #$29
+  2921 43B9 8D 64 03		            sta IOCB2+ICBAL
+  2922 43BC 8E 65 03		            stx IOCB2+ICBAH
+  2923 43BF 20 00 44		            jsr L4400
+  2924 43C2 A2 10		            ldx #$10
+  2925 43C4 A9 06		L43C4       lda #$06
+  2926 43C6 9D 4A 03		            sta IOCB0+ICAX1,X
+  2927 43C9 A9 00		L43C9       lda #$00
+  2928 43CB 9D 4B 03		            sta IOCB0+ICAX2,X
+  2929 43CE 9D 4F 03		            sta IOCB0+ICAX6,X
+  2930 43D1 A9 03		            lda #$03
+  2931 43D3 20 2E 1B		            jsr L1B2E
+  2932 43D6 10 03		            bpl L43DB
+  2933 43D8 4C 36 41		            jmp L4136
+  2934 43DB AC 01 03		L43DB       ldy DUNIT
+  2935 43DE B9 C3 07		            lda L07C3,Y
+  2936 43E1 9D 4F 03		            sta IOCB0+ICAX6,X
+  2937 43E4 60			            rts
+  2938 43E5 20 00 44		L43E5       jsr L4400
+  2939 43E8 B1 DE		            lda (L00DE),Y
+  2940 43EA D0 13		            bne L43FF
+  2941 43EC 8D A9 29		            sta L29A9
+  2942 43EF 99 B2 29		            sta L29B2,Y
+  2943 43F2 A9 2A		            lda #$2A
+  2944 43F4 99 B0 29		            sta L29B0,Y
+  2945 43F7 99 B1 29		            sta L29B1,Y
+  2946 43FA A9 9B		            lda #$9B
+  2947 43FC 99 B2 29		            sta L29B2,Y
+  2948 43FF 60			L43FF       rts
+  2949 4400 A0 FF		L4400       ldy #$FF
+  2950 4402 C8			L4402       iny
+  2951 4403 B1 DE		            lda (L00DE),Y
+  2952 4405 99 B0 29		            sta L29B0,Y
+  2953 4408 D0 F8		            bne L4402
+  2954 440A 88			L440A       dey
+  2955 440B B9 B0 29		            lda L29B0,Y
+  2956 440E C9 3A		            cmp #$3A
+  2957 4410 F0 04		            beq L4416
+  2958 4412 C9 3E		            cmp #$3E
+  2959 4414 D0 F4		            bne L440A
+  2960 4416 C8			L4416       iny
+  2961 4417 8C AE 29		            sty L29AE
+  2962 441A 60			            rts
+  2963 441B 44			            .byte 'D'
+  2964 441C 00			L441C       .byte $00
+  2965 441D 3A			            .byte ':'
+  2966 441E 60			            .byte $60
+  2967 441F 4F 53 2E 53 59 53	            .byte 'OS.SYS'
+  2968 4425 2C 44 4F 53 2E 53 + L4425       .byte ',DOS.SYS'
+  2969 442D 00			            .byte $00
+  2970 442E 68			L442E       pla
+  2971 442F 85 1A		            sta DSKUTL
+  2972 4431 68			            pla
+  2973 4432 85 1B		            sta DSKUTL+1
+  2974 4434 20 BF 3E		            jsr L3EBF
+  2975 4437 4C 10 2D		            jmp L2D10
+  2976 				;
+  2977 				         

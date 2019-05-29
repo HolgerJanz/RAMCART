@@ -1,0 +1,773 @@
+mads 1.9.9
+     1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     2 				; 
+     3 				; The!Ramdisk vers43 - Ramdisk for The!Cart
+     4
+     5 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     6 				;
+     7 				; Assembler Switches
+     8
+     9 				; patchDOS:
+    10 				;   assemble with (1) our without (0) DOS 2.5 patches 
+    11 				; initRAMDISK
+    12 				;   init RAMDISK (1), our without (0) 
+    13
+    14 				; RAMCART.COM
+    15 = 0001			patchDOS = 1
+    16 = 0001			initRAMDISK = 1
+    17
+    18 				; RAMDISK.COM
+    19 				; patchDOS = 0
+    20 				; initRAMDISK = 1
+    21
+    22 				; PATCH.COM
+    23 				; patchDOS = 1
+    24 				; initRAMDISK = 0
+    25
+    26 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    27 				; 
+    28 				; The!Cart programming information
+    29 				; (c) 2013 Matthias Reichl
+    30 				;
+    31 				; The!Cart is equipped with 128MB flash (Spansion S29GL01
+    32 				; chip), 512k RAM and a 256-byte SPI EEPROM (Microchip
+    33 				; 25AA020A). The memory is addressed using 16384 8k banks
+    34 				; (64 8k banks when using RAM instead of flash).
+    35 				; 
+    36 				; The cartridge configuration registers are located at
+    37 				; $D5A0-$D5A8. All registers are read/write unless noted
+    38 				; otherwise. Unused bits shall be written as '0' and
+    39 				; always read back as '0'.
+    40 				; 
+    41 				; Powerup configuration is 8k mode ($A000-$BFFF) using
+    42 				; flash bank 0, writes to flash are disabled.
+    43 				; 
+    44 				; Depending on the selected cartridge mode additional
+    45 				; registers are enabled at $D5xx.
+    46 				; 
+    47 				; The primary bank register also serves as a base bank
+    48 				; register for the various sub-modes.
+    49 				; 
+    50 				; The secondary bank register is only used in "flexi mode".
+    51 				;
+    52
+    53 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    54 				; 
+    55 				; The!Cart Register (from-to,default)
+    56 				;
+    57
+    58 				; Mode Select
+    59 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+    60 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
+    61 				; other than the ones listed here are reserved (and result
+    62 				; in "cartridge off"):
+    63 				; $00: off, cartridge disabled
+    64 				; $01: 8k banks at $A000
+    65 				; $02: AtariMax 1MBit / 128k
+    66 				; $03: Atarimax 8MBit / 1MB
+    67 				; $04: OSS M091
+    68 				; $08: SDX 64k cart, $D5Ex banking
+    69 				; $09: Diamond GOS 64k cart, $D5Dx banking
+    70 				; $0A: Express 64k cart, $D57x banking
+    71 				; $0C: Atrax 128k cart
+    72 				; $0D: Williams 64k cart
+    73 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
+    74 				; $21: standard 16k cart at $8000-$BFFF
+    75 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+    76 				; $23: Blizzard 16k
+    77 				; $24: Sic!Cart 512k
+    78 				; $28: 16k Mega cart
+    79 				; $29: 32k Mega cart
+    80 				; $2A: 64k Mega cart
+    81 				; $2B: 128k Mega cart
+    82 				; $2C: 256k Mega cart
+    83 				; $2D: 512k Mega cart
+    84 				; $2E: 1024k Mega cart
+    85 				; $2F: 2048k Mega cart
+    86 				; $30: 32k XEGS cart
+    87 				; $31: 64k XEGS cart
+    88 				; $32: 128k XEGS cart
+    89 				; $33: 256k XEGS cart
+    90 				; $34: 512k XEGS cart
+    91 				; $35: 1024k XEGS cart
+    92 				; $38: 32k SWXEGS cart
+    93 				; $39: 64k SWXEGS cart
+    94 				; $3A: 128k SWXEGS cart
+    95 				; $3B: 256k SWXEGS cart
+    96 				; $3C: 512k SWXEGS cart
+    97 				; $3D: 1024k SWXEGS cart
+    98 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
+    99 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
+   100 = 0021			TCMOSL.FLEXI = $21    ; flexi mode,
+   101 				                         ; separate 8k banks at $A000 and $8000
+   102 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+   103
+   104 				; how to figure out that The!Cart is not active?
+   105 				; If the address is not used then the XL returns $ff but
+   106 				; the XE (and old 800) return $d5 (high byte of address,
+   107 				; the value of the last bus cycle)
+   108 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+   109 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+   110
+   111 				; Mode Flash/RAM Select
+   112 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+   113 				; bit 0: primary bank write enable (0=readOnly, 1=write)
+   114 				; bit 1: primary bank source (0=flash, 1=RAM)
+   115 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
+   116 				; bit 3: secondary bank source (0=flash, 1=RAM)
+   117 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
+   118 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
+   119
+   120 				; Primary Bank
+   121 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
+   122 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
+   123 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+   124
+   125 				; Secondary Bank 
+   126 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
+   127 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
+   128 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   129
+   130 				; SPI interface to EEPROM
+   131 = D5A8			TCINEP = $d5a8
+   132 				; bit 0: SPI CLK
+   133 				; bit 1: SPI CS
+   134 				; bit 7: SPI data in (on reads), SPI data out (on writes)
+   135
+   136 				; configuration lock
+   137 = D5AF			TCCOLO = $d5af
+   138 				; Writing to this register disables "The!Cart" registers
+   139 				; at $d5aX.
+   140
+   141 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   142 				;
+   143 				; Equates used to call CIO
+   144 				;
+   145
+   146 = 00FE			XIO.FMTDD = 254 ; Format command
+   147 = 0009			XIO.PRINT = 9   ; Print line
+   148 = 0003			XIO.OPEN  = 3   ; Open
+   149 = 000C			XIO.CLOSE = 12  ; Close
+   150 = 0004			XIO.READ  = 4   ; Read
+   151 = 0008			XIO.WRITE = 8   ; Write
+   152 = 0007			XIO.GET   = 7   ; Get
+   153 = 000B			XIO.PUT   = 11  ; Put
+   154
+   155 = 0340			IOCB        =  $0340    ; address of first IOCB
+   156 = 0342			IOCB.CMD    = IOCB+2    ; where command goes in IOCB
+   157 = 0344			IOCB.BUF    = IOCB+4    ; buffer (or name) address
+   158 = 0348			IOCB.BUFLEN = IOCB+8    ; max buffer length address
+   159 = 034A			IOCB.AUX1   = IOCB+10   ; Auxilliary byte 1
+   160 = 034B			IOCB.AUX2   = IOCB+11   ; Auxilliary byte 2
+   161
+   162 = E456			CIOV = $E456            ; the classic location
+   163
+   164 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   165 				;
+   166 				; OS Equates
+   167 				;
+   168
+   169 = 0012			RTCLOKH = $12
+   170 = 0013			RTCLOKM = $13
+   171 = 0014			RTCLOKL = $14
+   172 = 0042			CRITIC  = $42
+   173 = D40E			NMIEN   = $d40e
+   174
+   175 = 070A			DRVBYT  = $070a ; the infamous "1802" location
+   176 = 07E0			INITDOS = $07e0 ; same as DOS 2.0 and others
+   177
+   178 				; DOS and DUP end pointer
+   179 = 1D7C			NDOS    = $1D7C ; end of the system buffers and minidup
+   180 = 3306			NDUP    = $3306 ; end of dup
+   181
+   182 = 153F			FIXMDUP = $153f ; just before Mini-DUP
+   183 				; Location that says which drive MEM.SAV and DUP.SYS
+   184 				; are located on (contains ATASCII character--
+   185 				; not just a byte value)
+   186
+   187 = 105D			FIXXFMT = $105d ; Patch XFORMAT in FMS
+   188 				; Max length of VTOC
+   189 				;   $8a = dual density 10+(1024/8)
+   190 				;   $64 = single density 10+(720/8)
+   191 				;   $4a = ram disk 130XE 10+(512/8) (original)
+   192
+   193 = 0B87			FIXVTOC = $0b87 ; Patch RDVTOC in FMS
+   194 				; Offset in VTOC header table
+   195 				;   $00 = TYPE810 720 sectors
+   196 				;   $06 = TYPE1050 1024 sectors
+   197 				;   $0C = TYPERAM 512 sectores (originial)
+   198
+   199 = 1F31			FIXDUP  = $1f31 ; start of version number in DUP
+   200 				; used to patch 2.5 -> 2.5TC (Th!Cart DOS now ;-)
+   201
+   202 = 0304			DISKBUF = $0304 ; buffer address for read/write
+   203 = 030A			DCBSEC  = $030a    ; DAUX1,DAUX2 contains sector number
+   204
+   205 = 1481			RAMIO   = $1481 ; start of RAMIO of DOS 2.5, end $14e7 = $66
+   206 = 12CB			SETBANK = $12cb ; start of SETBANK of DOS 2.5, end $12ec = $21
+   207
+   208 = 0168			VTOCSEC = $168           ; sector number of VTOC
+   209
+   210 = 0002			DVDOTYP = 2              ; type in VTOC for DOS 2.5
+   211 = 03F2			DVMAXSC = 1024-14        ; max sector count Enhanced Density
+   212
+   213 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   214 				; 
+   215 				; Start
+   216 				;
+   217
+   218 				        org $4000 
+   219
+   220 				start                   ; Start of code
+   221
+   222 				.if patchDOS
+   223
+   224 				; Patch FMS to use 1050 VTOC instead of 130XE VTOC
+   225 				; and switch to D8: for MEM.SAV and DUP.SYS 
+   226 FFFF> 4000-429A> A9 06	        lda #$06        ; offset 6 -> 1050
+   227 4002 8D 87 0B		        sta FIXVTOC     ; set max VTOC length
+   228 4005 A9 8A		        lda #$8a      
+   229 4007 8D 5D 10		        sta FIXXFMT     ; set VTOC head
+   230
+   231 				.endif
+   232
+   233 				.if patchDOS
+   234
+   235 				; Patch DUP set 2.5 to 2.5TC
+   236 				; do not patch for RAMDISK because DUP is loaded later
+   237 400A A9 B2		        lda #$b2        ; inverse 2
+   238 400C 8D 31 1F		        sta FIXDUP
+   239 400F A9 AE		        lda #$ae        ; inverse .
+   240 4011 8D 32 1F		        sta FIXDUP+1
+   241 4014 A9 B5		        lda #$b5        ; inverse 5
+   242 4016 8D 33 1F		        sta FIXDUP+2
+   243 4019 A9 D4		        lda #$d4        ; inverse T
+   244 401B 8D 34 1F		        sta FIXDUP+3
+   245 401E A9 C3		        lda #$c3        ; inverse C
+   246 4020 8D 35 1F		        sta FIXDUP+4
+   247
+   248 				.endif
+   249
+   250 				; start message
+   251 4023 A2 A7		        ldx #<msg.start
+   252 4025 A0 41		        ldy #>msg.start
+   253 4027 A9 26		        lda #msg.start.end-msg.start
+   254 4029 20 82 42		        jsr print
+   255
+   256 				.if initRAMDISK
+   257
+   258 				; check for The!Cart
+   259 402C AD A6 D5		        lda TCMOSL
+   260 402F C9 FF		        cmp #TCMOSL.XLLOCK
+   261 4031 F0 04		        beq setup.error
+   262 4033 C9 D5		        cmp #TCMOSL.XELOCK
+   263 4035 D0 0D		        bne setup.ok
+   264 4037			setup.error
+   265 				; not found message        
+   266 4037 A2 CD		        ldx #<msg.notfound
+   267 4039 A0 41		        ldy #>msg.notfound
+   268 403B A9 13		        lda #msg.notfound.end-msg.notfound
+   269 403D 20 82 42		        jsr print
+   270 				; deactivate RAMDISK at D8:
+   271 				;        lda DRVBYT      ; to active drives...
+   272 				;        and #$7f        ; ...exclude this drive
+   273 				;        sta DRVBYT      ; and update the mask
+   274 4040 20 E0 07		        jsr INITDOS     ; including the drive table,
+   275 				                        ; alloc buffer, etc.
+   276 				; finish
+   277 4043 60			        rts             ; OK and we are done!
+   278 				        
+   279 4044			setup.ok
+   280 				; found The!Cart, start setup
+   281 4044 A2 E0		        ldx #<msg.setup
+   282 4046 A0 41		        ldy #>msg.setup
+   283 4048 A9 13		        lda #msg.setup.end-msg.setup
+   284 404A 20 82 42		        jsr print        
+   285
+   286 				; activate RAMDISK at D8:
+   287 404D AD 0A 07		        lda DRVBYT      ; to active drives...
+   288 4050 09 80		        ora #$80        ; ...include this drive
+   289 4052 8D 0A 07		        sta DRVBYT      ; and update the mask
+   290 4055 20 E0 07		        jsr INITDOS     ; including the drive table,
+   291 				                        ; alloc buffer, etc.
+   292 				; check for preformat (maybe there is already a ram disk)
+   293 4058 20 4F 42		        jsr check.vtoc
+   294 405B 98			        tya
+   295 405C D0 2B		        bne prepare.ramdisk ; no ram disk
+   296 				; there seems to be already a ramdisk
+   297 				; check file name DUP.SYS set to D8:
+   298 405E A9 38		        lda #'8'
+   299 4060 8D 2F 42		        sta file.dup.NAME+1
+   300 				; check for DUP.SYS on D8:
+   301 4063 A2 70		        ldx #$70
+   302 4065 A9 03		        lda #XIO.OPEN   
+   303 4067 9D 42 03		        sta IOCB.CMD,X
+   304 406A A9 04		        lda #XIO.READ
+   305 406C 9D 4A 03		        sta IOCB.AUX1,X
+   306 406F A9 2E		        lda #<file.dup.name
+   307 4071 9D 44 03		        sta IOCB.BUF,X
+   308 4074 A9 42		        lda #>file.dup.name
+   309 4076 9D 45 03		        sta IOCB.BUF+1,X
+   310 4079 20 56 E4		        jsr CIOV
+   311 407C 30 0A		        bmi dup.notfound
+   312 407E 20 44 42		        jsr close
+   313 4081 30 05		        bmi dup.notfound
+   314 				; switch to D8: for MEM.SAV and DUP.SYS
+   315 4083 A9 38		        lda #'8'
+   316 4085 8D 3F 15		        sta FIXMDUP     ; set MEM.SAV and DUP.SYS drive
+   317 				; finish 
+   318 4088			dup.notfound
+   319 4088 60			        rts             ; OK and we are done!
+   320
+   321 4089			prepare.ramdisk
+   322 				; *** (1) FORMAT
+   323 4089 A2 F3		        ldx #<msg.format
+   324 408B A0 41		        ldy #>msg.format
+   325 408D A9 0F		        lda #msg.format.end-msg.format
+   326 408F 20 82 42		        jsr print
+   327 				; format
+   328 4092 A2 70		        ldx #$70        ; we will use channel 7 for this
+   329 4094 A9 FE		        lda #XIO.FMTDD  ; the format command
+   330 4096 9D 42 03		        sta IOCB.CMD,X  ; is first item on agenda!
+   331 4099 A9 2A		        lda #<drv.name  ; LSB of address of drive name
+   332 409B 9D 44 03		        sta IOCB.BUF,X  ; to IOCB
+   333 409E A9 42		        lda #>drv.name  ; then MSB
+   334 40A0 9D 45 03		        sta IOCB.BUF+1,X ; also to IOCB
+   335 40A3 20 56 E4		        jsr CIOV        ; call CIO to FORMAT the disk
+   336 40A6 30 22		        BMI oops1       ; but we can't handle an error! (do nothing)
+   337
+   338 				;*** (2) COPY DUP.SYS TO D8:
+   339 40A8 A2 02		        ldx #<msg.copy
+   340 40AA A0 42		        ldy #>msg.copy
+   341 40AC A9 0D		        lda #msg.copy.end-msg.copy
+   342 40AE 20 82 42		        jsr print
+   343 				; start copy of DUP.SYS
+   344 40B1 A2 70		        ldx #$70
+   345 40B3 A9 03		        lda #XIO.OPEN
+   346 40B5 9D 42 03		        sta IOCB.CMD,X
+   347 40B8 A9 04		        lda #XIO.READ
+   348 40BA 9D 4A 03		        sta IOCB.AUX1,X
+   349 40BD A9 2E		        lda #<file.dup.name
+   350 40BF 9D 44 03		        sta IOCB.BUF,X
+   351 40C2 A9 42		        lda #>file.dup.name
+   352 40C4 9D 45 03		        sta IOCB.BUF+1,X
+   353 40C7 20 56 E4		        jsr CIOV
+   354 40CA			oops1
+   355 40CA 30 1E		        bmi oops2           ;NO DUP(?)
+   356 				; read it into buffer
+   357 40CC A2 70		        ldx #$70
+   358 40CE A9 07		        lda #XIO.GET
+   359 40D0 9D 42 03		        sta IOCB.CMD,X
+   360 40D3 A9 06		        lda #<file.dup.size
+   361 40D5 9D 48 03		        sta IOCB.BUFLEN,X
+   362 40D8 A9 14		        lda #>file.dup.size
+   363 40DA 9D 49 03		        sta IOCB.BUFLEN+1,X
+   364 40DD A9 9C		        lda #<file.dup.buffer
+   365 40DF 9D 44 03		        sta IOCB.BUF,X
+   366 40E2 A9 42		        lda #>file.dup.buffer
+   367 40E4 9D 45 03		        sta IOCB.BUF+1,X
+   368 40E7 20 56 E4		        jsr CIOV
+   369 40EA			oops2
+   370 40EA 30 23		        bmi oops3
+   371 40EC 20 44 42		        jsr close
+   372 40EF 30 1E		        bmi oops3
+   373 				; file name DUP.SYS set to D8:
+   374 40F1 A9 38		        lda #'8' ;
+   375 40F3 8D 2F 42		        sta file.dup.NAME+1
+   376 				; now open for write
+   377 40F6 A2 70		        ldx #$70
+   378 40F8 A9 03		        lda #XIO.OPEN
+   379 40FA 9D 42 03		        sta IOCB.CMD,X
+   380 40FD A9 08		        lda #XIO.WRITE
+   381 40FF 9D 4A 03		        sta IOCB.AUX1,X
+   382 4102 A9 2E		        lda #<file.dup.name
+   383 4104 9D 44 03		        sta IOCB.BUF,X
+   384 4107 A9 42		        lda #>file.dup.name
+   385 4109 9D 45 03		        sta IOCB.BUF+1,X
+   386 410C 20 56 E4		        jsr  CIOV
+   387 410F			oops3
+   388 410F 30 1E		        bmi  oops4
+   389 				; write dup.sys to D8:
+   390 4111 A2 70		        ldx #$70
+   391 4113 A9 0B		        lda #XIO.PUT
+   392 4115 9D 42 03		        sta IOCB.CMD,X
+   393 4118 A9 06		        lda #<file.dup.size
+   394 411A 9D 48 03		        sta IOCB.BUFLEN,X
+   395 411D A9 14		        lda #>file.dup.size
+   396 411F 9D 49 03		        sta IOCB.BUFLEN+1,X
+   397 4122 A9 9C		        lda #<file.dup.buffer
+   398 4124 9D 44 03		        sta IOCB.BUF,X
+   399 4127 A9 42		        lda #>file.dup.buffer
+   400 4129 9D 45 03		        sta IOCB.BUF+1,X
+   401 412C 20 56 E4		        jsr CIOV
+   402 412F			OOPS4
+   403 412F 30 2C		        bmi  OOPS5
+   404 				; close
+   405 4131 20 44 42		        jsr close
+   406 4134 30 27		        bmi  OOPS5
+   407
+   408 				; only and only if format and copy OK, 
+   409 				; switch to D8: for MEM.SAV and DUP.SYS
+   410 4136 A9 38		        lda #'8'
+   411 4138 8D 3F 15		        sta FIXMDUP     ; set MEM.SAV and DUP.SYS drive
+   412 				        
+   413 				;*** (3) CREATE MEM.SAV FILE
+   414 413B A2 0F		        ldx #<msg.create
+   415 413D A0 42		        ldy #>msg.create
+   416 413F A9 0F		        lda #msg.create.end-msg.create
+   417 4141 20 82 42		        jsr print
+   418 				; start copy of DUP.SYS
+   419 4144 A2 70		        ldx #$70
+   420 4146 A9 03		        lda #XIO.OPEN
+   421 4148 9D 42 03		        sta IOCB.CMD,X
+   422 414B A9 08		        lda #XIO.WRITE
+   423 414D 9D 4A 03		        sta IOCB.AUX1,X
+   424 4150 A9 39		        lda #<file.mem.name
+   425 4152 9D 44 03		        sta IOCB.BUF,X
+   426 4155 A9 42		        lda #>file.mem.name
+   427 4157 9D 45 03		        sta IOCB.BUF+1,X
+   428 415A 20 56 E4		        jsr CIOV
+   429 415D			OOPS5
+   430 415D 30 1E		        bmi oops6
+   431 				; write mem.sav to d8:
+   432 415F A2 70		        ldx #$70
+   433 4161 A9 0B		        lda #XIO.PUT
+   434 4163 9D 42 03		        sta IOCB.CMD,X
+   435 4166 A9 8A		        lda #<file.mem.size
+   436 4168 9D 48 03		        sta IOCB.BUFLEN,X
+   437 416B A9 15		        lda #>file.mem.size
+   438 416D 9D 49 03		        sta IOCB.BUFLEN+1,X
+   439 4170 A9 7C		        lda #<file.mem.buffer
+   440 4172 9D 44 03		        sta IOCB.BUF,X
+   441 4175 A9 1D		        lda #>file.mem.buffer
+   442 4177 9D 45 03		        sta IOCB.BUF+1,X
+   443 417A 20 56 E4		        jsr CIOV
+   444 417D			OOPS6
+   445 417D 30 06		        bmi  oops7
+   446 				; close channel
+   447 417F 20 44 42		        jsr close
+   448 4182 30 01		        bmi oops7
+   449
+   450 4184 60			        rts         ; OK and we are done!
+   451
+   452 4185			oops7
+   453 				; set error code in message
+   454 4185 98			        tya
+   455 4186 38			        sec 
+   456 4187 E9 64		        sbc #100    ; error nums always are 1xx dec
+   457 4189 A2 2F		        ldx #'0'-1  ; convert tens
+   458 418B			count.tens
+   459 418B E8			        inx 
+   460 418C 38			        sec 
+   461 418D E9 0A		        sbc #10
+   462 418F 10 FA		        bpl count.tens ; the easy (slow) way
+   463 4191 18			        clc
+   464 4192 69 3A		        adc #10+'0'
+   465 4194 8E 27 42		        stx msg.error.code
+   466 4197 8D 28 42		        sta msg.error.code+1
+   467 				; error message
+   468 419A A2 1E		        ldx #<msg.error
+   469 419C A0 42		        ldy #>msg.error
+   470 419E A9 0C		        lda #msg.error.end-msg.error
+   471 41A0 20 82 42		        jsr print
+   472 				; close channel, just in case
+   473 41A3 20 44 42		        jsr close
+   474 				.endif
+   475
+   476 41A6 60			        rts         ; ERROR and we are done!
+   477
+   478 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   479 				;
+   480 				; Messages
+   481 				;
+   482
+   483 41A7			msg.start
+   484 41A7 54 48 45 21 52 41 +         .byte 'THE!RAMDISK vers43 '
+   485 				.if patchDOS & initRAMDISK
+   486 41BA 50 41 54 43 48 26 +         .byte 'PATCH&RAMDISK '
+   487 				.endif
+   488 				.if patchDOS & !initRAMDISK
+   489 				        .byte 'PATCH         '
+   490 				.endif
+   491 				.if !patchDOS & initRAMDISK
+   492 				        .byte 'RAMDISK       '
+   493 				.endif
+   494 41C8 B2 AE B5 D4 C3	        .byte $0b2,$ae,$b5,$d4,$c3 ; invers 2.5TC
+   495 41CD			msg.start.end
+   496
+   497 				.if initRAMDISK
+   498
+   499 41CD			msg.notfound
+   500 41CD 54 48 45 21 43 41 +         .byte 'THE!CART NOT FOUND', $9b
+   501 41E0			msg.notfound.end
+   502
+   503 41E0			msg.setup
+   504 41E0 53 45 54 20 55 50 +         .byte 'SET UP RAMDISK D8:', $9b
+   505 41F3			msg.setup.end
+   506
+   507 41F3			msg.format
+   508 41F3 46 4F 52 4D 41 54 +         .byte 'FORMAT RAMDISK', $9b
+   509 4202			msg.format.end
+   510
+   511 4202			msg.copy
+   512 4202 43 4F 50 59 20 44 +         .byte 'COPY DUP.SYS', $9b
+   513 420F			msg.copy.end
+   514
+   515 420F			msg.create
+   516 420F 43 52 45 41 54 45 +         .byte 'CREATE MEM.SAV', $9b
+   517 421E			msg.create.end
+   518
+   519 421E			msg.error
+   520 421E 45 52 52 4F 52 2D +         .byte 'ERROR-  1' ; error code always >128
+   521 4227			msg.error.code
+   522 4227 30 31 9B		        .byte '01',$9b
+   523 422A			msg.error.end
+   524
+   525 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   526 				;
+   527 				; A string to hold drive name for XIO command
+   528 				;
+   529
+   530 422A			drv.name
+   531 422A 44 38 3A 9B		        .byte 'D8:',$9b  
+   532 				        
+   533 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   534 				;
+   535 				; File names
+   536 				;
+   537
+   538 422E			file.dup.name
+   539 422E 44 31 3A 44 55 50 +         .byte 'D1:DUP.SYS',$9b
+   540 = 1406			file.dup.size   = 5126
+   541
+   542 = 429C			file.dup.buffer = BUFFER
+   543
+   544 4239			file.mem.name
+   545 4239 44 38 3A 4D 45 4D +         .byte 'D8:MEM.SAV',$9b
+   546 = 158A			file.mem.size   = NDUP-NDOS
+   547 = 1D7C			file.mem.buffer = NDOS
+   548
+   549 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   550 				;
+   551 				; Close
+   552 				;
+   553
+   554 4244			close ; close channel in X
+   555 4244 A2 70		        ldx #$70
+   556 4246 A9 0C		        lda #XIO.CLOSE
+   557 4248 9D 42 03		        sta IOCB.CMD,X
+   558 424B 20 56 E4		        jsr CIOV
+   559 424E 60			        rts
+   560
+   561 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   562 				;
+   563 				; Check VTOC sector for pre formating
+   564 				;
+   565 				; return     Y=0   -> preformated
+   566 				;            Y=1-3 -> wrong format
+   567 				;
+   568
+   569 424F			check.vtoc ; Check VTOC sector
+   570 				; set DCBSEC and DISKBUF
+   571 424F A9 68		        lda #<VTOCSEC
+   572 4251 8D 0A 03		        sta DCBSEC
+   573 4254 A9 01		        lda #>VTOCSEC
+   574 4256 8D 0B 03		        sta DCBSEC+1
+   575
+   576 4259 A9 9C		        lda #<BUFFER
+   577 425B 8D 04 03		        sta DISKBUF
+   578 425E A9 42		        lda #>BUFFER
+   579 4260 8D 05 03		        sta DISKBUF+1
+   580 				; call RAMIONEW
+   581 4263 18			        clc             ; read
+   582 4264 20 81 14		        jsr RAMIO
+   583 				; check first three bytes
+   584 4267 A0 03		        ldy #$03
+   585 				        
+   586 4269 AD 9C 42		        lda BUFFER
+   587 426C C9 02		        cmp #DVDOTYP
+   588 426E D0 11		        bne check.vtoc.end
+   589 4270 88			        dey
+   590
+   591 4271 AD 9D 42		        lda BUFFER+1
+   592 4274 C9 F2		        cmp #<DVMAXSC
+   593 4276 D0 09		        bne check.vtoc.end
+   594 4278 88			        dey
+   595
+   596 4279 AD 9E 42		        lda BUFFER+2
+   597 427C C9 03		        cmp #>DVMAXSC
+   598 427E D0 01		        bne check.vtoc.end
+   599 4280 88			        dey
+   600
+   601 4281			check.vtoc.end
+   602 4281 60			        rts
+   603
+   604 				.endif
+   605
+   606 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   607 				; 
+   608 				; Print Message
+   609 				;
+   610 				; IN    X,Y    low, high byte of address to message
+   611 				;        A    length of message
+   612
+   613 4282			print    ;print message
+   614 4282 8D 48 03		        sta IOCB.BUFLEN
+   615 4285 A9 00		        lda #$00
+   616 4287 8D 49 03		        sta IOCB.BUFLEN+1
+   617 428A 8E 44 03		        stx IOCB.BUF
+   618 428D 8C 45 03		        sty IOCB.BUF+1
+   619 4290 A9 0B		        lda #XIO.PUT
+   620 4292 8D 42 03		        sta IOCB.CMD
+   621 4295 A2 00		        ldx #$00
+   622 4297 20 56 E4		        jsr CIOV
+   623 429A 60			        rts
+   624
+   625 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   626 				; 
+   627 				; Buffer for copy
+   628
+   629 = 429C			BUFFER  =  *+1
+   630
+   631 				.if patchDOS
+   632
+   633 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   634 				; 
+   635 				; RAMIO: IN DCBSEC: sector number (low, high)
+   636 				;           CARRY: set -> write to buffer, else -> read
+   637 				;
+   638 				; sector buffer address:     RAMIO.SECPTR
+   639 				; ramdisk sector address:    RAMIO.RAMPTR
+   640 				;
+   641
+   642 = 0043			RAMIO.SECPTR = $43  ; address to buffer, FMSZPG register
+   643 = 0032			RAMIO.RAMPTR = $32  ; address to ramdisk sector 
+   644 				                    ; ZSECPTR = $32 (share with SIO!)
+   645
+   646 				; number of sectors 1040 $0410
+   647 				;   %0000010000010000 (16bit)
+   648 				; split to bank and address 
+   649 				;   %000001000 %0010000 (9bit Bank + 7bit address)
+   650
+   651 				; address space $8000-$BFFF
+   652 				; address = %10+(7bit address)+0000000 (16bit)
+   653
+   654 				; Place for new subroutine at same place
+   655 				; like RAMIO/SETBANK in DOS 2.5:
+   656 				; RAMIONEW (incl jump to second part) length $55 + $3d = $92
+   657 				;-----------------------------------------------------------
+   658 				; RAMIO length $54 and SETBANK length $21  = $75 diff $1d!!!
+   659 				; but
+   660 				; memory layout with gaps (see sources of DOS 2.5):
+   661 				; SETBANK    start $12cb end $12ec gap $1307  = $3d
+   662 				; RAMIO        start $1481 end $14d4 gap $14d7  = $57 == $94
+   663 				;---------------------------------------------------------
+   664 				; perfect $92 < $94
+   665 				;==================
+   666
+   667 429B			        org SETBANK
+   668 				; check carry (read or write mode)
+   669 				; set offsets for address in copy loop
+   670 12CB-1307> A2 01		        ldx #loop.radr.off      ; offset for LB read     
+   671 12CD A0 04		        ldy #loop.wadr.off      ; offset for LB write
+   672 12CF 90 04		        bcc RAMIO.read  
+   673 12D1 A2 04		        ldx #loop.wadr.off      ; offset for LB write
+   674 12D3 A0 01		        ldy #loop.radr.off      ; offset for LB read 
+   675 12D5			RAMIO.read
+   676 				; calc address
+   677 12D5 AD 0A 03		        lda DCBSEC              ; get low byte of sector
+   678 12D8 38			        sec                     ; set Bit7
+   679 12D9 6A			        ror                     ; save Bit0 in carry
+   680 12DA 29 BF		        and #$bf                ; clear Bit6
+   681 12DC 9D B0 14		        sta loop.copy+1,X       ; high byte of address
+   682 12DF A9 00		        lda #$00
+   683 12E1 6A			        ror                     ; make carry Bit7
+   684 12E2 9D AF 14		        sta loop.copy,X         ; low byte of address
+   685 				; set buffer address
+   686 12E5 AD 04 03		        lda DISKBUF
+   687 12E8 99 AF 14		        sta loop.copy,Y         ; low byte of address
+   688 12EB AD 05 03		        lda DISKBUF+1
+   689 12EE 99 B0 14		        sta loop.copy+1,Y       ; high byte of address
+   690 				; calc bank number, set A to bank number times 2 for T!C
+   691 12F1 AD 0A 03		        lda DCBSEC              ; get low byte of sector
+   692 12F4 0A			        asl                     ; save Bit8 in carry 
+   693 12F5 AD 0B 03		        lda DCBSEC+1            ; get high byte of sector
+   694 12F8 2A			        rol                     ; get Bit8 of low byte 
+   695 12F9 0A			        asl                     ; get bank number with LSB 0
+   696 				; set critical mode
+   697 12FA A0 01		        ldy #$01
+   698 12FC 84 42		        sty CRITIC              ; tell VBLANK this is critical!
+   699 12FE A6 14		        ldx RTCLOKL
+   700 1300			RAMIO.sync
+   701 1300 E4 14		        cpx RTCLOKL             ; got a VBLANK yet?
+   702 1302 F0 FC		        beq RAMIO.sync          ; no
+   703 1304 8C 0E D4		        sty NMIEN               ; disable VBI and DLI
+   704 				; back to RAMIO, it must SEI
+   705 				; only $3d bytes in SETBANK
+   706 1307 60			        rts
+   707
+   708 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   709
+   710 1308			        org RAMIO
+   711 				; save the!cart registers
+   712 1481-14D6> AD A6 D5	        lda TCMOSL
+   713 1484 48			        pha
+   714 1485 AD A7 D5		        lda TCMOFR
+   715 1488 48			        pha
+   716 1489 AD A0 D5		        lda TCPBRL
+   717 148C 48			        pha
+   718 148D AD A1 D5		        lda TCPBRH
+   719 1490 48			        pha
+   720 1491 AD A2 D5		        lda TCPBEN
+   721 1494 48			        pha
+   722 				; calc and set read/write address
+   723 1495 20 CB 12		        jsr SETBANK
+   724 1498 78			        sei                     ; and disable IRQ's
+   725 				; set new The!Cart mode
+   726 1499 A2 21		        ldx #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+   727 149B 8E A6 D5		        stx TCMOSL          
+   728 149E A2 03		        ldx #TCMOFR.PBRAM       ; set to RAM
+   729 14A0 8E A7 D5		        stx TCMOFR  
+   730 14A3 8D A0 D5		        sta TCPBRL              ; get bank number from A
+   731 14A6 8C A2 D5		        sty TCPBEN              ; Y must be $01 from SETBANK        
+   732 14A9 88			        dey                     
+   733 14AA 8C A1 D5		        sty TCPBRH              ; enable
+   734 				; copy from/to buffer
+   735 14AD A0 7F		        ldy #$7f                ; 128 bytes in a sector
+   736 14AF			loop.copy ; read/write sector from RAMDISK
+   737 = 0001			loop.radr.off = $01
+   738 = 0004			loop.wadr.off = $04
+   739 14AF B9 FF FF		        lda $ffff,Y     ; $FFFF is set to read address
+   740 14B2 99 FF FF		        sta $ffff,Y     ; $FFFF is set to write address
+   741 14B5 88			        dey
+   742 14B6 10 F7		        bpl loop.copy
+   743 				; restore The!Cart registers
+   744 14B8 68			        pla                 
+   745 14B9 8D A2 D5		        sta TCPBEN          
+   746 14BC 68			        pla                 
+   747 14BD 8D A1 D5		        sta TCPBRH          
+   748 14C0 68			        pla                 
+   749 14C1 8D A0 D5		        sta TCPBRL          
+   750 14C4 68			        pla                 
+   751 14C5 8D A7 D5		        sta TCMOFR          
+   752 14C8 68			        pla                 
+   753 14C9 8D A6 D5		        sta TCMOSL          
+   754 				; unset critical mode
+   755 14CC A9 C0		        lda #$c0
+   756 14CE 8D 0E D4		        sta NMIEN       ; enable VBI's and DLI's
+   757 14D1 C8			        iny             ; from read/write loop y=ff
+   758 				                        ; Y(ff)+1 = 0 
+   759 14D2 84 42		        sty CRITIC      ; no longer critical I/O
+   760 14D4 58			        cli             ; and IRQ's are now legal
+   761 				; return code 1 = OK
+   762 14D5 C8			        iny
+   763 				; end back
+   764 14D6 60			        rts
+   765 				; phuuu, just at the finish line, needed $93,
+   766 				; limit for RAMIO is $94
+   767 				.endif
+   768
+   769 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   770 				; 
+   771 				; Run address
+   772 02E0-02E1> 00 40		        run start
