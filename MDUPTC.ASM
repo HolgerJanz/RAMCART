@@ -761,8 +761,8 @@ L2B0A       dex
             ror L2CF2
             jsr L3EC8
 ; add invers TC to version
-            .byte $7d,'MyDOS 4.55beta4 ',$d4,$c3,' ' 
-            .byte '  (C)1989 '
+            .byte $7d,'MyDOS 4.55beta4 ',$d4,$c3,'42' 
+            .byte ' (C)1989 '
             .byte $D7,$CF,$D2,$C4,$CD,$C1,$D2,$CB
             .byte $9B
             .byte 'Disks'
@@ -1860,7 +1860,7 @@ L3895       and #$7F
             beq L38B5
             jmp L38F8
 L38B5       jsr L3EC8
-            .byte 'Size(K)?'
+            .byte 'Size(48-511K)?'
             .byte $00
             jsr L410E
             jsr L4170
@@ -1872,12 +1872,19 @@ L38B5       jsr L3EC8
             ror
             lsr L00D5
             ror
-            bne L38D7
-            lda #$04
+;            bne L38D7
+
+; check bank number between $03 and $1f
+            cmp #$03
+            bcc L38B5
+            cmp #$20
+            bcs L38B5
+            
+;            lda #$04
 L38D7       sta L0C3A
 L38DA       jmp l38F8 ; jump over page sequence
 ;            jsr L3EC8
-            .byte 'Page sequence?'
+            .byte 'Page'  ; -4 because of patch: ' sequence?'
             .byte $00
             jsr L410E
             jsr L4172

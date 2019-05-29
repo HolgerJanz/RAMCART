@@ -188,8 +188,7 @@ print   ; print adr X,Y len A
         rts
 
 msg.start
-        .byte 'My!RAMDISK v42 '
-        .byte 'PATCH MYDOS4.55beta4'
+        .byte 'The!Cart PATCH v42 for MYDOS4.55beta4'
         .byte $9b
 msg.start.end
 
@@ -268,23 +267,30 @@ MAPAGE  = $0bba
         org MAPAGE+3        ; because of bcc VALSEC 
                             ; must not be out of range
 VALSEC  asl
-        tax                 ;Save RAMbank # in X*2
+        sta BUFR            ; save RAMbank # in X*2
+        tya                 ; Sector # (lo) for address of sector
+; set offsets for address in copy loop
+        plp                 ; pull carry
+        ldx #loop.radr.off  ; offset for LB read     
+        ldy #loop.wadr.off  ; offset for LB write
+        bcc sector.read  
+        ldx #loop.wadr.off  ; offset for LB write
+        ldy #loop.radr.off  ; offset for LB read 
+sector.read
 ; set address of sector
-        tya                 ;Sector # (lo)
         sec                 ; set Bit7
         ror                 ; save Bit0 in carry
         and #$bf            ; clear Bit6
-        sta BUFR+1          ;  (lo)/2.
+        sta loop.copy+1,X   ; (lo)/2.
         lda #$00
-        ror                 ;Odd sector uses
-        sta BUFR            ;  top 1/2 page.
+        ror                 ; Odd sector uses
+        sta loop.copy,X     ;  top 1/2 page.
 ; set sector buffer address
-        lda DBUFLO          ;USER BUFFER ADDRESS GOES HERE
-        sta BUFR+2
+        lda DBUFLO          ; USER BUFFER ADDRESS GOES HERE
+        sta loop.copy,Y
         lda DBUFLO+1
-        sta BUFR+3
+        sta loop.copy+1,Y
 ; save the!cart registers
-        plp                 ; pull carry
         lda TCMOSL
         pha
         lda TCMOFR
@@ -295,7 +301,6 @@ VALSEC  asl
         pha
         lda TCPBEN
         pha
-        php                 ; push carry again
 ; set critical mode
         lda #$01
         sta CRITIC          ; tell VBLANK this is critical!
@@ -309,34 +314,24 @@ SYNC    cpy RTCLOKL         ; got a VBLANK yet?
         sta TCMOSL        
         lda #TCMOFR.PBRAM   ; set to RAM
         sta TCMOFR          ;
-        stx TCPBRL          ; get bank number from x
-; read or write sector
-        ldy #$00
-        plp                 ; pull carry 
-        bcc RREADL          ;CY=0 IF READ
-; write
-RWRITL  lda (BUFR+2),Y
-        sta (BUFR),Y
-        iny 
-        bpl RWRITL
-        bmi RRWEND
-; read
-RREADL  lda (BUFR),Y
-        sta (BUFR+2),Y
-        iny 
-        bpl RREADL
-RRWEND
-; restore The!Cart registers, part 1
+        lda BUFR
+        sta TCPBRL          ; get bank number from x
+; copy from/to buffer
+        ldy #$7f            ; 128 bytes in a sector
+loop.copy ; read/write sector from RAMDISK
+loop.radr.off = $01
+loop.wadr.off = $04
+        lda $ffff,Y         ; $FFFF is set to read address
+        sta $ffff,Y         ; $FFFF is set to write address
+        dey
+        bpl loop.copy
+; restore The!Cart registers, part1
         pla        
         sta TCPBEN 
         pla        
         sta TCPBRH 
         pla        
         sta TCPBRL 
-        pla        
-        sta TCMOFR 
-        pla        
-        sta TCMOSL 
 ; jump to The End
         jmp RIOX
 ; max $0c32
@@ -345,7 +340,7 @@ RRWEND
 ; keep original address for RDKIO
 ; ramdisk IO
 ; input: sector number in A(H),Y(L)
-;        read/write    in C
+;        read/write    in C on stack
         sty DAUX1 ;*** FOR FORMAT CODE ***
         cpy #$80
         rol 
@@ -358,6 +353,11 @@ RDKLMT  = *-1       ;NUMBER OF 16K PAGES IN RAMDISK
         ldy #139
         bmi RERROR
 RIOX
+; restore The!Cart registers, part2
+        pla        
+        sta TCMOFR 
+        pla        
+        sta TCMOSL 
 ; reset critical mode
         lda #$C0
         sta NMIEN   ;RE-ENABLE NMI
