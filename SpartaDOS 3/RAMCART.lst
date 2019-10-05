@@ -1,0 +1,822 @@
+mads 1.9.9
+     1 				;
+     2 				; RAMDISK for SpartaDOS 3 
+     3 				;
+     4 				;
+     5 				; System equates
+     6 				;
+     7 				; OS EQUATES
+     8 				; ----------
+     9 				; 
+    10 				; IO EQUATES
+    11 				; 
+    12 = 0002			ICCOM       = $0002
+    13 = 0008			ICBLL       = $0008
+    14 = 0009			ICBLH       = $0009
+    15 				; 
+    16 				; OS VARIABLES FOR XL/XE
+    17 				; 
+    18 				; PAGE 0
+    19 				; 
+    20 = 000A			DOSVEC      = $000A
+    21 = 000C			DOSINI      = $000C
+    22 = 0012			RTCLOK      = $0012
+    23 = 0032			BUFRLO      = $0032
+    24 = 0033			BUFRHI      = $0033
+    25 = 0034			BFENLO      = $0034
+    26 = 0035			BFENHI      = $0035
+    27 				; 
+    28 				; PAGE 2
+    29 				; 
+    30 = 022F			SDMCTL      = $022F
+    31 = 02E7			MEMLO       = $02E7
+    32 				; 
+    33 				; PAGE 3
+    34 				; 
+    35 = 0300			DDEVIC      = $0300
+    36 = 0301			DUNIT       = $0301
+    37 = 0302			DCOMND      = $0302
+    38 = 0304			DBUFLO      = $0304
+    39 = 0305			DBUFHI      = $0305
+    40 = 0308			DBYTLO      = $0308
+    41 = 0309			DBYTHI      = $0309
+    42 = 030A			DAUX1       = $030A
+    43 = 030B			DAUX2       = $030B
+    44 = 0340			IOCB0       = $0340
+    45 				; 
+    46 				; PIA
+    47 				; 
+    48 = D300			PORTA       = $D300
+    49 = D301			PORTB       = $D301
+    50 = D302			PACTL       = $D302
+    51 = D303			PBCTL       = $D303
+    52 				; 
+    53 				; ANTIC
+    54 				; 
+    55 = D40E			NMIEN       = $D40E
+    56 				; 
+    57 				; ROM VECTORS
+    58 				; 
+    59 = E456			CIOV        = $E456
+    60 				;
+    61 				; SpartaDOS 
+    62 				;
+    63 = 000A			SD_BUFOFF      = $0A ; offset in line buffer
+    64 = 003F			SD_LBUF        = $3F ; offset to line buffer
+    65 = 0003			SD_ZCRNAME     = $03 ; offset for jmp to crunch name
+    66 = 0021			SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
+    67 = 000A			SD_LSIO        = $0A ; negative offset to SIO vector
+    68
+    69 				; macros
+    70
+    71 				; set bank: number of bank in X, uses A
+    72 				M_bank_set  .macro
+    73 				            lda BNKSWTMSK,X
+    74 				            eor PORTB
+    75 				            and #$7E
+    76 				            eor PORTB
+    77 				            sta PORTB
+    78 				;            lda PORTB
+    79 				;            and #$01
+    80 				;            ora BNKSWTMSK,X
+    81 				;            sta PORTB
+    82 				            .endm
+    83
+    84 				; saves bank register: pushes bank register on stack
+    85 				M_bank_push .macro
+    86 				            lda PORTB
+    87 				            pha
+    88 				            .endm
+    89
+    90 				; restores bank register from stack: pops from stack
+    91 				M_bank_pop  .macro
+    92 				            pla
+    93 				            sta PORTB
+    94 				            .endm
+    95 				 
+    96 				;
+    97 				; Start of code
+    98 				;
+    99 				            org $3000
+   100
+   101 				; save PIA PORT B
+   102 3000			            M_bank_push
+Macro: M_BANK_PUSH [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 FFFF> 3000-343A> AD 01 +             lda PORTB
+     2 3003 48			            pha
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   103 				            
+   104 				; switch off interrupts
+   105 3004 A9 00		            lda #$00
+   106 3006 8D 2F 02		            sta SDMCTL
+   107 3009 20 A3 31		            jsr WAITSYNC
+   108 				            
+   109 				; try to save and write banks            
+   110 300C A2 1F		            ldx #$1F
+   111 300E			BNKSAVWRT   M_bank_set
+Macro: M_BANK_SET [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 300E BD 1B 34		            lda BNKSWTMSK,X
+     2 3011 4D 01 D3		            eor PORTB
+     3 3014 29 7E		            and #$7E
+     4 3016 4D 01 D3		            eor PORTB
+     5 3019 8D 01 D3		            sta PORTB
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   112 301C AD 00 70		            lda $7000
+   113 301F 9D 3B 35		            sta BNKSAVBUF,X
+   114 3022 BD 1B 34		            lda BNKSWTMSK,X
+   115 3025 8D 00 70		            sta $7000
+   116 3028 AD 01 70		            lda $7001
+   117 302B 9D 5B 35		            sta BNKSAVBUF2,X
+   118 302E BD 1B 34		            lda BNKSWTMSK,X
+   119 3031 0A			            asl
+   120 3032 8D 01 70		            sta $7001
+   121 3035 CA			            dex
+   122 3036 10 D6		            bpl BNKSAVWRT
+   123 				            
+   124 				; check banks
+   125 3038 E8			BNKCHK      inx
+   126 3039			            M_bank_set
+Macro: M_BANK_SET [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 3039 BD 1B 34		            lda BNKSWTMSK,X
+     2 303C 4D 01 D3		            eor PORTB
+     3 303F 29 7E		            and #$7E
+     4 3041 4D 01 D3		            eor PORTB
+     5 3044 8D 01 D3		            sta PORTB
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   127 3047 BD 1B 34		            lda BNKSWTMSK,X
+   128 304A CD 00 70		            cmp $7000
+   129 304D D0 0E		            bne BNKSTOP
+   130 304F BD 1B 34		            lda BNKSWTMSK,X
+   131 3052 0A			            asl
+   132 3053 CD 01 70		            cmp $7001
+   133 3056 D0 05		            bne BNKSTOP
+   134 3058 E0 1F		            cpx #$1F
+   135 305A D0 DC		            bne BNKCHK
+   136 305C E8			            inx
+   137 305D 8E 0D 34		BNKSTOP     stx BNKCNT
+   138
+   139 				; restore banks
+   140 3060 A2 00		            ldx #$00
+   141 3062			BNKRESTR    M_bank_set
+Macro: M_BANK_SET [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 3062 BD 1B 34		            lda BNKSWTMSK,X
+     2 3065 4D 01 D3		            eor PORTB
+     3 3068 29 7E		            and #$7E
+     4 306A 4D 01 D3		            eor PORTB
+     5 306D 8D 01 D3		            sta PORTB
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   142 3070 BD 3B 35		            lda BNKSAVBUF,X
+   143 3073 8D 00 70		            sta $7000
+   144 3076 BD 5B 35		            lda BNKSAVBUF2,X
+   145 3079 8D 01 70		            sta $7001
+   146 307C E8			            inx
+   147 307D E0 20		            cpx #$20
+   148 307F D0 E1		            bne BNKRESTR
+   149
+   150 				; restore PIA PORT B
+   151 3081			            M_bank_pop
+Macro: M_BANK_POP [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 3081 68			            pla
+     2 3082 8D 01 D3		            sta PORTB
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   152
+   153 				; enable interrupts
+   154 3085 A9 22		            lda #$22
+   155 3087 8D 2F 02		            sta SDMCTL
+   156 308A 20 A3 31		            jsr WAITSYNC
+   157
+   158 				; info message
+   159 308D 20 90 32		            jsr PRINT
+   160 3090 52 41 4D 44 49 53 +             .byte 'RAMDISK 512k 2019-10-05 12:33',$9B,$FF
+   161
+   162 				; check bank count
+   163 30AF AE 0D 34		            ldx BNKCNT
+   164 30B2 E0 20		            cpx #$20
+   165 30B4 F0 21		            beq RAMDISKINI
+   166
+   167 				; no banks            
+   168 30B6 20 90 32		            jsr PRINT
+   169 30B9 45 72 72 6F 72 20 +             .byte 'Error - No 512k Extende RAM',$9B,$FF
+   170 30D6 60			            rts
+   171 				                        
+   172 30D7			RAMDISKINI
+   173 				; check for parameter
+   174 30D7 A0 0A		            ldy #SD_BUFOFF
+   175 30D9 B1 0A		            lda (DOSVEC),Y
+   176 30DB 18			            clc
+   177 30DC 69 3F		            adc #SD_LBUF
+   178 30DE A8			            tay
+   179 30DF B1 0A		            lda (DOSVEC),Y
+   180 30E1 C9 9B		            cmp #$9B
+   181 30E3 D0 07		            bne PRSPARM
+   182 				; no parameter -> error
+   183 30E5 4C 27 31		            jmp PARAMERR
+   184
+   185 				; jump for jsr to crunch name
+   186 30E8 4C FF FF		CRNAME      jmp $FFFF
+   187
+   188 30EB FF			CHKFRMT     .byte $FF
+   189
+   190 				; set crunch name address
+   191 30EC A5 0A		PRSPARM     lda DOSVEC
+   192 30EE 18			            clc
+   193 30EF 69 03		            adc #SD_ZCRNAME
+   194 30F1 8D E9 30		            sta CRNAME+1
+   195 30F4 A5 0B		            lda DOSVEC+1
+   196 30F6 69 00		            adc #$00
+   197 30F8 8D EA 30		            sta CRNAME+2
+   198 				            
+   199 				; parameter parsing            
+   200 				; get drive number SD_COMFNAM starts alway with Dx:
+   201 30FB 20 E8 30		            jsr CRNAME
+   202 30FE D0 27		            bne PARAMERR
+   203 3100 A0 22		            ldy #SD_COMFNAM+1
+   204 3102 B1 0A		            lda (DOSVEC),Y
+   205 3104 29 0F		            and #$0F
+   206 3106 8D 1A 34		            sta DRVNUM
+   207 				; check options /N
+   208 3109 20 E8 30		            jsr CRNAME
+   209 310C F0 43		            beq PRSPAREND
+   210 310E A0 24		            ldy #SD_COMFNAM+3
+   211 3110 B1 0A		            lda (DOSVEC),Y
+   212 3112 C9 2F		            cmp #'/'
+   213 3114 D0 11		            bne PARAMERR
+   214 3116 C8			PRSPARLOOP  iny
+   215 3117 B1 0A		            lda (DOSVEC),Y
+   216 3119 C9 9B		            cmp #$9B         ; end of parameter
+   217 311B F0 34		            beq PRSPAREND
+   218 311D C9 4E		PRSPARNXT   cmp #'N'         ; format ?
+   219 311F D0 06		            bne PARAMERR
+   220 				; check format at startup to preserve existing RAM disk            
+   221 3121 EE EB 30		            inc CHKFRMT
+   222 3124 4C 16 31		            jmp PRSPARLOOP
+   223 3127 20 90 32		PARAMERR    jsr PRINT
+   224 312A 45 72 72 6F 72 20 +             .byte 'Error - Parameter Error use Dx: [/N]',$9B,$FF
+   225 3150 60			            rts
+   226
+   227 				; set jsr to original DOSINI
+   228 3151 A5 0C		PRSPAREND   lda DOSINI
+   229 3153 8D C7 32		            sta JSRDOSINI+1
+   230 3156 A5 0D		            lda DOSINI+1
+   231 3158 8D C8 32		            sta JSRDOSINI+2
+   232
+   233 				; set MEMLO oldaddress, realloc
+   234 315B AD E7 02		            lda MEMLO
+   235 315E 8D 80 36		            sta READSTADR
+   236 3161 8D 86 36		            sta CPYTOADR
+   237 3164 AD E8 02		            lda MEMLO+1
+   238 3167 8D 81 36		            sta READSTADR+1
+   239 316A 8D 87 36		            sta CPYTOADR+1
+   240 				;
+   241 				; start realloc
+   242 				;
+   243 316D 20 B8 35		            jsr REASTART
+   244
+   245 				; set new DOSINI            
+   246 3170 A9 C6		REAL001     lda #<JSRDOSINI
+   247 3172 85 0C		            sta DOSINI
+   248 3174 A9 32		REAH001     lda #>JSRDOSINI
+   249 3176 85 0D		            sta DOSINI+1
+   250 				; get SIO and patch for RAMDISK
+   251 3178 38			            sec
+   252 3179 A5 0A		            lda DOSVEC
+   253 317B E9 0A		            sbc #SD_LSIO
+   254 317D 85 32		            sta BUFRLO
+   255 317F A5 0B		            lda DOSVEC+1
+   256 3181 E9 00		            sbc #$00
+   257 3183 85 33		            sta BUFRHI
+   258 3185 A0 00		            ldy #$00
+   259 3187 B1 32		            lda (BUFRLO),Y
+   260 3189 8D E4 32		REAA001     sta JMPSIO+1      ;realloc $33CA
+   261 318C A9 D4		REAL002     lda #<RAMDSIO
+   262 318E 91 32		            sta (BUFRLO),Y
+   263 3190 C8			            iny
+   264 3191 B1 32		            lda (BUFRLO),Y
+   265 3193 8D E5 32		REAA002     sta JMPSIO+2      ;realloc $33D4
+   266 3196 A9 32		REAH002     lda #>RAMDSIO
+   267 3198 91 32		            sta (BUFRLO),Y
+   268 				; set MEMLO            
+   269 319A 20 C9 32		REAA003     jsr SETMEMLO      ;realloc $33DB
+   270 				; format if requested            
+   271 319D 2C EB 30		            bit CHKFRMT
+   272 31A0 30 08		            bmi FRMTRD
+   273 31A2 60			            rts
+   274
+   275 				; wait for sync            
+   276 31A3 A5 14		WAITSYNC    lda RTCLOK+2
+   277 31A5 C5 14		WAITLOOP    cmp RTCLOK+2
+   278 31A7 F0 FC		            beq WAITLOOP
+   279 31A9 60			            rts
+   280 				            
+   281 				; format ramdisk
+   282 31AA 20 90 32		FRMTRD      jsr PRINT
+   283 31AD 20 20 52 41 4D 20 +             .byte '  RAM Disk Formatted',$9B,$FF
+   284
+   285
+   286 				;            lda PORTB
+   287 				;            pha
+   288 31C3			            M_bank_push
+Macro: M_BANK_PUSH [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 31C3 AD 01 D3		            lda PORTB
+     2 31C6 48			            pha
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   289 				            
+   290 				;            and #$FD
+   291 				;            eor BNKSWTMSK
+   292 				;            and PORTBMASK
+   293 				;            eor PORTB
+   294 				;            sta PORTB
+   295 31C7 A2 10		            ldx #$10
+   296 31C9			            M_bank_set
+Macro: M_BANK_SET [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 31C9 BD 1B 34		            lda BNKSWTMSK,X
+     2 31CC 4D 01 D3		            eor PORTB
+     3 31CF 29 7E		            and #$7E
+     4 31D1 4D 01 D3		            eor PORTB
+     5 31D4 8D 01 D3		            sta PORTB
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   297
+   298 				; clear loop
+   299 31D7 A9 00		            lda #$00
+   300 31D9 A8			            tay
+   301 31DA 99 00 40		FRMTCLP     sta $4000,Y
+   302 31DD 99 00 41		            sta $4100,Y
+   303 31E0 99 00 42		            sta $4200,Y
+   304 31E3 99 00 43		            sta $4300,Y
+   305 31E6 C8			            iny
+   306 31E7 D0 F1		            bne FRMTCLP
+   307 				; header loop            
+   308 31E9 A0 2A		            ldy #$2A
+   309 31EB B9 54 32		FRMTHLP     lda RDHEAD,Y
+   310 31EE 99 00 40		            sta $4000,Y
+   311 31F1 88			            dey
+   312 31F2 10 F7		            bpl FRMTHLP
+   313 				; set free sector VTOC             
+   314 31F4 AD 0D 34		            lda BNKCNT
+   315 31F7 4A			            lsr
+   316 31F8 4A			            lsr
+   317 31F9 AA			            tax
+   318 31FA 20 47 32		FRMTVTOCLP  jsr FRMTSETVTOC
+   319 31FD AD 4C 32		            lda FRMTVTOCIT+1
+   320 3200 18			            clc
+   321 3201 69 40		            adc #$40
+   322 3203 8D 4C 32		            sta FRMTVTOCIT+1
+   323 3206 AD 4D 32		            lda FRMTVTOCIT+2
+   324 3209 69 00		            adc #$00
+   325 320B 8D 4D 32		            sta FRMTVTOCIT+2
+   326 320E CA			            dex
+   327 320F D0 E9		            bne FRMTVTOCLP
+   328 				 ; set map sector
+   329 3211 A9 04		            lda #$04 
+   330 3213 8D 0F 40		            sta $400F     ; number of bit map sectors used on the disk
+   331 3216 18			            clc
+   332 3217 69 02		            adc #$02
+   333 3219 8D 09 40		            sta $4009     ; first sector map of the MAIN directory
+   334 321C A9 00		            lda #$00 
+   335 321E 8D 80 40		            sta $4080
+   336 3221 A9 80		            lda #$80      ; low address of MAIN sector map
+   337 3223 85 32		            sta BUFRLO
+   338 3225 A9 42		            lda #$42      ; high address of MAIN sector map
+   339 3227 85 33		            sta BUFRHI   
+   340 3229 18			            clc
+   341 322A A0 04		            ldy #$04
+   342 322C AD 09 40		            lda $4009
+   343 322F 69 01		            adc #$01
+   344 3231 91 32		            sta (BUFRLO),Y
+   345 				; set MAIN sector map            
+   346 3233 A2 00		            ldx #$00
+   347 3235 A0 80		            ldy #$80
+   348 3237 BD 7F 32		L349B       lda RDMAIN,X
+   349 323A 91 32		            sta (BUFRLO),Y
+   350 323C E8			            inx
+   351 323D C8			            iny
+   352 323E E0 11		            cpx #$11
+   353 3240 D0 F5		            bne L349B
+   354 				; restore PORTB
+   355 				;            pla
+   356 				;            sta PORTB
+   357 3242			            M_bank_pop
+Macro: M_BANK_POP [Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM]
+     1 3242 68			            pla
+     2 3243 8D 01 D3		            sta PORTB
+Source: /Users/holger/Documents/ATARI-XL/Projects/RAMCART/SpartaDOS 3/RAMCART.ASM
+   358 3246 60			            rts
+   359 				            
+   360 				; set VTOC            
+   361 3247 A0 00		FRMTSETVTOC ldy #$00
+   362 3249 A9 FF		            lda #$FF
+   363 324B 99 80 40		FRMTVTOCIT  sta $4080,Y
+   364 324E C8			            iny
+   365 324F C0 40		            cpy #$40
+   366 3251 D0 F8		            bne FRMTVTOCIT
+   367 3253 60			            rts
+   368
+   369 3254 00 03 00 07 E0 07 + RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
+   370 325C 30 03 00		            .byte $30,$03,$00 ;original $00,$04,$FB,$03
+   371 325F 00 10 F8 0F		            .word $1000,$0ff8 ; 512k
+   372 3263 01 02 00 20 00 00 +             .byte $01, $02,$00,$20,$00,$00,$00
+   373 326A 52 41 4D 44 35 31 +             .byte 'RAMD512K'
+   374 3272 00 80 22 00 00 00 +             .byte $00,$80,$22,$00,$00,$00,$00,$00
+   375 327A 00 16 00 00 00	            .byte $00,$16,$00,$00,$00
+   376
+   377 327F 08 00 00 11 00 00	RDMAIN      .byte $08,$00,$00,$11,$00,$00
+   378 3285 4D 41 49 4E 20 20 +             .byte 'MAIN       '
+   379
+   380
+   381 				; print subroutine            
+   382 3290 68			PRINT       pla
+   383 3291 8D A1 32		            sta PRINTITER+1
+   384 3294 68			            pla
+   385 3295 8D A2 32		            sta PRINTITER+2
+   386 3298 EE A1 32		PRINTLOOP   inc PRINTITER+1
+   387 329B D0 03		            bne PRINTITER
+   388 329D EE A2 32		            inc PRINTITER+2
+   389 32A0 AD FF FF		PRINTITER   lda $FFFF
+   390 32A3 C9 FF		            cmp #$FF
+   391 32A5 F0 06		            beq PRINTEND
+   392 32A7 20 B6 32		            jsr CIOPUTCHR
+   393 32AA 4C 98 32		            jmp PRINTLOOP
+   394 32AD AD A2 32		PRINTEND    lda PRINTITER+2
+   395 32B0 48			            pha
+   396 32B1 AD A1 32		            lda PRINTITER+1
+   397 32B4 48			            pha
+   398 32B5 60			            rts
+   399 				; call cio put char subroutine
+   400 32B6 A2 00		CIOPUTCHR   ldx #$00
+   401 32B8 8E 48 03		            stx IOCB0+ICBLL
+   402 32BB 8E 49 03		            stx IOCB0+ICBLH
+   403 32BE A0 0B		            ldy #$0B
+   404 32C0 8C 42 03		            sty IOCB0+ICCOM
+   405 32C3 4C 56 E4		            jmp CIOV
+   406
+   407
+   408
+   409 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   410 				;;; BEGIN OF REALLOC BLOCK
+   411 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   412
+   413 				; to realloc routines
+   414 				; DOSINI set MEMLO at reset
+   415 32C6			REABEGIN
+   416 32C6 20 00 00		JSRDOSINI   jsr $0000
+   417
+   418 32C9			SETMEMLO    
+   419 32C9 A9 3B		REAL003     lda #<BNKSAVBUF
+   420 32CB 8D E7 02		            sta MEMLO
+   421 32CE A9 35		REAH003     lda #>BNKSAVBUF
+   422 32D0 8D E8 02		            sta MEMLO+1
+   423 32D3 60			            rts
+   424
+   425 				; new DOSVEC for RAMDISK device
+   426 32D4 AD 00 03		RAMDSIO     lda DDEVIC
+   427 32D7 C9 31		            cmp #$31
+   428 32D9 D0 08		            bne JMPSIO
+   429 32DB AD 01 03		            lda DUNIT
+   430 32DE CD 1A 34		REAA004     cmp DRVNUM
+   431 32E1 F0 03		            beq L358A
+   432 32E3 4C 00 00		JMPSIO      jmp $0000
+   433 32E6 AE 01 D3		L358A       ldx PORTB           ; save PORTB
+   434 32E9 78			            sei
+   435 32EA A9 00		            lda #$00
+   436 32EC 8D 0E D4		            sta NMIEN
+   437 32EF AD 04 03		            lda DBUFLO
+   438 32F2 85 34		            sta BFENLO
+   439 32F4 AD 05 03		            lda DBUFHI
+   440 32F7 85 35		            sta BFENHI
+   441 32F9 AD 02 03		            lda DCOMND
+   442 				            
+   443 32FC C9 53		            cmp #$53            ; command STATUS REQUEST 
+   444 32FE D0 1B		            bne NEXT1
+   445 3300 AD 15 34		REAA009     lda L36BF
+   446 3303 4A			            lsr
+   447 3304 4A			            lsr
+   448 3305 49 30		            eor #$30
+   449 3307 AC 11 34		REAA010     ldy L36BB
+   450 330A C0 1A		            cpy #$1A
+   451 330C D0 02		            bne L35B4
+   452 330E 09 80		            ora #$80
+   453 3310 A0 00		L35B4       ldy #$00
+   454 3312 91 34		            sta (BFENLO),Y
+   455 3314 C8			            iny
+   456 3315 A9 FF		            lda #$FF
+   457 3317 91 34		            sta (BFENLO),Y
+   458 3319 30 22		            bmi JMPSIOEND
+   459 				            
+   460 331B C9 4E		NEXT1       cmp #$4E            ; command RETURN CONFIGURATION
+   461 331D D0 0C		            bne NEXT2
+   462 331F A0 0B		            ldy #$0B            ; 12 bytes
+   463 3321			RETCNFLOOP
+   464 3321 B9 0E 34		REAA011     lda CONFBUF,Y
+   465 3324 91 34		            sta (BFENLO),Y
+   466 3326 88			            dey
+   467 3327 10 F8		            bpl RETCNFLOOP
+   468 3329 30 12		            bmi JMPSIOEND
+   469 				            
+   470 332B C9 4F		NEXT2       cmp #$4F            ; command SET CONFIGURATION
+   471 332D D0 11		            bne NEXT3
+   472 332F A0 07		            ldy #$07
+   473 3331 B1 34		            lda (BFENLO),Y
+   474 3333 8D 15 34		REAA012     sta L36BF
+   475 3336 A0 03		            ldy #$03
+   476 3338 B1 34		            lda (BFENLO),Y
+   477 333A 8D 11 34		REAA013     sta L36BB
+   478
+   479 333D			JMPSIOEND
+   480 333D 4C FD 33		REAA014     jmp RDSIOEND
+   481
+   482 3340 C9 21		NEXT3       cmp #$21            ; command FORMAT DISK
+   483 3342 D0 0B		            bne NEXT4
+   484 3344 A0 00		SIOFRMT     ldy #$00
+   485 3346 A9 FF		            lda #$FF
+   486 3348 91 34		            sta (BFENLO),Y
+   487 334A C8			            iny
+   488 334B 91 34		            sta (BFENLO),Y
+   489 334D D0 EE		            bne JMPSIOEND
+   490 				            
+   491 334F C9 22		NEXT4       cmp #$22            ; command FORMAT DISK ENHANCED
+   492 3351 D0 0C		            bne NEXT5
+   493 3353 A9 1A		            lda #$1A
+   494 3355 8D 11 34		REAA015     sta L36BB
+   495 3358 A9 80		            lda #$80
+   496 335A 8D 15 34		REAA016     sta L36BF
+   497 335D D0 E5		            bne SIOFRMT
+   498 				            
+   499 335F C9 52		NEXT5       cmp #$52            ; command GET SECTOR
+   500 3361 F0 0B		            beq PUTGETSEC
+   501 3363 C9 57		            cmp #$57            ; command PUT SECTOR WITH VERIFY
+   502 3365 F0 07		            beq PUTGETSEC
+   503 3367 C9 50		            cmp #$50            ; command PUT SECTOR
+   504 3369 F0 03		            beq PUTGETSEC
+   505 336B 4C 00 34		REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
+   506
+   507 336E A9 00		PUTGETSEC   lda #$00
+   508 3370 85 32		            sta BUFRLO
+   509 3372 AD 0A 03		            lda DAUX1
+   510 3375 38			            sec
+   511 3376 E9 01		            sbc #$01
+   512 3378 85 33		            sta BUFRHI
+   513 337A AD 0B 03		            lda DAUX2
+   514 337D E9 00		            sbc #$00
+   515 337F 06 33		            asl BUFRHI
+   516 3381 2A			            rol
+   517 3382 2C 08 03		            bit DBYTLO
+   518 3385 30 06		            bmi L3631
+   519 3387 0E 15 34		REAA017     asl L36BF
+   520 338A 06 33		            asl BUFRHI
+   521 338C 2A			            rol
+   522 338D 48			L3631       pha
+   523 338E A5 33		            lda BUFRHI
+   524 3390 4A			            lsr
+   525 3391 4A			            lsr
+   526 3392 66 32		            ror BUFRLO
+   527 3394 09 40		            ora #$40
+   528 3396 85 33		            sta BUFRHI
+   529 				            
+   530 3398 8A			            txa                 ; OS off ???
+   531 3399 29 FE		            and #$FE
+   532 339B 8D 01 D3		            sta PORTB
+   533 				            
+   534 339E AD 02 03		            lda DCOMND
+   535 33A1 C9 52		            cmp #$52
+   536 33A3 F0 0D		            beq L3656           ; is PUT
+   537 				            
+   538 33A5 A0 00		            ldy #$00
+   539 33A7 B1 34		L364B       lda (BFENLO),Y
+   540 33A9 99 3B 34		REAA005     sta BUFFERXX1,Y
+   541 33AC C8			            iny
+   542 33AD CC 08 03		            cpy DBYTLO
+   543 33B0 D0 F5		            bne L364B
+   544 				            
+   545 33B2 68			L3656       pla                 ; check bank number
+   546 33B3 CD 0D 34		REAA018     cmp BNKCNT
+   547 33B6 B0 48		            bcs RDSIOEND+3      ; error NAK
+   548 33B8 A8			            tay
+   549 				            
+   550 33B9 AD 01 D3		            lda PORTB           ; set bank
+   551 33BC 29 FD		            and #$FD
+   552 33BE 59 1B 34		REAA019     eor BNKSWTMSK,Y
+   553 				;REAA022     and PORTBMASK
+   554 33C1 29 7E		            and #$7E
+   555 33C3 4D 01 D3		            eor PORTB
+   556 33C6 8D 01 D3		            sta PORTB
+   557 				            
+   558 33C9 A0 00		            ldy #$00
+   559 33CB AD 02 03		            lda DCOMND
+   560 33CE C9 52		            cmp #$52
+   561 33D0 D0 20		            bne L369B           ; is PUT
+   562 33D2 B1 32		L367B       lda (BUFRLO),Y
+   563 33D4 99 3B 34		REAA006     sta BUFFERXX1,Y
+   564 33D7 C8			            iny
+   565 33D8 CC 08 03		            cpy DBYTLO
+   566 33DB D0 F5		            bne L367B
+   567 				            
+   568 33DD 8A			            txa                 ; OS off ???
+   569 33DE 29 FE		            and #$FE
+   570 33E0 8D 01 D3		            sta PORTB
+   571
+   572 33E3 A0 00		            ldy #$00
+   573 33E5			L368E
+   574 33E5 B9 3B 34		REAA008     lda BUFFERXX1,Y
+   575 33E8 91 34		            sta (BFENLO),Y
+   576 33EA C8			            iny
+   577 33EB CC 08 03		            cpy DBYTLO
+   578 33EE D0 F5		            bne L368E
+   579 33F0 F0 0B		            beq RDSIOEND
+   580 33F2			L369B
+   581 33F2 B9 3B 34		REAA007     lda BUFFERXX1,Y
+   582 33F5 91 32		            sta (BUFRLO),Y
+   583 33F7 C8			            iny
+   584 33F8 CC 08 03		            cpy DBYTLO
+   585 33FB D0 F5		            bne L369B
+   586 				            
+   587 33FD A0 01		RDSIOEND    ldy #$01
+   588 33FF 2C A0 8B		            bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
+   589
+   590 3402 8E 01 D3		            stx PORTB           ; restrore PORTB
+   591
+   592 3405 A9 E0		            lda #$E0
+   593 3407 8D 0E D4		            sta NMIEN
+   594 340A 58			            cli
+   595 340B 98			            tya
+   596 340C 60			            rts
+   597 				            
+   598 340D 00			BNKCNT      .byte $00
+   599
+   600 				; drive configuration buffer
+   601 340E 28 01 12		CONFBUF     .byte $28,$01,$12
+   602 3411 00 00 00 00		L36BB       .byte $00,$00,$00,$00
+   603 3415 80 FF 00 00 00	L36BF       .byte $80,$FF,$00,$00,$00
+   604
+   605 341A 01			DRVNUM      .byte $01
+   606 341B 60 64 68 6C 20 24 + BNKSWTMSK   .byte $60,$64,$68,$6C,$20,$24,$28,$2C
+   607 3423 40 44 48 4C 00 04 +             .byte $40,$44,$48,$4C,$00,$04,$08,$0C
+   608 342B 62 66 6A 6E 22 26 +             .byte $62,$66,$6A,$6E,$22,$26,$2A,$2E
+   609 3433 42 46 4A 4E 02 06 +             .byte $42,$46,$4A,$4E,$02,$06,$0A,$0E
+   610 				;PORTBMASK   .byte $7E
+   611
+   612 				; $100 Bytes
+   613 343B			BUFFERXX1
+   614
+   615 				;            org $37E6
+   616 = 353B			REAEND      = BUFFERXX1 + $100
+   617 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   618 				;;; END OF REALLOC BLOCK
+   619 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   620
+   621
+   622 				; $20 Bytes
+   623 = 353B			BNKSAVBUF   = REAEND
+   624
+   625 				; $20 bytes
+   626 				;            org $3806
+   627 = 355B			BNKSAVBUF2  = BNKSAVBUF + $20
+   628
+   629 				 
+   630 				;           org $3826
+   631 343B			            org BNKSAVBUF2 + $20
+   632 				; realloc whole addresses
+   633 357B-3689> 8A 31		REATAB      .word REAA001+1 ;$33CA
+   634 357D 94 31		            .word REAA002+1 ;$33D4
+   635 357F 9B 31		            .word REAA003+1 ;$33DB
+   636 3581 DF 32		            .word REAA004+1 ;$3583
+   637 3583 AA 33		            .word REAA005+1 ;$364E
+   638 3585 D5 33		            .word REAA006+1 ;$367E
+   639 3587 F3 33		            .word REAA007+1 ;$369C
+   640 3589 E6 33		            .word REAA008+1 ;$368F
+   641 358B 01 33		            .word REAA009+1 ;$35A5
+   642 358D 08 33		            .word REAA010+1 ;$35AC
+   643 358F 22 33		            .word REAA011+1 ;$35C6
+   644 3591 34 33		            .word REAA012+1 ;$35D8
+   645 3593 3B 33		            .word REAA013+1 ;$35DF
+   646 3595 3E 33		            .word REAA014+1 ;$35E2
+   647 3597 56 33		            .word REAA015+1 ;$35FA
+   648 3599 5B 33		            .word REAA016+1 ;$35FF
+   649 359B 88 33		            .word REAA017+1 ;$362C
+   650 359D B4 33		            .word REAA018+1 ;$365C
+   651 359F BF 33		            .word REAA019+1 ;$3667
+   652 35A1 6C 33		            .word REAA020+1 ;$3610
+   653 				;            .word REAA022+1 ;$366A
+   654 35A3 00 00		            .word $0000
+   655 				 
+   656 				; realloc address low byte           
+   657 35A5 71 31		            .word REAL001+1 ;$33B1
+   658 35A7 8D 31		            .word REAL002+1 ;$33CD
+   659 35A9 CA 32		            .word REAL003+1 ;$356E
+   660 35AB 00 00		            .word $0000
+   661 				; realloc address high byte (address to high byte and value of low byte)
+   662 35AD 75 31		            .word REAH001+1  ;$33B5
+   663 35AF C6			            .byte <JSRDOSINI ;$6A
+   664 				                        
+   665 35B0 97 31		            .word REAH002+1 ;$33D7
+   666 35B2 D4			            .byte <RAMDSIO  ;$78
+   667 				            
+   668 35B3 CF 32		            .word REAH003+1  ;$3573
+   669 35B5 3B			            .byte <BNKSAVBUF ;$E6
+   670 				            
+   671 35B6 00 00		            .word $0000
+   672 				            
+   673 35B8 A9 00		REASTART    lda #$00
+   674 35BA 8D 8A 36		            sta REALOOPCNT
+   675 35BD AE 8A 36		REALOOP     ldx REALOOPCNT
+   676 35C0 BD 7C 36		            lda REATABADR,X
+   677 35C3 8D 62 36		            sta L3910+1
+   678 35C6 BD 7D 36		            lda REATABADR+1,X
+   679 35C9 8D 63 36		            sta L3910+2
+   680 35CC 0D 62 36		            ora L3910+1
+   681 35CF D0 01		            bne L3881
+   682 35D1 60			            rts
+   683 				            
+   684 35D2 38			L3881       sec
+   685 35D3 BD 80 36		            lda READSTADR,X
+   686 35D6 FD 7E 36		            sbc REASRCADR,X
+   687 35D9 8D 8B 36		            sta READIFLO
+   688 35DC BD 81 36		            lda READSTADR+1,X
+   689 35DF FD 7F 36		            sbc REASRCADR+1,X
+   690 35E2 8D 8C 36		            sta READIFHI
+   691 				            
+   692 35E5 20 6D 36		L3894       jsr L391C
+   693 35E8 F0 13		            beq L38AC
+   694 35EA B1 D7		            lda ($D7),Y
+   695 35EC 18			            clc
+   696 35ED 6D 8B 36		            adc READIFLO
+   697 35F0 91 D7		            sta ($D7),Y
+   698 35F2 C8			            iny
+   699 35F3 B1 D7		            lda ($D7),Y
+   700 35F5 6D 8C 36		            adc READIFHI
+   701 35F8 91 D7		            sta ($D7),Y
+   702 35FA 4C E5 35		            jmp L3894
+   703 35FD 20 6D 36		L38AC       jsr L391C
+   704 3600 F0 0B		            beq L38BC
+   705 3602 B1 D7		            lda ($D7),Y
+   706 3604 18			            clc
+   707 3605 6D 8B 36		            adc READIFLO
+   708 3608 91 D7		            sta ($D7),Y
+   709 360A 4C FD 35		            jmp L38AC
+   710 360D 20 6D 36		L38BC       jsr L391C
+   711 3610 F0 11		            beq L38D2
+   712 3612 20 61 36		            jsr L3910
+   713 3615 18			            clc
+   714 3616 6D 8B 36		            adc READIFLO
+   715 3619 B1 D7		            lda ($D7),Y
+   716 361B 6D 8C 36		            adc READIFHI
+   717 361E 91 D7		            sta ($D7),Y
+   718 3620 4C 0D 36		            jmp L38BC
+   719 3623 AE 8A 36		L38D2       ldx REALOOPCNT
+   720
+   721 3626 BD 82 36		            lda CPYFROMADR,X
+   722 3629 8D 44 36		            sta L38F2+1
+   723 362C BD 83 36		            lda CPYFROMADR+1,X
+   724 362F 8D 45 36		            sta L38F2+2
+   725
+   726 3632 BD 86 36		            lda CPYTOADR,X
+   727 3635 8D 47 36		            sta L38F2+4
+   728 3638 BD 87 36		            lda CPYTOADR+1,X
+   729 363B 8D 48 36		            sta L38F2+5
+   730
+   731 363E BC 85 36		            ldy CPYLENGTH+1,X
+   732 3641 A2 00		            ldx #$00
+   733 3643 BD FF FF		L38F2       lda $FFFF,X
+   734 3646 9D FF FF		            sta $FFFF,X
+   735 3649 E8			            inx
+   736 364A D0 F7		            bne L38F2
+   737 364C EE 45 36		            inc L38F2+2
+   738 364F EE 48 36		            inc L38F2+5
+   739 3652 88			            dey
+   740 3653 10 EE		            bpl L38F2
+   741 3655 AD 8A 36		            lda REALOOPCNT
+   742 3658 18			            clc
+   743 3659 69 0C		            adc #$0C
+   744 365B 8D 8A 36		            sta REALOOPCNT
+   745 365E 4C BD 35		            jmp REALOOP
+   746 				            
+   747 3661 AD FF FF		L3910       lda $FFFF
+   748 3664 EE 62 36		            inc L3910+1
+   749 3667 D0 03		            bne L391B
+   750 3669 EE 63 36		            inc L3910+2
+   751 366C 60			L391B       rts
+   752
+   753 366D 20 61 36		L391C       jsr L3910
+   754 3670 85 D7		            sta $D7
+   755 3672 20 61 36		            jsr L3910
+   756 3675 A0 00		            ldy #$00
+   757 3677 85 D8		            sta $D8
+   758 3679 05 D7		            ora $D7
+   759 367B 60			            rts
+   760
+   761 				; realloc code pointer
+   762 367C 7B 35		REATABADR   .word REATAB
+   763 367E C6 32		REASRCADR   .word REABEGIN
+   764 3680 FF FF		READSTADR   .word $FFFF
+   765 				; copy code pointer
+   766 3682 C6 32		CPYFROMADR  .word REABEGIN
+   767 3684 75 02		CPYLENGTH   .word REAEND-REABEGIN ;$027C
+   768 3686 FF FF		CPYTOADR    .word $FFFF
+   769 3688 00 00		            .word $0000
+   770 				            
+   771 				; $01 byte
+   772 368A			REALOOPCNT  ;= $392B
+   773 = 368B			READIFLO   = REALOOPCNT+1
+   774 = 368C			READIFHI   = READIFLO+1
+   775
+   776
+   777 				         
