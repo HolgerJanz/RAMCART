@@ -1,6 +1,6 @@
 ;
-; RAMDISK for SpartaDOS 3 
-;
+; THE!RAMDISK for THE!CART for SpartaDOS 3 
+; Previous work RD/RAMDISK.COM for SpartaDOS 3 by FTe
 ;
 ; System equates
 ;
@@ -66,6 +66,122 @@ SD_ZCRNAME     = $03 ; offset for jmp to crunch name
 SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
 SD_LSIO        = $0A ; negative offset to SIO vector
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 
+; The!Cart programming information
+; (c) 2013 Matthias Reichl
+;
+; The!Cart is equipped with 128MB flash (Spansion S29GL01
+; chip), 512k RAM and a 256-byte SPI EEPROM (Microchip
+; 25AA020A). The memory is addressed using 16384 8k banks
+; (64 8k banks when using RAM instead of flash).
+; 
+; The cartridge configuration registers are located at
+; $D5A0-$D5A8. All registers are read/write unless noted
+; otherwise. Unused bits shall be written as '0' and
+; always read back as '0'.
+; 
+; Powerup configuration is 8k mode ($A000-$BFFF) using
+; flash bank 0, writes to flash are disabled.
+; 
+; Depending on the selected cartridge mode additional
+; registers are enabled at $D5xx.
+; 
+; The primary bank register also serves as a base bank
+; register for the various sub-modes.
+; 
+; The secondary bank register is only used in "flexi mode".
+;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 
+; The!Cart Register (from-to,default)
+;
+
+; Mode Select
+TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+; Cartridge mode is selected with bits 0-5 of $D5A6, values
+; other than the ones listed here are reserved (and result
+; in "cartridge off"):
+; $00: off, cartridge disabled
+; $01: 8k banks at $A000
+; $02: AtariMax 1MBit / 128k
+; $03: Atarimax 8MBit / 1MB
+; $04: OSS M091
+; $08: SDX 64k cart, $D5Ex banking
+; $09: Diamond GOS 64k cart, $D5Dx banking
+; $0A: Express 64k cart, $D57x banking
+; $0C: Atrax 128k cart
+; $0D: Williams 64k cart
+; $20: flexi mode (separate 8k banks at $A000 and $8000)
+; $21: standard 16k cart at $8000-$BFFF
+; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+; $23: Blizzard 16k
+; $24: Sic!Cart 512k
+; $28: 16k Mega cart
+; $29: 32k Mega cart
+; $2A: 64k Mega cart
+; $2B: 128k Mega cart
+; $2C: 256k Mega cart
+; $2D: 512k Mega cart
+; $2E: 1024k Mega cart
+; $2F: 2048k Mega cart
+; $30: 32k XEGS cart
+; $31: 64k XEGS cart
+; $32: 128k XEGS cart
+; $33: 256k XEGS cart
+; $34: 512k XEGS cart
+; $35: 1024k XEGS cart
+; $38: 32k SWXEGS cart
+; $39: 64k SWXEGS cart
+; $3A: 128k SWXEGS cart
+; $3B: 256k SWXEGS cart
+; $3C: 512k SWXEGS cart
+; $3D: 1024k SWXEGS cart
+TCMOSL.OFF   = $00    ; off, cartridge disabled
+TCMOSL.8K    = $01    ; 8k banks at $A000
+TCMOSL.FLEXI = $21    ; flexi mode,
+                         ; separate 8k banks at $A000 and $8000
+TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+
+; how to figure out that The!Cart is not active?
+; If the address is not used then the XL returns $ff but
+; the XE (and old 800) return $d5 (high byte of address,
+; the value of the last bus cycle)
+TCMOSL.XLLOCK  = $ff    ; config lock or not present
+TCMOSL.XELOCK  = $d5    ; config lock or not present
+
+; Mode Flash/RAM Select
+TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+; bit 0: primary bank write enable (0=readOnly, 1=write)
+; bit 1: primary bank source (0=flash, 1=RAM)
+; bit 2: secondary bank write enable (0=readOnly, 1=write)
+; bit 3: secondary bank source (0=flash, 1=RAM)
+TCMOFR.PBRAM = $03    ; primary bank RAM
+TCMOFR.SBRAM = $0C    ; secondary bank RAM
+
+; Primary Bank
+TCPBRL = $d5a0    ; register low byte (0-255,0)
+TCPBRH = $d5a1    ; register high byte (0-63,0)
+TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+
+; Secondary Bank 
+TCSBRL = $d5a3    ; register low byte (0-255,0)
+TCSBRH = $d5a4  ; register high byte (0-63,0)
+TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+
+; SPI interface to EEPROM
+TCINEP = $d5a8
+; bit 0: SPI CLK
+; bit 1: SPI CS
+; bit 7: SPI data in (on reads), SPI data out (on writes)
+
+; configuration lock
+TCCOLO = $d5af
+; Writing to this register disables "The!Cart" registers
+; at $d5aX.
+
+
 ; macros
 
 ; set bank: number of bank in X, uses A
@@ -93,14 +209,42 @@ M_bank_pop  .macro
             sta PORTB
             .endm
  
+; set bank: number of bank in X, uses A
+M_cart_set  .macro
+; set new The!Cart mode
+            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+            sta TCMOSL          
+            lda #TCMOFR.PBRAM       ; set to RAM
+            sta TCMOFR
+            txa
+            asl   
+            sta TCPBRL              ; get bank number from X
+            lda #$00                     
+            sta TCPBRH              ; set high to $00
+            lda #$01
+            sta TCPBEN              ; enable        
+            .endm
+
+
+
 ;
 ; Start of code
 ;
             org $3000
 
-; save PIA PORT B
-            M_bank_push
-            
+; save the!cart registers
+            lda TCMOSL
+            pha
+            lda TCMOFR
+            pha
+            lda TCPBRL
+            pha
+            lda TCPBRH
+            pha
+            lda TCPBEN
+            pha
+
+           
 ; switch off interrupts
             lda #$00
             sta SDMCTL
@@ -108,28 +252,28 @@ M_bank_pop  .macro
             
 ; try to save and write banks            
             ldx #$1F
-BNKSAVWRT   M_bank_set
-            lda $7000
+BNKSAVWRT   M_cart_set
+            lda $9000
             sta BNKSAVBUF,X
-            lda BNKSWTMSK,X
-            sta $7000
-            lda $7001
+            txa
+            sta $9000
+            lda $B000
             sta BNKSAVBUF2,X
-            lda BNKSWTMSK,X
+            txa
             asl
-            sta $7001
+            sta $B000
             dex
             bpl BNKSAVWRT
             
 ; check banks
 BNKCHK      inx
-            M_bank_set
-            lda BNKSWTMSK,X
-            cmp $7000
+            M_cart_set            
+            txa
+            cmp $9000
             bne BNKSTOP
-            lda BNKSWTMSK,X
+            txa
             asl
-            cmp $7001
+            cmp $B000
             bne BNKSTOP
             cpx #$1F
             bne BNKCHK
@@ -138,17 +282,26 @@ BNKSTOP     stx BNKCNT
 
 ; restore banks
             ldx #$00
-BNKRESTR    M_bank_set
+BNKRESTR    M_cart_set
             lda BNKSAVBUF,X
-            sta $7000
+            sta $9000
             lda BNKSAVBUF2,X
-            sta $7001
+            sta $B000
             inx
             cpx #$20
             bne BNKRESTR
 
-; restore PIA PORT B
-            M_bank_pop
+; restore The!Cart registers
+            pla                 
+            sta TCPBEN          
+            pla                 
+            sta TCPBRH          
+            pla                 
+            sta TCPBRL          
+            pla                 
+            sta TCMOFR          
+            pla                 
+            sta TCMOSL          
 
 ; enable interrupts
             lda #$22
@@ -157,7 +310,7 @@ BNKRESTR    M_bank_set
 
 ; info message
             jsr PRINT
-            .byte 'RAMDISK 512k 2019-10-05 12:33',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART v1910051703',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -166,7 +319,7 @@ BNKRESTR    M_bank_set
 
 ; no banks            
             jsr PRINT
-            .byte 'Error - No 512k Extende RAM',$9B,$FF
+            .byte '  Error - 512k RAM THE!CART not found',$9B,$FF
             rts
                         
 RAMDISKINI
@@ -280,7 +433,7 @@ WAITLOOP    cmp RTCLOK+2
             
 ; format ramdisk
 FRMTRD      jsr PRINT
-            .byte '  RAM Disk Formatted',$9B,$FF
+            .byte '  RAM Disk formatted',$9B,$FF
 
 
 ;            lda PORTB
