@@ -184,29 +184,32 @@ TCCOLO = $d5af
 
 ; macros
 
-; set bank: number of bank in X, uses A
-M_bank_set  .macro
-            lda BNKSWTMSK,X
-            eor PORTB
-            and #$7E
-            eor PORTB
-            sta PORTB
-;            lda PORTB
-;            and #$01
-;            ora BNKSWTMSK,X
-;            sta PORTB
-            .endm
-
-; saves bank register: pushes bank register on stack
-M_bank_push .macro
-            lda PORTB
+; saves register: pushes bank register on stack
+M_cart_push .macro
+            lda TCMOSL
+            pha
+            lda TCMOFR
+            pha
+            lda TCPBRL
+            pha
+            lda TCPBRH
+            pha
+            lda TCPBEN
             pha
             .endm
 
-; restores bank register from stack: pops from stack
-M_bank_pop  .macro
-            pla
-            sta PORTB
+; restores register from stack: pops from stack
+M_cart_pop  .macro
+            pla                 
+            sta TCPBEN          
+            pla                 
+            sta TCPBRH          
+            pla                 
+            sta TCPBRL          
+            pla                 
+            sta TCMOFR          
+            pla                 
+            sta TCMOSL          
             .endm
  
 ; set bank: number of bank in X, uses A
@@ -226,24 +229,13 @@ M_cart_set  .macro
             .endm
 
 
-
 ;
 ; Start of code
 ;
             org $3000
 
 ; save the!cart registers
-            lda TCMOSL
-            pha
-            lda TCMOFR
-            pha
-            lda TCPBRL
-            pha
-            lda TCPBRH
-            pha
-            lda TCPBEN
-            pha
-
+            M_cart_push
            
 ; switch off interrupts
             lda #$00
@@ -292,16 +284,7 @@ BNKRESTR    M_cart_set
             bne BNKRESTR
 
 ; restore The!Cart registers
-            pla                 
-            sta TCPBEN          
-            pla                 
-            sta TCPBRH          
-            pla                 
-            sta TCPBRL          
-            pla                 
-            sta TCMOFR          
-            pla                 
-            sta TCMOSL          
+            M_cart_pop
 
 ; enable interrupts
             lda #$22
@@ -310,7 +293,7 @@ BNKRESTR    M_cart_set
 
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART v1910051703',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART v1910051916',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -374,7 +357,7 @@ PRSPARNXT   cmp #'N'         ; format ?
             inc CHKFRMT
             jmp PRSPARLOOP
 PARAMERR    jsr PRINT
-            .byte 'Error - Parameter Error use Dx: [/N]',$9B,$FF
+            .byte '  Error - Parameter Error use Dx: [/N]',$9B,$FF
             rts
 
 ; set jsr to original DOSINI
@@ -434,33 +417,24 @@ WAITLOOP    cmp RTCLOK+2
 ; format ramdisk
 FRMTRD      jsr PRINT
             .byte '  RAM Disk formatted',$9B,$FF
-
-
-;            lda PORTB
-;            pha
-            M_bank_push
-            
-;            and #$FD
-;            eor BNKSWTMSK
-;            and PORTBMASK
-;            eor PORTB
-;            sta PORTB
-            ldx #$10
-            M_bank_set
-
+; save register
+            M_cart_push
+; set sector for VTOC
+            ldx #$00
+            M_cart_set
 ; clear loop
             lda #$00
             tay
-FRMTCLP     sta $4000,Y
-            sta $4100,Y
-            sta $4200,Y
-            sta $4300,Y
+FRMTCLP     sta $8000,Y
+            sta $8100,Y
+            sta $8200,Y
+            sta $8300,Y
             iny
             bne FRMTCLP
 ; header loop            
             ldy #$2A
 FRMTHLP     lda RDHEAD,Y
-            sta $4000,Y
+            sta $8000,Y
             dey
             bpl FRMTHLP
 ; set free sector VTOC             
@@ -480,19 +454,19 @@ FRMTVTOCLP  jsr FRMTSETVTOC
             bne FRMTVTOCLP
  ; set map sector
             lda #$04 
-            sta $400F     ; number of bit map sectors used on the disk
+            sta $800F     ; number of bit map sectors used on the disk
             clc
             adc #$02
-            sta $4009     ; first sector map of the MAIN directory
+            sta $8009     ; first sector map of the MAIN directory
             lda #$00 
-            sta $4080
+            sta $8080
             lda #$80      ; low address of MAIN sector map
             sta BUFRLO
-            lda #$42      ; high address of MAIN sector map
+            lda #$82      ; high address of MAIN sector map
             sta BUFRHI   
             clc
             ldy #$04
-            lda $4009
+            lda $8009
             adc #$01
             sta (BUFRLO),Y
 ; set MAIN sector map            
@@ -504,16 +478,14 @@ L349B       lda RDMAIN,X
             iny
             cpx #$11
             bne L349B
-; restore PORTB
-;            pla
-;            sta PORTB
-            M_bank_pop
+; restore register
+            M_cart_pop
             rts
             
 ; set VTOC            
 FRMTSETVTOC ldy #$00
             lda #$FF
-FRMTVTOCIT  sta $4080,Y
+FRMTVTOCIT  sta $8080,Y
             iny
             cpy #$40
             bne FRMTVTOCIT
@@ -523,7 +495,7 @@ RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
             .byte $30,$03,$00 ;original $00,$04,$FB,$03
             .word $1000,$0ff8 ; 512k
             .byte $01, $02,$00,$20,$00,$00,$00
-            .byte 'RAMD512K'
+            .byte 'CART512K'
             .byte $00,$80,$22,$00,$00,$00,$00,$00
             .byte $00,$16,$00,$00,$00
 
@@ -583,10 +555,14 @@ RAMDSIO     lda DDEVIC
 REAA004     cmp DRVNUM
             beq L358A
 JMPSIO      jmp $0000
+
 L358A       ldx PORTB           ; save PORTB
+            M_cart_push         ; save register
+
             sei
             lda #$00
             sta NMIEN
+
             lda DBUFLO
             sta BFENLO
             lda DBUFHI
@@ -677,7 +653,7 @@ L3631       pha
             lsr
             lsr
             ror BUFRLO
-            ora #$40
+            ora #$80
             sta BUFRHI
             
             txa                 ; OS off ???
@@ -698,15 +674,20 @@ REAA005     sta BUFFERXX1,Y
 L3656       pla                 ; check bank number
 REAA018     cmp BNKCNT
             bcs RDSIOEND+3      ; error NAK
-            tay
-            
-            lda PORTB           ; set bank
-            and #$FD
-REAA019     eor BNKSWTMSK,Y
-;REAA022     and PORTBMASK
-            and #$7E
-            eor PORTB
-            sta PORTB
+            tay                 ; bank number in Y
+
+; set new The!Cart mode
+            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+            sta TCMOSL          
+            lda #TCMOFR.PBRAM       ; set to RAM
+            sta TCMOFR
+            tya
+            asl   
+            sta TCPBRL              ; get bank number from y
+            lda #$00                     
+            sta TCPBRH              ; set high to $00
+            lda #$01
+            sta TCPBEN              ; enable        
             
             ldy #$00
             lda DCOMND
@@ -740,6 +721,7 @@ REAA007     lda BUFFERXX1,Y
 RDSIOEND    ldy #$01
             bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
 
+            M_cart_pop          ; restore register
             stx PORTB           ; restrore PORTB
 
             lda #$E0
@@ -760,7 +742,6 @@ BNKSWTMSK   .byte $60,$64,$68,$6C,$20,$24,$28,$2C
             .byte $40,$44,$48,$4C,$00,$04,$08,$0C
             .byte $62,$66,$6A,$6E,$22,$26,$2A,$2E
             .byte $42,$46,$4A,$4E,$02,$06,$0A,$0E
-;PORTBMASK   .byte $7E
 
 ; $100 Bytes
 BUFFERXX1
@@ -801,9 +782,7 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA016+1 ;$35FF
             .word REAA017+1 ;$362C
             .word REAA018+1 ;$365C
-            .word REAA019+1 ;$3667
             .word REAA020+1 ;$3610
-;            .word REAA022+1 ;$366A
             .word $0000
  
 ; realloc address low byte           
