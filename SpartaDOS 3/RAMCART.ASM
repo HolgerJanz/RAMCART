@@ -213,6 +213,23 @@ M_cart_pop  .macro
             sta TCMOSL          
             .endm
  
+; saves register and sync: pushes bank register on stack
+M_cart_sync_push .macro
+            M_cart_push
+            jsr WAITSYNC        ; wait for vblank
+ ;           sei                 ; disable interrupts
+ ;           lda #$00
+ ;           sta NMIEN
+            .endm
+
+; restores register from stack anf sync: pops from stack
+M_cart_sync_pop  .macro
+            M_cart_pop
+;            lda #$E0            ; enable interrupts
+;            sta NMIEN
+;            cli
+            .endm
+
 ; set bank: number of bank in X, uses A
 M_cart_set  .macro
 ; set new The!Cart mode
@@ -229,18 +246,13 @@ M_cart_set  .macro
             sta TCPBEN              ; enable        
             .endm
 
-
 ;
 ; Start of code
 ;
             org $3000
 
 ; save the!cart registers
-            M_cart_push
-           
-; wait for vblank
-            jsr WAITSYNC
-            
+            M_cart_sync_push            
 ; try to save and write banks            
             ldx #$1F
 BNKSAVWRT   M_cart_set
@@ -283,7 +295,7 @@ BNKRESTR    M_cart_set
             bne BNKRESTR
 
 ; restore The!Cart registers
-            M_cart_pop
+            M_cart_sync_pop
 
 ; info message
             jsr PRINT
@@ -413,9 +425,7 @@ WAITLOOP    cmp RTCLOK+2
 FRMTRD      jsr PRINT
             .byte '  RAM Cart formatted',$9B,$FF
 ; save register
-            M_cart_push
-; wait for vblank
-            jsr WAITSYNC
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -429,12 +439,10 @@ FRMTCLP     sta $8000,Y
             iny
             bne FRMTCLP
 ; restore register
-            M_cart_pop
+            M_cart_sync_pop
 
 ; save register
-            M_cart_push
-; wait for vblank
-            jsr WAITSYNC
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -445,12 +453,10 @@ FRMTHLP     lda RDHEAD,Y
             dey
             bpl FRMTHLP
 ; restore register
-            M_cart_pop
+            M_cart_sync_pop
 
 ; save register
-            M_cart_push
-; wait for vblank
-            jsr WAITSYNC
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -470,12 +476,10 @@ FRMTVTOCLP  jsr FRMTSETVTOC
             dex
             bne FRMTVTOCLP
 ; restore register
-            M_cart_pop
+            M_cart_sync_pop
 
 ; save register
-            M_cart_push
-; wait for vblank
-            jsr WAITSYNC
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -506,7 +510,8 @@ L349B       lda RDMAIN,X
             cpx #$11
             bne L349B
 ; restore register
-            M_cart_pop
+            M_cart_sync_pop
+; finished
             rts
             
 ; set VTOC            
@@ -760,7 +765,7 @@ RDSIOEND    ldy #$01
 
             M_cart_pop          ; restore register
             stx PORTB           ; restrore PORTB
-            lda #$E0            ; enable interrups
+            lda #$E0            ; enable interrupts
             sta NMIEN
             cli
 
