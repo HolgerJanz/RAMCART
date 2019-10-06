@@ -1,6 +1,7 @@
 ;
 ; THE!RAMDISK for THE!CART for SpartaDOS 3 
 ; Previous work RD/RAMDISK.COM for SpartaDOS 3 by FTe
+;   RD Ver 2.3 07-14-86 (c) 1984 by FTe
 ;
 ; System equates
 ;
@@ -237,9 +238,7 @@ M_cart_set  .macro
 ; save the!cart registers
             M_cart_push
            
-; switch off interrupts
-            lda #$00
-            sta SDMCTL
+; wait for vblank
             jsr WAITSYNC
             
 ; try to save and write banks            
@@ -286,14 +285,9 @@ BNKRESTR    M_cart_set
 ; restore The!Cart registers
             M_cart_pop
 
-; enable interrupts
-            lda #$22
-            sta SDMCTL
-            jsr WAITSYNC
-
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART v1910051916',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers42',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -322,6 +316,7 @@ RAMDISKINI
 CRNAME      jmp $FFFF
 
 CHKFRMT     .byte $FF
+BNKCNT      .byte $00
 
 ; set crunch name address
 PRSPARM     lda DOSVEC
@@ -416,9 +411,11 @@ WAITLOOP    cmp RTCLOK+2
             
 ; format ramdisk
 FRMTRD      jsr PRINT
-            .byte '  RAM Disk formatted',$9B,$FF
+            .byte '  RAM Cart formatted',$9B,$FF
 ; save register
             M_cart_push
+; wait for vblank
+            jsr WAITSYNC
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -431,14 +428,34 @@ FRMTCLP     sta $8000,Y
             sta $8300,Y
             iny
             bne FRMTCLP
+; restore register
+            M_cart_pop
+
+; save register
+            M_cart_push
+; wait for vblank
+            jsr WAITSYNC
+; set sector for VTOC
+            ldx #$00
+            M_cart_set
 ; header loop            
             ldy #$2A
 FRMTHLP     lda RDHEAD,Y
             sta $8000,Y
             dey
             bpl FRMTHLP
+; restore register
+            M_cart_pop
+
+; save register
+            M_cart_push
+; wait for vblank
+            jsr WAITSYNC
+; set sector for VTOC
+            ldx #$00
+            M_cart_set
 ; set free sector VTOC             
-            lda BNKCNT
+            lda #$20            ; 16k bank count
             lsr
             lsr
             tax
@@ -452,6 +469,16 @@ FRMTVTOCLP  jsr FRMTSETVTOC
             sta FRMTVTOCIT+2
             dex
             bne FRMTVTOCLP
+; restore register
+            M_cart_pop
+
+; save register
+            M_cart_push
+; wait for vblank
+            jsr WAITSYNC
+; set sector for VTOC
+            ldx #$00
+            M_cart_set
  ; set map sector
             lda #$04 
             sta $800F     ; number of bit map sectors used on the disk
@@ -558,18 +585,23 @@ JMPSIO      jmp $0000
 
 L358A       ldx PORTB           ; save PORTB
             M_cart_push         ; save register
-
+; wait for sync            
+            lda RTCLOK+2
+WAITLOOP2   cmp RTCLOK+2
+            beq WAITLOOP2
             sei
             lda #$00
             sta NMIEN
-
+            
+; set buffer address
             lda DBUFLO
             sta BFENLO
             lda DBUFHI
             sta BFENHI
             lda DCOMND
-            
-            cmp #$53            ; command STATUS REQUEST 
+
+; command STATUS REQUEST
+            cmp #$53 
             bne NEXT1
 REAA009     lda L36BF
             lsr
@@ -586,7 +618,8 @@ L35B4       ldy #$00
             sta (BFENLO),Y
             bmi JMPSIOEND
             
-NEXT1       cmp #$4E            ; command RETURN CONFIGURATION
+; command RETURN CONFIGURATION            
+NEXT1       cmp #$4E
             bne NEXT2
             ldy #$0B            ; 12 bytes
 RETCNFLOOP
@@ -595,8 +628,9 @@ REAA011     lda CONFBUF,Y
             dey
             bpl RETCNFLOOP
             bmi JMPSIOEND
-            
-NEXT2       cmp #$4F            ; command SET CONFIGURATION
+
+; command SET CONFIGURATION
+NEXT2       cmp #$4F
             bne NEXT3
             ldy #$07
             lda (BFENLO),Y
@@ -608,7 +642,8 @@ REAA013     sta L36BB
 JMPSIOEND
 REAA014     jmp RDSIOEND
 
-NEXT3       cmp #$21            ; command FORMAT DISK
+; command FORMAT DISK
+NEXT3       cmp #$21
             bne NEXT4
 SIOFRMT     ldy #$00
             lda #$FF
@@ -616,8 +651,9 @@ SIOFRMT     ldy #$00
             iny
             sta (BFENLO),Y
             bne JMPSIOEND
-            
-NEXT4       cmp #$22            ; command FORMAT DISK ENHANCED
+
+; command FORMAT DISK ENHANCED
+NEXT4       cmp #$22
             bne NEXT5
             lda #$1A
 REAA015     sta L36BB
@@ -625,6 +661,7 @@ REAA015     sta L36BB
 REAA016     sta L36BF
             bne SIOFRMT
             
+; command PUT/GET SECTOR 
 NEXT5       cmp #$52            ; command GET SECTOR
             beq PUTGETSEC
             cmp #$57            ; command PUT SECTOR WITH VERIFY
@@ -672,27 +709,27 @@ REAA005     sta BUFFERXX1,Y
             bne L364B
             
 L3656       pla                 ; check bank number
-REAA018     cmp BNKCNT
+REAA018     cmp #$20
             bcs RDSIOEND+3      ; error NAK
             tay                 ; bank number in Y
 
-; set new The!Cart mode
-            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
-            sta TCMOSL          
-            lda #TCMOFR.PBRAM       ; set to RAM
+            lda #TCMOSL.16K     ; set new The!Cart mode
+            sta TCMOSL          ; set 2x8k mode at $8000-$BFFF
+            lda #TCMOFR.PBRAM   ; set to RAM
             sta TCMOFR
             tya
             asl   
-            sta TCPBRL              ; get bank number from y
+            sta TCPBRL          ; get bank number from y
             lda #$00                     
-            sta TCPBRH              ; set high to $00
+            sta TCPBRH          ; set high to $00
             lda #$01
-            sta TCPBEN              ; enable        
+            sta TCPBEN          ; enable        
             
             ldy #$00
             lda DCOMND
             cmp #$52
             bne L369B           ; is PUT
+
 L367B       lda (BUFRLO),Y
 REAA006     sta BUFFERXX1,Y
             iny
@@ -723,15 +760,13 @@ RDSIOEND    ldy #$01
 
             M_cart_pop          ; restore register
             stx PORTB           ; restrore PORTB
-
-            lda #$E0
+            lda #$E0            ; enable interrups
             sta NMIEN
             cli
-            tya
+
+            tya                 ; set RC
             rts
             
-BNKCNT      .byte $00
-
 ; drive configuration buffer
 CONFBUF     .byte $28,$01,$12
 L36BB       .byte $00,$00,$00,$00
@@ -742,10 +777,8 @@ BNKSWTMSK   .byte $60,$64,$68,$6C,$20,$24,$28,$2C
             .byte $40,$44,$48,$4C,$00,$04,$08,$0C
             .byte $62,$66,$6A,$6E,$22,$26,$2A,$2E
             .byte $42,$46,$4A,$4E,$02,$06,$0A,$0E
-
 ; $100 Bytes
 BUFFERXX1
-
 ;            org $37E6
 REAEND      = BUFFERXX1 + $100
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
