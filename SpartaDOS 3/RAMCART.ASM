@@ -299,7 +299,7 @@ BNKRESTR    M_cart_set
 
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers42',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers43',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -588,8 +588,7 @@ REAA004     cmp DRVNUM
             beq L358A
 JMPSIO      jmp $0000
 
-L358A       ldx PORTB           ; save PORTB
-            M_cart_push         ; save register
+L358A 
 ; wait for sync            
             lda RTCLOK+2
 WAITLOOP2   cmp RTCLOK+2
@@ -697,27 +696,26 @@ L3631       pha
             ror BUFRLO
             ora #$80
             sta BUFRHI
-            
-            txa                 ; OS off ???
-            and #$FE
-            sta PORTB
-            
+; check for GET
             lda DCOMND
             cmp #$52
-            beq L3656           ; is PUT
-            
+            beq L3656           ; is GET
+; PUT: put user data to buffer            
             ldy #$00
 L364B       lda (BFENLO),Y
 REAA005     sta BUFFERXX1,Y
             iny
             cpy DBYTLO
             bne L364B
-            
+; check if bank number is in ranga            
 L3656       pla                 ; check bank number
 REAA018     cmp #$20
-            bcs RDSIOEND+3      ; error NAK
+;            bcs RDSIOEND+3      ; error NAK
+            bcs REAA020         ; intermediate jmp to NAK
             tay                 ; bank number in Y
-
+; save register
+            M_cart_push         ; save register
+; set memory bank
             lda #TCMOSL.16K     ; set new The!Cart mode
             sta TCMOSL          ; set 2x8k mode at $8000-$BFFF
             lda #TCMOFR.PBRAM   ; set to RAM
@@ -729,22 +727,20 @@ REAA018     cmp #$20
             sta TCPBRH          ; set high to $00
             lda #$01
             sta TCPBEN          ; enable        
-            
+; check for PUT
             ldy #$00
             lda DCOMND
             cmp #$52
             bne L369B           ; is PUT
-
+; GET: read data to buffer
 L367B       lda (BUFRLO),Y
 REAA006     sta BUFFERXX1,Y
             iny
             cpy DBYTLO
             bne L367B
-            
-            txa                 ; OS off ???
-            and #$FE
-            sta PORTB
-
+; restore bank for write to user buffer
+            M_cart_pop          ; restore register            
+; GET: write buffer to user data            
             ldy #$00
 L368E
 REAA008     lda BUFFERXX1,Y
@@ -752,19 +748,20 @@ REAA008     lda BUFFERXX1,Y
             iny
             cpy DBYTLO
             bne L368E
-            beq RDSIOEND
+            beq RDSIOEND            
+; PUT: buffer data to sector
 L369B
 REAA007     lda BUFFERXX1,Y
             sta (BUFRLO),Y
             iny
             cpy DBYTLO
             bne L369B
-            
+; restore register
+            M_cart_pop          ; restore register
+; enable interrupts and set rc            
 RDSIOEND    ldy #$01
             bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
 
-            M_cart_pop          ; restore register
-            stx PORTB           ; restrore PORTB
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
@@ -778,10 +775,6 @@ L36BB       .byte $00,$00,$00,$00
 L36BF       .byte $80,$FF,$00,$00,$00
 
 DRVNUM      .byte $01
-BNKSWTMSK   .byte $60,$64,$68,$6C,$20,$24,$28,$2C
-            .byte $40,$44,$48,$4C,$00,$04,$08,$0C
-            .byte $62,$66,$6A,$6E,$22,$26,$2A,$2E
-            .byte $42,$46,$4A,$4E,$02,$06,$0A,$0E
 ; $100 Bytes
 BUFFERXX1
 ;            org $37E6
