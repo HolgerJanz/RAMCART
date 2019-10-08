@@ -25,6 +25,7 @@ BUFRLO      = $0032
 BUFRHI      = $0033
 BFENLO      = $0034
 BFENHI      = $0035
+CRITIC      = $0042
 ; 
 ; PAGE 2
 ; 
@@ -251,6 +252,9 @@ M_cart_set  .macro
 ;
             org $3000
 
+            lda #$01
+            sta CRITIC
+
 ; save the!cart registers
             M_cart_sync_push            
 ; try to save and write banks            
@@ -258,31 +262,33 @@ M_cart_set  .macro
 BNKSAVWRT   M_cart_set
             lda $9000
             sta BNKSAVBUF,X
-            txa
-            sta $9000
+            stx $9000
             lda $B000
             sta BNKSAVBUF2,X
-            txa
-            asl
-            sta $B000
+            stx $B000
             dex
             bpl BNKSAVWRT
-            
+; restore The!Cart registers
+            M_cart_sync_pop
+
+; save the!cart registers
+            M_cart_sync_push            
 ; check banks
 BNKCHK      inx
             M_cart_set            
-            txa
-            cmp $9000
+            cpx $9000
             bne BNKSTOP
-            txa
-            asl
-            cmp $B000
+            cpx $B000
             bne BNKSTOP
             cpx #$1F
             bne BNKCHK
             inx
 BNKSTOP     stx BNKCNT
+; restore The!Cart registers
+            M_cart_sync_pop
 
+; save the!cart registers
+            M_cart_sync_push            
 ; restore banks
             ldx #$00
 BNKRESTR    M_cart_set
@@ -293,13 +299,15 @@ BNKRESTR    M_cart_set
             inx
             cpx #$20
             bne BNKRESTR
-
 ; restore The!Cart registers
             M_cart_sync_pop
 
+            lda #$00
+            sta CRITIC
+
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers43',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers44a',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -364,7 +372,7 @@ PRSPARNXT   cmp #'N'         ; format ?
             inc CHKFRMT
             jmp PRSPARLOOP
 PARAMERR    jsr PRINT
-            .byte '  Error - Parameter Error use Dx: [/N]',$9B,$FF
+            .byte '  Error - Wrong parameter use Dx: [/N]',$9B,$FF
             rts
 
 ; set jsr to original DOSINI
@@ -673,7 +681,7 @@ NEXT5       cmp #$52            ; command GET SECTOR
             cmp #$50            ; command PUT SECTOR
             beq PUTGETSEC
 REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
-
+; buffer address and calc byte count
 PUTGETSEC   lda #$00
             sta BUFRLO
             lda DAUX1
@@ -689,7 +697,7 @@ PUTGETSEC   lda #$00
 REAA017     asl L36BF
             asl BUFRHI
             rol
-L3631       pha
+L3631       tax                 ; set X with memory bank number
             lda BUFRHI
             lsr
             lsr
@@ -707,26 +715,15 @@ REAA005     sta BUFFERXX1,Y
             iny
             cpy DBYTLO
             bne L364B
-; check if bank number is in ranga            
-L3656       pla                 ; check bank number
+; check if bank number is in range            
+L3656       txa                 ; check bank number
 REAA018     cmp #$20
 ;            bcs RDSIOEND+3      ; error NAK
             bcs REAA020         ; intermediate jmp to NAK
-            tay                 ; bank number in Y
 ; save register
             M_cart_push         ; save register
 ; set memory bank
-            lda #TCMOSL.16K     ; set new The!Cart mode
-            sta TCMOSL          ; set 2x8k mode at $8000-$BFFF
-            lda #TCMOFR.PBRAM   ; set to RAM
-            sta TCMOFR
-            tya
-            asl   
-            sta TCPBRL          ; get bank number from y
-            lda #$00                     
-            sta TCPBRH          ; set high to $00
-            lda #$01
-            sta TCPBEN          ; enable        
+            M_cart_set          ; set bank, number in X
 ; check for PUT
             ldy #$00
             lda DCOMND
