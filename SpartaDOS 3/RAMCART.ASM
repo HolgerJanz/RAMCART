@@ -53,7 +53,9 @@ PACTL       = $D302
 PBCTL       = $D303
 ; 
 ; ANTIC
-; 
+;
+DMACTL      = $D400 
+WSYNC       = $D40A
 NMIEN       = $D40E
 ; 
 ; ROM VECTORS
@@ -216,19 +218,25 @@ M_cart_pop  .macro
  
 ; saves register and sync: pushes bank register on stack
 M_cart_sync_push .macro
+            lda SDMCTL
+            pha
             M_cart_push
+            lda #$00
+            sta SDMCTL
             jsr WAITSYNC        ; wait for vblank
- ;           sei                 ; disable interrupts
- ;           lda #$00
- ;           sta NMIEN
+            sei
+            lda #$00
+            sta NMIEN
             .endm
 
 ; restores register from stack anf sync: pops from stack
 M_cart_sync_pop  .macro
             M_cart_pop
-;            lda #$E0            ; enable interrupts
-;            sta NMIEN
-;            cli
+            lda #$E0            ; enable interrupts
+            sta NMIEN
+            cli
+            pla
+            sta SDMCTL
             .endm
 
 ; set bank: number of bank in X, uses A
@@ -251,10 +259,7 @@ M_cart_set  .macro
 ; Start of code
 ;
             org $3000
-
-            lda #$01
-            sta CRITIC
-
+            
 ; save the!cart registers
             M_cart_sync_push            
 ; try to save and write banks            
@@ -268,11 +273,6 @@ BNKSAVWRT   M_cart_set
             stx $B000
             dex
             bpl BNKSAVWRT
-; restore The!Cart registers
-            M_cart_sync_pop
-
-; save the!cart registers
-            M_cart_sync_push            
 ; check banks
 BNKCHK      inx
             M_cart_set            
@@ -284,11 +284,6 @@ BNKCHK      inx
             bne BNKCHK
             inx
 BNKSTOP     stx BNKCNT
-; restore The!Cart registers
-            M_cart_sync_pop
-
-; save the!cart registers
-            M_cart_sync_push            
 ; restore banks
             ldx #$00
 BNKRESTR    M_cart_set
@@ -299,15 +294,13 @@ BNKRESTR    M_cart_set
             inx
             cpx #$20
             bne BNKRESTR
-; restore The!Cart registers
+            
+; restore the!cart registers
             M_cart_sync_pop
-
-            lda #$00
-            sta CRITIC
 
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers44a',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers45',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -432,25 +425,23 @@ WAITLOOP    cmp RTCLOK+2
 ; format ramdisk
 FRMTRD      jsr PRINT
             .byte '  RAM Cart formatted',$9B,$FF
+
 ; save register
             M_cart_sync_push
-; set sector for VTOC
+
+; set sector for VTOC part 1
             ldx #$00
             M_cart_set
 ; clear loop
             lda #$00
             tay
-FRMTCLP     sta $8000,Y
+FRMTCLP1    sta $8000,Y
             sta $8100,Y
             sta $8200,Y
             sta $8300,Y
             iny
-            bne FRMTCLP
-; restore register
-            M_cart_sync_pop
+            bne FRMTCLP1
 
-; save register
-            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -460,11 +451,7 @@ FRMTHLP     lda RDHEAD,Y
             sta $8000,Y
             dey
             bpl FRMTHLP
-; restore register
-            M_cart_sync_pop
 
-; save register
-            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -483,11 +470,7 @@ FRMTVTOCLP  jsr FRMTSETVTOC
             sta FRMTVTOCIT+2
             dex
             bne FRMTVTOCLP
-; restore register
-            M_cart_sync_pop
 
-; save register
-            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
             M_cart_set
@@ -517,6 +500,7 @@ L349B       lda RDMAIN,X
             iny
             cpx #$11
             bne L349B
+
 ; restore register
             M_cart_sync_pop
 ; finished
@@ -595,15 +579,9 @@ RAMDSIO     lda DDEVIC
 REAA004     cmp DRVNUM
             beq L358A
 JMPSIO      jmp $0000
-
-L358A 
 ; wait for sync            
-            lda RTCLOK+2
-WAITLOOP2   cmp RTCLOK+2
-            beq WAITLOOP2
-            sei
-            lda #$00
-            sta NMIEN
+L358A       
+
             
 ; set buffer address
             lda DBUFLO
@@ -720,6 +698,18 @@ L3656       txa                 ; check bank number
 REAA018     cmp #$20
 ;            bcs RDSIOEND+3      ; error NAK
             bcs REAA020         ; intermediate jmp to NAK
+
+; DMA control
+            lda SDMCTL
+            pha
+            lda #$00
+            sta SDMCTL
+            lda RTCLOK+2
+WAITLOOP2   cmp RTCLOK+2
+            beq WAITLOOP2
+            sei
+            lda #$00
+            sta NMIEN
 ; save register
             M_cart_push         ; save register
 ; set memory bank
@@ -737,6 +727,11 @@ REAA006     sta BUFFERXX1,Y
             bne L367B
 ; restore bank for write to user buffer
             M_cart_pop          ; restore register            
+            pla
+            sta SDMCTL
+            lda #$E0            ; enable interrupts
+            sta NMIEN
+            cli
 ; GET: write buffer to user data            
             ldy #$00
 L368E
@@ -755,13 +750,14 @@ REAA007     lda BUFFERXX1,Y
             bne L369B
 ; restore register
             M_cart_pop          ; restore register
-; enable interrupts and set rc            
-RDSIOEND    ldy #$01
-            bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
-
+            pla
+            sta SDMCTL
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
+; enable interrupts and set rc            
+RDSIOEND    ldy #$01
+            bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
 
             tya                 ; set RC
             rts
