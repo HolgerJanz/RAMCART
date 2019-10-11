@@ -300,7 +300,7 @@ BNKRESTR    M_cart_set
 
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers45',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers47',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -309,7 +309,8 @@ BNKRESTR    M_cart_set
 
 ; no banks            
             jsr PRINT
-            .byte '  Error - 512k RAM THE!CART not found',$9B,$FF
+            .byte '  Error - 512k RAM THE!CART not found',$9B
+            .byte '  Use SHIFT+RETURN/ESC in start menu',$9B,$FF
             rts
                         
 RAMDISKINI
@@ -365,7 +366,8 @@ PRSPARNXT   cmp #'N'         ; format ?
             inc CHKFRMT
             jmp PRSPARLOOP
 PARAMERR    jsr PRINT
-            .byte '  Error - Wrong parameter use Dx: [/N]',$9B,$FF
+            .byte '  Error - Wrong parameter',$9B
+            .byte '  Use RAMCART Dn: [/N]',$9B,$FF
             rts
 
 ; set jsr to original DOSINI
@@ -424,7 +426,7 @@ WAITLOOP    cmp RTCLOK+2
             
 ; format ramdisk
 FRMTRD      jsr PRINT
-            .byte '  RAM Cart formatted',$9B,$FF
+            .byte '  RAM Cart 512K formatted',$9B,$FF
 
 ; save register
             M_cart_sync_push
@@ -562,12 +564,12 @@ CIOPUTCHR   ldx #$00
 ; to realloc routines
 ; DOSINI set MEMLO at reset
 REABEGIN
-JSRDOSINI   jsr $0000
 
+JSRDOSINI   jsr $0000
 SETMEMLO    
-REAL003     lda #<BNKSAVBUF
+REAL003     lda #<REAEND
             sta MEMLO
-REAH003     lda #>BNKSAVBUF
+REAH003     lda #>REAEND
             sta MEMLO+1
             rts
 
@@ -577,23 +579,20 @@ RAMDSIO     lda DDEVIC
             bne JMPSIO
             lda DUNIT
 REAA004     cmp DRVNUM
-            beq L358A
+            beq NEWSIOGO
 JMPSIO      jmp $0000
-; wait for sync            
-L358A       
 
-            
 ; set buffer address
-            lda DBUFLO
+NEWSIOGO    lda DBUFLO
             sta BFENLO
             lda DBUFHI
             sta BFENHI
+; load commad byte            
             lda DCOMND
-
 ; command STATUS REQUEST
             cmp #$53 
             bne NEXT1
-REAA009     lda L36BF
+REAA009     lda CONFSECSIZ
             lsr
             lsr
             eor #$30
@@ -624,7 +623,8 @@ NEXT2       cmp #$4F
             bne NEXT3
             ldy #$07
             lda (BFENLO),Y
-REAA012     sta L36BF
+            beq REAA020         ; error if sec size <> $80 ( $00 -> $100)            
+REAA012     sta CONFSECSIZ
             ldy #$03
             lda (BFENLO),Y
 REAA013     sta L36BB
@@ -648,7 +648,7 @@ NEXT4       cmp #$22
             lda #$1A
 REAA015     sta L36BB
             lda #$80
-REAA016     sta L36BF
+REAA016     sta CONFSECSIZ
             bne SIOFRMT
             
 ; command PUT/GET SECTOR 
@@ -659,6 +659,7 @@ NEXT5       cmp #$52            ; command GET SECTOR
             cmp #$50            ; command PUT SECTOR
             beq PUTGETSEC
 REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; buffer address and calc byte count
 PUTGETSEC   lda #$00
             sta BUFRLO
@@ -672,7 +673,7 @@ PUTGETSEC   lda #$00
             rol
             bit DBYTLO
             bmi L3631
-REAA017     asl L36BF
+REAA017     asl CONFSECSIZ
             asl BUFRHI
             rol
 L3631       tax                 ; set X with memory bank number
@@ -682,79 +683,90 @@ L3631       tax                 ; set X with memory bank number
             ror BUFRLO
             ora #$80
             sta BUFRHI
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; set buffer address in copy loops
+            lda BUFRLO
+REAA021     sta GETADRLP+1
+REAA022     sta PUTADRLP+1
+            lda BUFRHI
+REAA023     sta GETADRLP+2
+REAA024     sta PUTADRLP+2            
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; check for GET
             lda DCOMND
             cmp #$52
             beq L3656           ; is GET
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; PUT: put user data to buffer            
-            ldy #$00
+            ldy #$7F
 L364B       lda (BFENLO),Y
 REAA005     sta BUFFERXX1,Y
-            iny
-            cpy DBYTLO
-            bne L364B
+            dey
+            bpl L364B
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; check if bank number is in range            
-L3656       txa                 ; check bank number
-REAA018     cmp #$20
-;            bcs RDSIOEND+3      ; error NAK
+L3656       cpx #$20            ; check bank number
             bcs REAA020         ; intermediate jmp to NAK
-
-; DMA control
-            lda SDMCTL
-            pha
-            lda #$00
-            sta SDMCTL
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+            M_cart_push         ; save register
+            lda #$01
+            sta CRITIC
             lda RTCLOK+2
 WAITLOOP2   cmp RTCLOK+2
             beq WAITLOOP2
-            sei
+            sei                 ; 40 cycles
             lda #$00
             sta NMIEN
-; save register
-            M_cart_push         ; save register
-; set memory bank
             M_cart_set          ; set bank, number in X
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; check for PUT
-            ldy #$00
+            ldy #$7F            ; 9 cycles
             lda DCOMND
             cmp #$52
             bne L369B           ; is PUT
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; GET: read data to buffer
-L367B       lda (BUFRLO),Y
-REAA006     sta BUFFERXX1,Y
-            iny
-            cpy DBYTLO
-            bne L367B
+L367B
+;            lda (BUFRLO),Y      ; 6 cycles
+GETADRLP    lda $FFFF,Y
+REAA006     sta BUFFERXX1,Y     ; 5 cycles +
+            dey                 ; 2 cycles +
+            bpl L367B           ; 4 cycles + * 128 = 2176
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; restore bank for write to user buffer
             M_cart_pop          ; restore register            
-            pla
-            sta SDMCTL
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
+            lda #$00
+            sta CRITIC          ; 54 cycles
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
 ; GET: write buffer to user data            
-            ldy #$00
+            ldy #$7F
 L368E
 REAA008     lda BUFFERXX1,Y
             sta (BFENLO),Y
-            iny
-            cpy DBYTLO
-            bne L368E
-            beq RDSIOEND            
+            dey
+            bpl L368E
+            bmi RDSIOEND
+            
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; PUT: buffer data to sector
 L369B
-REAA007     lda BUFFERXX1,Y
-            sta (BUFRLO),Y
-            iny
-            cpy DBYTLO
-            bne L369B
+REAA007     lda BUFFERXX1,Y   ; 5 cycles                
+;            sta (BUFRLO),Y    ; 6 cycles +              
+PUTADRLP    sta $FFFF,Y
+            dey               ; 2 cycles +              
+            bpl L369B         ; 4 cycles + * 128 = 2176 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; restore register
             M_cart_pop          ; restore register
-            pla
-            sta SDMCTL
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
+            lda #$00
+            sta CRITIC          ; 54 cycles
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; enable interrupts and set rc            
 RDSIOEND    ldy #$01
             bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
@@ -764,14 +776,16 @@ RDSIOEND    ldy #$01
             
 ; drive configuration buffer
 CONFBUF     .byte $28,$01,$12
-L36BB       .byte $00,$00,$00,$00
-L36BF       .byte $80,$FF,$00,$00,$00
+L36BB       .byte $00
+            .byte $00,$00,$00
+CONFSECSIZ  .byte $80                   ; $80 -> 128Byte, $00 -> 256Byte
+            .byte $FF,$00,$00,$00
 
 DRVNUM      .byte $01
-; $100 Bytes
+; $80 for 128Bytes ($100 for 256Bytes)
 BUFFERXX1
 ;            org $37E6
-REAEND      = BUFFERXX1 + $100
+REAEND      = BUFFERXX1 + $80
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; END OF REALLOC BLOCK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -805,8 +819,11 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA015+1 ;$35FA
             .word REAA016+1 ;$35FF
             .word REAA017+1 ;$362C
-            .word REAA018+1 ;$365C
             .word REAA020+1 ;$3610
+            .word REAA021+1
+            .word REAA022+1
+            .word REAA023+1
+            .word REAA024+1
             .word $0000
  
 ; realloc address low byte           
@@ -822,8 +839,9 @@ REATAB      .word REAA001+1 ;$33CA
             .byte <RAMDSIO  ;$78
             
             .word REAH003+1  ;$3573
-            .byte <BNKSAVBUF ;$E6
+            .byte <REAEND    ;$E6
             
+
             .word $0000
             
 REASTART    lda #$00

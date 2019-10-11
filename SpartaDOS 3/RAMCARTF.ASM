@@ -218,8 +218,13 @@ M_cart_pop  .macro
  
 ; saves register and sync: pushes bank register on stack
 M_cart_sync_push .macro
+            lda SDMCTL          ; DMA control
+            pha
+            lda #$00
+            sta SDMCTL
+            sta DMACTL
             M_cart_push
-            sei
+            sei                 ; disable interrupts
             lda #$00
             sta NMIEN
             .endm
@@ -227,6 +232,9 @@ M_cart_sync_push .macro
 ; restores register from stack anf sync: pops from stack
 M_cart_sync_pop  .macro
             M_cart_pop
+            pla                 ; restore DMA control
+            sta SDMCTL
+            sta DMACTL
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
@@ -293,7 +301,7 @@ BNKRESTR    M_cart_set
 
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers45f',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers47f',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -302,7 +310,8 @@ BNKRESTR    M_cart_set
 
 ; no banks            
             jsr PRINT
-            .byte '  Error - 512k RAM THE!CART not found',$9B,$FF
+            .byte '  Error - 512k RAM THE!CART not found',$9B
+            .byte '  Use SHIFT+RETURN/ESC in start menu',$9B,$FF
             rts
                         
 RAMDISKINI
@@ -358,7 +367,8 @@ PRSPARNXT   cmp #'N'         ; format ?
             inc CHKFRMT
             jmp PRSPARLOOP
 PARAMERR    jsr PRINT
-            .byte '  Error - Wrong parameter use Dx: [/N]',$9B,$FF
+            .byte '  Error - Wrong parameter',$9B
+            .byte '  Use RAMCART Dn: [/N]',$9B,$FF
             rts
 
 ; set jsr to original DOSINI
@@ -552,9 +562,9 @@ REABEGIN
 JSRDOSINI   jsr $0000
 
 SETMEMLO    
-REAL003     lda #<BNKSAVBUF
+REAL003     lda #<REAEND
             sta MEMLO
-REAH003     lda #>BNKSAVBUF
+REAH003     lda #>REAEND
             sta MEMLO+1
             rts
 
@@ -682,10 +692,14 @@ REAA005     sta BUFFERXX1,Y
             bne L364B
 ; check if bank number is in range            
 L3656       txa                 ; check bank number
-REAA018     cmp #$20
-;            bcs RDSIOEND+3      ; error NAK
+            cmp #$20
             bcs REAA020         ; intermediate jmp to NAK
-
+; DMA control
+            lda SDMCTL
+            pha
+            lda #$00
+            sta SDMCTL
+            sta DMACTL
 ; all interrupts off
             sei
             lda #$00
@@ -707,6 +721,9 @@ REAA006     sta BUFFERXX1,Y
             bne L367B
 ; restore bank for write to user buffer
             M_cart_pop          ; restore register            
+            pla                 ; restore DMA control
+            sta SDMCTL
+            sta DMACTL
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
@@ -728,6 +745,9 @@ REAA007     lda BUFFERXX1,Y
             bne L369B
 ; restore register
             M_cart_pop          ; restore register
+            pla                 ; restore DMA control
+            sta SDMCTL
+            sta DMACTL
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
@@ -781,7 +801,6 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA015+1 ;$35FA
             .word REAA016+1 ;$35FF
             .word REAA017+1 ;$362C
-            .word REAA018+1 ;$365C
             .word REAA020+1 ;$3610
             .word $0000
  
