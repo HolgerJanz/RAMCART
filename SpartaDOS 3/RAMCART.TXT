@@ -1,0 +1,47 @@
+RAMCART - Ramdisk Driver for THE!CART
+and SpartaDOS 3
+
+RAMCART Dx: [/N]
+RAMCARTF Dx: [/N]
+
+RAMCART[F] is a ramdisk driver for
+THE!CART. Dx: specifies the drive
+number x that should be used for the
+ramdisk. With option /N the ramdisk
+will not be formatted. Without the
+option /N the ramdisk will be
+formatted with 4096 sectors of 128
+Bytes and SpartaDOS file system.
+XINIT can be used to format with
+a different size. The original
+ramdisk driver of SpartaDOS can be
+simultaneously used with the
+RAMCART driver.
+
+RAMCART is optimized using 128 Bytes
+Sectors and works only in VBLANK with
+display synchronization. XINIT can
+only be used with 128 Bytes sectors
+formats (single density).
+
+RAMCARTF is a more flexible version.
+It can also handle 256 Bytes sectors
+(double density).
+XINIT can be used with all formats.
+Furthermore this version is more than
+three times faster. The downside is 
+that the display is flickering
+during access to the ramdisk because
+there is no synchronization with the
+display.
+
+RAMCART and RAMCARTF can be
+simultaneously used to access the
+same ramdisk with different drive
+numbers. This only works with
+128 Bytes formats.
+
+PS: Do not forget to use SHIFT with
+RETURN or ESC in the start menu of
+THE!CART to enable the access to the
+configuration.
