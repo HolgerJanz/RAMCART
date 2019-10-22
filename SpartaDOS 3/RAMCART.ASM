@@ -218,15 +218,23 @@ M_cart_pop  .macro
  
 ; saves register and sync: pushes bank register on stack
 M_cart_sync_push .macro
-            lda SDMCTL
-            pha
             M_cart_push
-            lda #$00
-            sta SDMCTL
+            lda #$FF
+            sta CRITIC 
             jsr WAITSYNC        ; wait for vblank
             sei
             lda #$00
             sta NMIEN
+; set new The!Cart mode
+            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+            sta TCMOSL          
+            lda #TCMOFR.PBRAM       ; set to RAM
+            sta TCMOFR
+            lda #$00                     
+            sta TCPBRL              ; get bank number from X
+            sta TCPBRH              ; set high to $00
+            lda #$01
+            sta TCPBEN              ; enable        
             .endm
 
 ; restores register from stack anf sync: pops from stack
@@ -235,8 +243,8 @@ M_cart_sync_pop  .macro
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
-            pla
-            sta SDMCTL
+            lda #$00
+            sta CRITIC 
             .endm
 
 ; set bank: number of bank in X, uses A
@@ -255,6 +263,13 @@ M_cart_set  .macro
             sta TCPBEN              ; enable        
             .endm
 
+; set bank: number of bank in X, uses A
+M_cart_set_bank  .macro
+            txa
+            asl   
+            sta TCPBRL              ; get bank number from X
+            .endm
+
 ;
 ; Start of code
 ;
@@ -264,43 +279,42 @@ M_cart_set  .macro
             M_cart_sync_push            
 ; try to save and write banks            
             ldx #$1F
-BNKSAVWRT   M_cart_set
+BNKSAVWRT   M_cart_set_bank
             lda $9000
             sta BNKSAVBUF,X
             stx $9000
-            lda $B000
-            sta BNKSAVBUF2,X
-            stx $B000
+;            lda $B000
+;            sta BNKSAVBUF2,X
+;            stx $B000
             dex
             bpl BNKSAVWRT
 ; check banks
 BNKCHK      inx
-            M_cart_set            
+            M_cart_set_bank            
             cpx $9000
             bne BNKSTOP
-            cpx $B000
-            bne BNKSTOP
+;            cpx $B000
+;            bne BNKSTOP
             cpx #$1F
             bne BNKCHK
             inx
 BNKSTOP     stx BNKCNT
 ; restore banks
             ldx #$00
-BNKRESTR    M_cart_set
+BNKRESTR    M_cart_set_bank
             lda BNKSAVBUF,X
             sta $9000
-            lda BNKSAVBUF2,X
-            sta $B000
+;            lda BNKSAVBUF2,X
+;            sta $B000
             inx
             cpx #$20
-            bne BNKRESTR
-            
+            bne BNKRESTR            
 ; restore the!cart registers
             M_cart_sync_pop
 
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers47',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers48 HJX',$9B,$FF
 
 ; check bank count
             ldx BNKCNT
@@ -430,33 +444,54 @@ FRMTRD      jsr PRINT
 
 ; save register
             M_cart_sync_push
-
 ; set sector for VTOC part 1
             ldx #$00
-            M_cart_set
+            M_cart_set_bank
 ; clear loop
             lda #$00
             tay
 FRMTCLP1    sta $8000,Y
             sta $8100,Y
-            sta $8200,Y
-            sta $8300,Y
             iny
             bne FRMTCLP1
+; restore register
+            M_cart_sync_pop
 
+; save register
+            M_cart_sync_push
+; set sector for VTOC part 2
+            ldx #$00
+            M_cart_set_bank
+; clear loop
+            lda #$00
+            tay
+FRMTCLP2    sta $8200,Y
+            sta $8300,Y
+            iny
+            bne FRMTCLP2
+; restore register
+            M_cart_sync_pop
+
+
+; save register
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
-            M_cart_set
+            M_cart_set_bank
 ; header loop            
             ldy #$2A
 FRMTHLP     lda RDHEAD,Y
             sta $8000,Y
             dey
             bpl FRMTHLP
+; restore register
+            M_cart_sync_pop
 
+; save register
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
-            M_cart_set
+            M_cart_set_bank
 ; set free sector VTOC             
             lda #$20            ; 16k bank count
             lsr
@@ -472,10 +507,14 @@ FRMTVTOCLP  jsr FRMTSETVTOC
             sta FRMTVTOCIT+2
             dex
             bne FRMTVTOCLP
+; restore register
+            M_cart_sync_pop
 
+; save register
+            M_cart_sync_push
 ; set sector for VTOC
             ldx #$00
-            M_cart_set
+            M_cart_set_bank
  ; set map sector
             lda #$04 
             sta $800F     ; number of bit map sectors used on the disk
@@ -502,7 +541,6 @@ L349B       lda RDMAIN,X
             iny
             cpx #$11
             bne L349B
-
 ; restore register
             M_cart_sync_pop
 ; finished
@@ -796,11 +834,11 @@ BNKSAVBUF   = REAEND
 
 ; $20 bytes
 ;            org $3806
-BNKSAVBUF2  = BNKSAVBUF + $20
+;BNKSAVBUF2  = BNKSAVBUF + $20
 
  
 ;           org $3826
-            org BNKSAVBUF2 + $20
+            org BNKSAVBUF + $20
 ; realloc whole addresses
 REATAB      .word REAA001+1 ;$33CA
             .word REAA002+1 ;$33D4
