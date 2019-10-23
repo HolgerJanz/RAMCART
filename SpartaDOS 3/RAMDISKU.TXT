@@ -1,0 +1,28 @@
+RAMDISKU - Ramdisk Driver for
+SpartaDOS 3
+
+RAMCARTU Dx: [/NE]
+
+RAMCARTU is a ramdisk driver for
+SpartaDOS and RAMBO compatible RAM
+extensions from 64k to 1024k. It is
+derived form the original
+RD Ver 2.3 07-14-86 by FTe delivered
+originally with SpartaDOS 3.2. The
+main difference is that RAMBO 1024k
+extensions and Ultimate1MB are
+supported in addition.
+
+Dx: specifies the drive
+number x that should be used for the
+ramdisk. With option /N the ramdisk
+will not be formatted. Without the
+option /N the ramdisk will be
+formatted. The option /E spares the
+first 4 banks to be compatible with
+130XE and programs that uses the 
+extended memory.
+
+RAMDISKU can be simultaneously used 
+with RAMCART and/or RAMCARTF.
+
