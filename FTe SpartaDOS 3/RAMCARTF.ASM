@@ -143,6 +143,7 @@ TCMOSL = $d5a6    ; mode ($00-$3d,$01)
 ; $3C: 512k SWXEGS cart
 ; $3D: 1024k SWXEGS cart
 TCMOSL.OFF   = $00    ; off, cartridge disabled
+TCMOSL.AM1MB = $03
 TCMOSL.8K    = $01    ; 8k banks at $A000
 TCMOSL.FLEXI = $21    ; flexi mode,
                          ; separate 8k banks at $A000 and $8000

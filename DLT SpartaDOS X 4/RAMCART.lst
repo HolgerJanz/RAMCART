@@ -1,0 +1,1134 @@
+mads 1.9.9
+     1 				; Ramdisk for The!Cart and SparatDOS X
+     2 				; compile with MADS
+     3 				; written by Eric Bacher and Holger Janz
+     4 				; based on a ramdisk skeleton provided by Trub
+     5 				;
+     6
+     7 				; OS equ
+     8
+     9
+    10 = 0006			TRAMSZ   EQU $06
+    11 = 0008			WARMST   EQU $08
+    12 = 0009			BOOT_    EQU $09
+    13 = 000C			DOSINI   EQU $0C
+    14 = 000E			APPMHI   EQU $0E
+    15 = 0010			IRQENS   EQU $10
+    16 = 0011			IRQSTAT  EQU $11
+    17 = 0012			RTCLOK   EQU $12
+    18
+    19 = 0020			ichidz   EQU $20
+    20 = 0021			ICDNOZ   EQU $21
+    21 = 0022			ICCOMZ   EQU $22
+    22 = 0023			ICSTZ    EQU $23
+    23 = 0024			ICBAZ    EQU $24
+    24 = 0026			ICPTZ    EQU $26
+    25 = 0028			ICBLZ    EQU $28
+    26 = 002A			ICAX1Z   EQU $2A
+    27 = 002B			ICAX2Z   EQU $2B
+    28 = 002C			ICAX3Z   EQU $2C
+    29 = 002E			ICAX5Z   EQU $2E
+    30 = 002F			ICAX6Z   EQU $2F
+    31 = 0030			SIOSTAT  EQU $30
+    32 = 0031			CHKSUM   EQU $31
+    33 = 0032			BUFR     EQU $32
+    34 = 0034			BUFEN    EQU $34
+    35 = 0041			IOSNDEN  EQU $41
+    36 = 0042			CRITIC   EQU $42
+    37 = 0043			ZBUFA    EQU $43
+    38 = 0045			ZDRVA    EQU $45
+    39 = 0047			INIFLG   EQU $47
+    40 = 004D			ATRACT   EQU $4D
+    41 = 0052			LMARGN   EQU $52
+    42 = 0053			RMARGN   EQU $53
+    43 = 0054			VCP      EQU $54
+    44 = 0055			HCP      EQU $55
+    45 = 0058			SAVMSC   EQU $58
+    46
+    47 = 0063			LOGCOL   EQU $63
+    48 = 006A			RAMTOP   EQU $6A
+    49
+    50 = 0218			TIMCNT1  equ $218
+    51 = 0222			VVBLKI   EQU $222
+    52 = 0226			TIMVEC1  EQU $226
+    53 = 022F			DMACTLS  EQU $22F
+    54 = 0230			DLPTRS   EQU $230
+    55 = 023A			CDEVIC   EQU $23A
+    56 = 023B			CCMND    EQU $23B
+    57 = 023C			CAUX1    EQU $23C
+    58 = 023D			CAUX2    EQU $23D
+    59 = 0244			COLDST   EQU $244
+    60 = 0247			PDVMSK   EQU $247
+    61 = 0248			PDVRS    EQU $248
+    62 = 029C			CRETRY   EQU $29C
+    63 = 02B6			INVFLG   EQU $2B6
+    64 = 02BD			DRETRY   EQU $2BD
+    65 = 02BE			SHFLOK   EQU $2BE
+    66 = 02C5			COLPF1S  EQU $2C5
+    67 = 02C6			COLPF2S  EQU $2C6
+    68 = 02C7			COLPF3S  EQU $2C7
+    69 = 02C8			COLBAKS  EQU $2C8
+    70 = 02D9			KRPDEL   EQU $2D9
+    71 = 02DA			KEYREP   EQU $2DA
+    72 = 02DB			NOCLIK   EQU $2DB
+    73 = 02DC			hlpflg   equ $02dc
+    74 = 02E0			RUNAD    EQU $2E0
+    75 = 02E2			INITAD   EQU $2E2
+    76 = 02E5			MEMTOP   EQU $2E5
+    77 = 02E7			MEMLO    EQU $2E7
+    78 = 02EA			dvstat   EQU $2ea
+    79 = 02F0			CRSINH   EQU $2F0
+    80 = 02F2			oldkbc   equ $02f2
+    81 = 02F4			CHBAS    EQU $2F4
+    82 = 02FB			ATACHR   EQU $2FB
+    83 = 02FC			KBCODES  EQU $2FC
+    84 = 02FE			DSPFLG   EQU $2FE
+    85 = 02FF			SSFLAG   EQU $2FF
+    86
+    87 = 0300			DCB      EQU $300
+    88 = 0300			DDEVIC   EQU $300
+    89 = 0301			DUNIT    EQU $301
+    90 = 0302			DCMND    EQU $302
+    91 = 0303			DSTATS   EQU $303
+    92 = 0304			DBUFA    EQU $304
+    93 = 0304			DBUFAL   EQU $304
+    94 = 0305			DBUFAH   EQU $305
+    95 = 0306			DTIMLO   EQU $306
+    96 = 0308			DBYT     EQU $308
+    97 = 0308			DBYTL    EQU $308
+    98 = 0309			DBYTH    EQU $309
+    99 = 030A			DAUX     EQU $30A
+   100 = 030A			DAUX1    EQU $30A
+   101 = 030B			DAUX2    EQU $30B
+   102 = 030F			CASFLG   EQU $30F
+   103 = 0318			STACKP   EQU $318
+   104 = 0319			TSTAT    EQU $319
+   105 = 031A			HATABS   EQU $31A
+   106 = 0341			ICDNO    EQU $341
+   107 = 0342			ICCMD    EQU $342
+   108 = 0344			ICBUFA   EQU $344
+   109 = 0346			ICPUTB   EQU $346
+   110 = 0348			ICBUFL   EQU $348
+   111 = 034A			ICAX1    EQU $34A
+   112 = 034B			ICAX2    EQU $34B
+   113 = 034C			ICAX3    EQU $34C
+   114 = 034D			ICAX4    EQU $34D
+   115 = 034E			ICAX5    EQU $34E
+   116 = 034F			ICAX6    EQU $34F
+   117 = 03EB			CARTCK   EQU $3EB
+   118 = 03F8			BASICF   EQU $3F8
+   119 = 03FA			GINTLK   EQU $3FA
+   120
+   121 = 0580			BUF580   EQU $580
+   122
+   123
+   124 = BFF0			CART     EQU $BFF0
+   125 = BFFA			CARTRUN  EQU $BFFA
+   126
+   127 = CFFF			ABANK    EQU $CFFF
+   128
+   129 = D013			TRIG3    EQU $D013
+   130 = D014			PAL      EQU $D014
+   131 = D01F			CONSOL   EQU $D01F
+   132 = D000			GTIA     EQU $D000
+   133 = D1FF			PDVREG   EQU $D1FF
+   134 = D201			AUDC1    EQU $D201
+   135 = D203			AUDC2    EQU $D203
+   136 = D204			AUDF3    EQU $D204
+   137 = D205			AUDC3    EQU $D205
+   138 = D206			AUDF4    EQU $D206
+   139 = D207			AUDC4    EQU $D207
+   140 = D208			AUDCTL   EQU $D208
+   141 = D209			KBCODE   EQU $D209
+   142 = D20A			RANDOM   EQU $D20A
+   143 = D20A			SKSTRES  EQU $D20A
+   144 = D20D			SEROUT   EQU $D20D
+   145 = D20D			SERIN    EQU $D20D
+   146 = D20E			IRQST    EQU $D20E
+   147 = D20E			IRQEN    EQU $D20E
+   148 = D20F			SKCTL    EQU $D20F
+   149 = D20F			SKSTAT   EQU $D20F
+   150 = D300			PORTA    EQU $D300
+   151 = D301			PORTB    EQU $D301
+   152 = D302			PACTL    EQU $D302
+   153 = D303			PBCTL    EQU $D303
+   154 = D400			DMACTL   EQU $D400
+   155 = D402			DLPTR    EQU $D402
+   156 = D40A			WSYNC    EQU $D40A
+   157 = D40B			VCOUNT   EQU $D40B
+   158 = D40E			NMIEN    EQU $D40E
+   159 = D40F			NMIST    EQU $D40F
+   160
+   161 = D500			CART_ON  EQU $D500
+   162 = D508			CART_OF  EQU $D508
+   163
+   164 = D805			PDIOR    EQU $D805
+   165
+   166 = E000			CHARSET1 EQU $E000
+   167 = E400			DEVHAT   EQU $E400
+   168 = E420			KBDVEC   EQU $E420
+   169 = E424			VKBGBYT  EQU $E424
+   170 = E456			JCIOMAIN EQU $E456
+   171 = E459			JSIOINT  EQU $E459
+   172 = E45C			SETVBLV  EQU $E45C
+   173 = E477			JRESETCD EQU $E477
+   174 = E46B			JNMIENBL EQU $E46B
+   175
+   176 = E459			SIOV     EQU $E459
+   177 = E45F			JSYSVBL  EQU $E45F
+   178 = E462			JEXITVBL EQU $E462
+   179 = E486			JNEWDEVC EQU $E486
+   180
+   181 = FFFA			NMIVEC   EQU $FFFA
+   182 = FFFC			RESETVEC EQU $FFFC
+   183 = FFFE			IRQVEC   EQU $FFFE
+   184
+   185 				; SDX equ
+   186
+   187 = 0015			bufadr   equ $15
+   188 = 0018			dskfms   equ $18
+   189 = 001A			dskutl   equ $1A
+   190
+   191 = 0700			S_FLAG   EQU $700
+   192 = 0701			SDXVER   EQU $701
+   193 = 0702			SDXREV   EQU $702
+   194 = 0703			JKERNEL  EQU $703
+   195 = 0706			BLOCK_IO EQU $706
+   196 = 0709			JMISC    EQU $709
+   197 = 070C			JLSIO    EQU $70C
+   198 				;SIOIDX   EQU $70F  ;Sector IO InDeX.
+   199 = 0715			JHWCTRL  EQU $715
+   200 = 0718			SIOHAND  EQU $718
+   201 = 0720			SLVTAB   EQU $720
+   202 = 0730			LDFTAB   EQU $730
+   203 = 0740			DEVTAB   EQU $740
+   204 = 0750			HANDTAB  EQU $750
+   205 = 0760			fhandle equ $0760
+   206 = 0760			SIOCBIDX EQU $760
+   207 = 0761			DEVICE   EQU $761
+   208 = 0762			NAME     EQU $762
+   209 = 076D			NAMES    EQU $76D
+   210 = 0778			fmode   equ $778
+   211 = 0778			OPMODE   EQU $778
+   212 = 0779			FATR1    EQU $779
+   213 = 077A			FATR2    EQU $77A
+   214 = 077B			DATE     EQU $77B
+   215 = 077E			TIME     EQU $77E
+   216 = 0781			DATESET  EQU $781
+   217 = 0782			FAUX1    EQU $782
+   218 = 0783			FAUX2    EQU $783
+   219 = 0784			FAUX3    EQU $784
+   220 = 0785			FAUX4    EQU $785
+   221 = 0786			FAUX5    EQU $786
+   222 = 0787			SYSCALL  EQU $787
+   223 = 0789			DIRBUF   EQU $789
+   224 = 0789			DIRFATR  EQU $789
+   225 = 078A			DIRF1SEC EQU $78A
+   226 = 078C			DIRFLEN  EQU $78C
+   227 = 078F			DIRFNAME EQU $78F
+   228 = 079A			DIRFDATE EQU $79A
+   229 = 079D			DIRFTIME EQU $79D
+   230 = 07A0			PATH     EQU $7A0
+   231 = 07E0			DOSVECT  EQU $7E0
+   232 = 07E0			JHDOSINI EQU $7E0
+   233 = 07E3			VDOS     EQU $7E3
+   234 = 07E5			VCIO     EQU $7E5
+   235 = 07E7			VEDIT    EQU $7E7
+   236 = 07E9			VCRUNCH  EQU $7E9   
+   237 				;JTEMP    EQU $7EB
+   238 = 07EB			JFSYMBOL EQU $7EB
+   239 = 07EE			JMDVECT  EQU $7EE
+   240 = 07F1			JEXT_ON  EQU $7F1
+   241 = 07F4			JEXT_OFF EQU $7F4
+   242 = 07F7			JEXT_SW  EQU $7F7
+   243 = 07FA			JCAR_SW  EQU $7FA
+   244 = 07FD			JCAR_OLD EQU $7FD
+   245
+   246 				;******************
+   247 = 2000			BANKSIZE EQU 8192
+   248
+   249 				        
+   250 				;******************
+   251 				;* Vectors under ROM
+   252
+   253 = FFC0			highvect equ $FFC0
+   254 = FFC0			jgettd   equ $ffc0
+   255 = FFC3			jsettd   equ $ffc3
+   256 = FFC6			jtdon    equ $ffc6
+   257 = FFC9			jfmttd   equ $ffc9
+   258 = FFD2			jxcomli  equ $ffd2
+   259 = FFD5			jkeyon   equ $ffd5
+   260
+   261 				;******************
+   262 = 00B3			_err_memory_conflict    equ $b3
+   263 = 00B5			_err_disk_corrupt       equ $b5
+   264
+   265
+   266 				; SDX Symbols
+   267
+   268 = 0000			_CIO     SMB '_CIO'
+   269 = 0000			_CRUNCH  SMB '_CRUNCH'
+   270 = 0000			_DOS     SMB '_DOS'
+   271 = 0000			_EDIT    SMB '_EDIT'
+   272 = 0000			_INITZ   SMB '_INITZ'
+   273 = 0000			__MISC   smb '__MISC'
+   274 = 0000			BUILDDIR SMB 'BUILDDIR'
+   275 = 0000			CARVARS  SMB 'CARVARS'  ;as of SDX 4.30
+   276 = 0000			CHDIR    SMB 'CHDIR'
+   277 = 0000			CHMOD    SMB 'CHMOD'
+   278 = 0000			CKSPEC   SMB 'CKSPEC'
+   279 = 0000			COMTAB   SMB 'COMTAB'
+   280 = 0000			COMTAB2  SMB 'COMTAB2'  ;as of SDX 4.30
+   281 = 0000			CURDEV   SMB 'CURDEV'
+   282 = 0000			DEVSPEC  SMB 'DEVSPEC'  ;as of SDX 4.30
+   283 = 0000			DEVNAME  SMB 'DEVNAME'  ;as of SDX 4.30
+   284 = 0000			DIV_32   SMB 'DIV_32'
+   285 = 0000			DIVIO    SMB 'DIVIO'
+   286 = 0000			ENV_P    SMB 'ENV_P'
+   287 = 0000			ERRNO    smb 'ERRNO'
+   288 = 0000			EXTENDED SMB 'EXTENDED'
+   289 = 0000			FCLEVEL  SMB 'FCLEVEL'
+   290 = 0000			FCLOSE   SMB 'FCLOSE'
+   291 = 0000			FCLOSEAL SMB 'FCLOSEAL'
+   292 = 0000			FDCLOSE  SMB 'FDCLOSE'
+   293 = 0000			FDGETC   SMB 'FDGETC'
+   294 = 0000			FDOPEN   SMB 'FDOPEN'
+   295 = 0000			FFIRST   SMB 'FFIRST'
+   296 = 0000			FGETC    SMB 'FGETC'
+   297 = 0000			FGETS    SMB 'FGETS'
+   298 = 0000			FILE_P   SMB 'FILE_P'
+   299 = 0000			FILELENG SMB 'FILELENG'
+   300 = 0000			FLAG     SMB 'FLAG'
+   301 = 0000			FNEXT    SMB 'FNEXT'
+   302 = 0000			FOPEN    SMB 'FOPEN'
+   303 = 0000			FORMAT   SMB 'FORMAT'
+   304 = 0000			FPRINTF  SMB 'FPRINTF'
+   305 = 0000			FPUTC    SMB 'FPUTC'
+   306 = 0000			FPUTS    SMB 'FPUTS'
+   307 = 0000			FREAD    SMB 'FREAD'
+   308 = 0000			FSEEK    SMB 'FSEEK'
+   309 = 0000			FTELL    SMB 'FTELL'
+   310 = 0000			FWRITE   SMB 'FWRITE'
+   311 = 0000			GETC     SMB 'GETC'
+   312 = 0000			GETCWD   SMB 'GETCWD'
+   313 = 0000			GETDFREE SMB 'GETDFREE'
+   314 = 0000			GETENV   SMB 'GETENV'
+   315 = 0000			GETS     SMB 'GETS'
+   316 = 0000			H_FENCE  SMB 'H_FENCE'
+   317 = 0000			I_GETTD  SMB 'I_GETTD'
+   318 = 0000			I_SETTD  SMB 'I_SETTD'
+   319 = 0000			INSTALL  SMB 'INSTALL'
+   320 = 0000			MALLOC   SMB 'MALLOC'
+   321 = 0000			MKDIR    SMB 'MKDIR'
+   322 = 0000			MUL_32   SMB 'MUL_32'
+   323 = 0000			NUMENV   SMB 'NUMENV'
+   324 = 0000			PRINTF   SMB 'PRINTF'
+   325 = 0000			PRO_NAME SMB 'PRO_NAME'
+   326 = 0000			PUT_V    SMB 'PUT_V'
+   327 = 0000			PUTC     SMB 'PUTC'
+   328 = 0000			PUTENV   SMB 'PUTENV'
+   329 = 0000			PUTS     SMB 'PUTS'
+   330 = 0000			REMOVE   SMB 'REMOVE'
+   331 = 0000			RENAME   SMB 'RENAME'
+   332 = 0000			RENDIR   smb 'RENDIR'
+   333 = 0000			RMDIR    SMB 'RMDIR'
+   334 = 0000			S_ADD    SMB 'S_ADD'
+   335 = 0000			S_ADDIZ  SMB 'S_ADDIZ'
+   336 = 0000			S_CLEAR  SMB 'S_CLEAR'
+   337 = 0000			S_LOOKUP SMB 'S_LOOKUP'
+   338 = 0000			S_NEXT   SMB 'S_NEXT'
+   339 = 0000			SETBOOT  SMB 'SETBOOT'
+   340 = 0000			STATUS   SMB 'STATUS'
+   341 = 0000			SYMBOL   SMB 'SYMBOL'
+   342 = 0000			SYSLEVEL SMB 'SYSLEVEL'
+   343 = 0000			T_       SMB 'T_'
+   344 = 0000			TOUPPER  SMB 'TOUPPER'
+   345 = 0000			U_ERROR  SMB 'U_ERROR'
+   346 = 0000			U_EXPAND SMB 'U_EXPAND'
+   347 = 0000			U_FAIL   SMB 'U_FAIL'
+   348 = 0000			U_FSPEC  SMB 'U_FSPEC'
+   349 = 0000			U_GEFINA SMB 'U_GEFINA'
+   350 = 0000			U_GEPATH SMB 'U_GEPATH'
+   351 = 0000			U_GETATR SMB 'U_GETATR'
+   352 = 0000			U_GETFLG SMB 'U_GETFLG'
+   353 = 0000			U_GETKEY SMB 'U_GETKEY' ;as of SDX 4.30
+   354 = 0000			U_GETNUM SMB 'U_GETNUM'
+   355 = 0000			U_GETPAR SMB 'U_GETPAR'
+   356 = 0000			U_GONOFF SMB 'U_GONOFF'
+   357 = 0000			U_LOAD   SMB 'U_LOAD'
+   358 = 0000			U_PARAM  SMB 'U_PARAM'
+   359 = 0000			U_SFAIL  SMB 'U_SFAIL'
+   360 = 0000			U_SLASH  SMB 'U_SLASH'
+   361 = 0000			U_TOKEN  SMB 'U_TOKEN'
+   362 = 0000			U_UNLOAD SMB 'U_UNLOAD'
+   363 = 0000			U_XFAIL  SMB 'U_XFAIL'
+   364 = 0000			VALIDATE SMB 'VALIDATE'
+   365 = 0000			VPRINTF  SMB 'VPRINTF'
+   366 = 0000			XDIVIO   SMB 'XDIVIO'
+   367 = 0000			_XHDIR   SMB '_XHDIR'
+   368 = 0000			_XPROC   SMB '_XPROC'
+   369
+   370
+   371 				; 
+   372 				; The!Cart Register (from-to,default)
+   373 				;
+   374
+   375 				; Mode Select
+   376 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+   377 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
+   378 				; other than the ones listed here are reserved (and result
+   379 				; in "cartridge off"):
+   380 				; $00: off, cartridge disabled
+   381 				; $01: 8k banks at $A000
+   382 				; $02: AtariMax 1MBit / 128k
+   383 				; $03: Atarimax 8MBit / 1MB
+   384 				; $04: OSS M091
+   385 				; $08: SDX 64k cart, $D5Ex banking
+   386 				; $09: Diamond GOS 64k cart, $D5Dx banking
+   387 				; $0A: Express 64k cart, $D57x banking
+   388 				; $0C: Atrax 128k cart
+   389 				; $0D: Williams 64k cart
+   390 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
+   391 				; $21: standard 16k cart at $8000-$BFFF
+   392 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+   393 				; $23: Blizzard 16k
+   394 				; $24: Sic!Cart 512k
+   395 				; $28: 16k Mega cart
+   396 				; $29: 32k Mega cart
+   397 				; $2A: 64k Mega cart
+   398 				; $2B: 128k Mega cart
+   399 				; $2C: 256k Mega cart
+   400 				; $2D: 512k Mega cart
+   401 				; $2E: 1024k Mega cart
+   402 				; $2F: 2048k Mega cart
+   403 				; $30: 32k XEGS cart
+   404 				; $31: 64k XEGS cart
+   405 				; $32: 128k XEGS cart
+   406 				; $33: 256k XEGS cart
+   407 				; $34: 512k XEGS cart
+   408 				; $35: 1024k XEGS cart
+   409 				; $38: 32k SWXEGS cart
+   410 				; $39: 64k SWXEGS cart
+   411 				; $3A: 128k SWXEGS cart
+   412 				; $3B: 256k SWXEGS cart
+   413 				; $3C: 512k SWXEGS cart
+   414 				; $3D: 1024k SWXEGS cart
+   415 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
+   416 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
+   417 = 0003			TCMOSL.AM1MB = $03
+   418 = 0020			TCMOSL.FLEXI = $20    ; flexi mode, separate 8k banks at $A000 and $8000
+   419 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+   420
+   421 				; how to figure out that The!Cart is not active?
+   422 				; If the address is not used then the XL returns $ff but
+   423 				; the XE (and old 800) return $d5 (high byte of address,
+   424 				; the value of the last bus cycle)
+   425 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+   426 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+   427
+   428 				; Mode Flash/RAM Select
+   429 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+   430 				; bit 0: primary bank write enable (0=readOnly, 1=write)
+   431 				; bit 1: primary bank source (0=flash, 1=RAM)
+   432 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
+   433 				; bit 3: secondary bank source (0=flash, 1=RAM)
+   434 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
+   435 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
+   436
+   437 				; Primary Bank
+   438 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
+   439 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
+   440 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+   441
+   442 				; Secondary Bank 
+   443 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
+   444 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
+   445 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   446
+   447 				; SPI interface to EEPROM
+   448 = D5A8			TCINEP = $d5a8
+   449 				; bit 0: SPI CLK
+   450 				; bit 1: SPI CS
+   451 				; bit 7: SPI data in (on reads), SPI data out (on writes)
+   452
+   453 				; configuration lock
+   454 = D5AF			TCCOLO = $d5af
+   455 				; Writing to this register disables "The!Cart" registers
+   456 				; at $d5aX.
+   457
+   458
+   459 				;
+   460 				; Offset from COMTAB
+   461 				;
+   462 = 001A			TRAILS   = $1A
+   463 = 0021			CONFNAM  = $21
+   464 				;
+   465 				; Ramdisk size in KB if not specified on command line
+   466 				;
+   467 = 0200			RAMDISK_SIZE = 512
+   468 				;
+   469 				; ******************************************************************************
+   470 				;
+   471 				;    
+   472  FA FF			     blk sparta $3000
+   473 				;
+   474 				; check if we are running on THE!CART hardware
+   475 				;
+   476 3000-3268> AD A6 D5	     lda TCMOSL
+   477 3003 C9 FF		     cmp #TCMOSL.XLLOCK
+   478 3005 F0 04		     beq ?skipped
+   479 3007 C9 D5		     cmp #TCMOSL.XELOCK
+   480 3009 D0 03		     bne ?thecart_hardware
+   481 300B			?skipped
+   482 300B 4C F3 31		     jmp nocartram
+   483 				;
+   484 				; find the maximum drive number and store it in ramdisk_drive
+   485 				;
+   486 300E			?thecart_hardware
+   487 300E AD FE FF		     lda DEVSPEC-2
+   488 3011 8D 9D 01		     sta ramdisk_drive
+   489 3014 A9 B6		     lda #<maxvar
+   490 3016 A2 31		     ldx #>maxvar
+   491 3018 20 00 00		     jsr GETENV
+   492 301B 30 10		     bmi ?nomxd
+   493 301D AD 80 05		     lda BUF580
+   494 3020 38			     sec
+   495 3021 E9 40		     sbc #$40
+   496 3023 30 08		     bmi ?nomxd
+   497 3025 CD 9D 01		     cmp ramdisk_drive
+   498 3028 B0 03		     bcs ?nomxd
+   499 302A 8D 9D 01		     sta ramdisk_drive
+   500 302D			?nomxd
+   501 				;
+   502 				; check if a drive number has been provided in the command
+   503 				;
+   504 302D 20 00 00		     jsr U_GETPAR
+   505 3030 F0 43		     beq ?no_parameters
+   506 3032 A2 00		     ldx #$00
+   507 3034			?ppar1
+   508 3034 BD 21 00		     lda COMTAB+CONFNAM,x
+   509 3037 C9 30		     cmp #'0'
+   510 3039 90 24		     bcc ?epar1
+   511 303B C9 3A		     cmp #'9'+1
+   512 303D B0 20		     bcs ?epar1
+   513 303F 48			     pha
+   514 3040 AD AC 31		     lda newdrvn
+   515 3043 0A			     asl
+   516 3044 8D A0 31		     sta multmp
+   517 3047 0A			     asl
+   518 3048 0A			     asl
+   519 3049 18			     clc
+   520 304A 6D A0 31		     adc multmp
+   521 304D 8D AC 31		     sta newdrvn
+   522 3050 68			     pla
+   523 3051 29 0F		     and #$0F
+   524 3053 6D AC 31		     adc newdrvn
+   525 3056 8D AC 31		     sta newdrvn
+   526 3059 E8			     inx
+   527 305A EC 1A 00		     cpx COMTAB+TRAILS
+   528 305D 90 D5		     bcc ?ppar1
+   529 305F			?epar1
+   530 305F AD AC 31		     lda newdrvn
+   531 3062 D0 05		     bne ?num
+   532 3064 AD 21 00		     lda COMTAB+CONFNAM
+   533 3067 29 1F		     and #$1f
+   534 3069			?num
+   535 3069 C9 10		     cmp #16
+   536 306B B0 08		     bcs ?no_parameters
+   537 306D CD 9D 01		     cmp ramdisk_drive
+   538 3070 B0 03		     bcs ?no_parameters
+   539 3072 8D 9D 01		     sta ramdisk_drive
+   540 				;
+   541 				; use max size 
+   542 				;
+   543 3075			?no_parameters
+   544 3075 A9 00		     lda #<RAMDISK_SIZE
+   545 3077 8D AD 01		     sta ramdisk_sectors
+   546 307A A2 02		     ldx #>RAMDISK_SIZE
+   547 307C 8E AE 01		     stx ramdisk_sectors+1
+   548 				;
+   549 				; convert ramdisk size (in Kb) into number of sectors (sector len = 128 bytes)
+   550 				;
+   551 307F AD AD 01		     lda ramdisk_sectors
+   552 3082 0A			     asl
+   553 3083 2E AE 01		     rol ramdisk_sectors+1
+   554 3086 0A			     asl
+   555 3087 2E AE 01		     rol ramdisk_sectors+1
+   556 308A 0A			     asl
+   557 308B 2E AE 01		     rol ramdisk_sectors+1
+   558 308E 8D AD 01		     sta ramdisk_sectors
+   559 				;
+   560 				; find a free entry in the SIO table
+   561 				;
+   562 3091 A2 06		     ldx #$06
+   563 3093			?next_sio_entry
+   564 3093 BD 19 07		     lda SIOHAND+1,x
+   565 3096 F0 07		     beq ?free_sio_entry
+   566 3098 CA			     dex
+   567 3099 CA			     dex
+   568 309A 10 F7		     bpl ?next_sio_entry
+   569 309C 4C BD 31		     jmp sio_full
+   570 				;
+   571 				; save SIO handler
+   572 				;
+   573 309F			?free_sio_entry
+   574 309F AD A1 31		     lda prdsio
+   575 30A2 9D 18 07		     sta SIOHAND,x
+   576 30A5 AD A2 31		     lda prdsio+1
+   577 30A8 9D 19 07		     sta SIOHAND+1,x
+   578 				;
+   579 				; set ramdisk name
+   580 				;
+   581 30AB AD 9D 01		     lda ramdisk_drive
+   582 30AE 09 40		     ora #$40
+   583 30B0 8D B4 31		     sta rddrvch
+   584 30B3 AD 9D 01		     lda ramdisk_drive
+   585 30B6 09 30		     ora #$30
+   586 30B8 8D 98 31		     sta report_drive
+   587 				;
+   588 				; set max sector number
+   589 				;
+   590 30BB AD AE 01		     lda ramdisk_sectors+1
+   591 30BE 8D A0 01		     sta spt_hi
+   592 30C1 AD AD 01		     lda ramdisk_sectors
+   593 30C4 8D A1 01		     sta spt_lo
+   594 				;
+   595 				; check if there is a ramdisk content to preserve
+   596 				; by looking at the magic bytes at the start of RAM
+   597 				; Disable interrupts before switching to RAM because of
+   598 				; cartridge lock and preserve THE!CART registers
+   599 				;
+   600 30C7 A9 FF		     lda #$FF
+   601 30C9 85 42		     sta CRITIC 
+   602 30CB A5 14		     lda RTCLOK+2
+   603 30CD			_wait1
+   604 30CD C5 14		     cmp RTCLOK+2
+   605 30CF F0 FC		     beq _wait1
+   606
+   607 30D1 78			     sei                ; disable all interrupts
+   608 30D2 A9 00		     lda #$00
+   609 30D4 8D 0E D4		     sta NMIEN
+   610
+   611 30D7 AD A2 D5		     lda TCPBEN         ; save register
+   612 30DA 48			     pha
+   613 30DB AD A7 D5		     lda TCMOFR
+   614 30DE 48			     pha
+   615 30DF AD A0 D5		     lda TCPBRL
+   616 30E2 48			     pha
+   617 30E3 AD A1 D5		     lda TCPBRH
+   618 30E6 48			     pha
+   619 30E7 AD A6 D5		     lda TCMOSL
+   620 30EA 48			     pha
+   621
+   622 30EB A9 21		     lda #TCMOSL.16K    ; set 16k mode at $8000-$BFFF
+   623 30ED 8D A6 D5		     sta TCMOSL
+   624 30F0 A9 03		     lda #TCMOFR.PBRAM  ; set to RAM
+   625 30F2 8D A7 D5		     sta TCMOFR
+   626 30F5 A9 00		     lda #$00
+   627 30F7 8D A0 D5		     sta TCPBRL              ; get bank number from X
+   628 30FA 8D A1 D5		     sta TCPBRH              ; set high to $00
+   629 30FD A9 01		     lda #$01
+   630 30FF 8D A2 D5		     sta TCPBEN              ; enable
+   631
+   632 3102 A9 00		     lda #0
+   633 3104 8D AB 31		     sta no_magic            ; used to store if magic is found (0=yes)
+   634
+   635 3107 A2 07		     ldx #7
+   636 3109			next_magic
+   637 3109 BD A3 31		     lda magic,x
+   638 310C DD 00 80		     cmp $8000,x
+   639 310F F0 06		     beq good_magic
+   640 3111 9D 00 80		     sta $8000,x
+   641 3114 CE AB 31		     dec no_magic
+   642 3117			good_magic
+   643 3117 CA			     dex
+   644 3118 10 EF		     bpl next_magic
+   645
+   646 311A 68			     pla                ; restore register
+   647 311B 8D A6 D5		     sta TCMOSL
+   648 311E 68			     pla
+   649 311F 8D A1 D5		     sta TCPBRH
+   650 3122 68			     pla
+   651 3123 8D A0 D5		     sta TCPBRL
+   652 3126 68			     pla
+   653 3127 8D A7 D5		     sta TCMOFR
+   654 312A 68			     pla
+   655 312B 8D A2 D5		     sta TCPBEN
+   656
+   657 312E A9 E0		     lda #$E0           ; enable interrupts
+   658 3130 8D 0E D4		     sta NMIEN
+   659 3133 58			     cli
+   660
+   661 3134 A9 00		     lda #$00           ; reset crirical
+   662 3136 85 42		     sta CRITIC 
+   663 				;
+   664 				; check if ramdisk is already initialized
+   665 				;
+   666 3138 AD AB 31		     lda no_magic
+   667 313B 30 28		     bmi ?erase_content
+   668 				;
+   669 				; ramdisk has a previous content
+   670 				;
+   671 313D 20 00 00		     jsr PRINTF
+   672 3140 54 68 65 21 43 41 +      .byte 'The!CART Ramdisk ver43 preserved',$9B,0
+   673 3162 4C 9C 31		     jmp ?end
+   674 				;
+   675 				; ramdisk must be initialised because no previous content has been found
+   676 				; Build SpartaDos disk structure
+   677 				;
+   678 3165			?erase_content
+   679 3165 A9 31		     lda #$31
+   680 3167 8D 00 03		     sta DDEVIC
+   681 316A AD 9D 01		     lda ramdisk_drive
+   682 316D 8D 01 03		     sta DUNIT
+   683 3170 A9 AD		     lda #<rdname
+   684 3172 A2 31		     ldx #>rdname
+   685 3174 20 00 00		     jsr BUILDDIR
+   686 				;
+   687 				; ramdisk is initialized
+   688 				;
+   689 3177 20 00 00		     jsr PRINTF
+   690 317A 54 68 65 21 43 61 +      .byte 'The!Cart Ramdisk ver44 drive D'
+   691 3198			report_drive
+   692 3198 3F 3A 9B 00		     .byte '?:',$9B,0
+   693 				;
+   694 				; mark the device as being installed
+   695 				;
+   696 319C			?end
+   697 319C CE 00 00		     dec INSTALL
+   698 319F 60			     rts
+   699 				;
+   700 				; Strings and variables
+   701 				;
+   702 31A0			multmp
+   703 31A0 00			     .byte 0
+   704 31A1			prdsio
+   705 31A1 00 00		     .word rdsio
+   706 31A3			magic
+   707 31A3 34 23 32 21 2D 28 +      .byte "TCRAMHJX"
+   708 31AB			no_magic
+   709 31AB 00			     .byte 0
+   710 31AC			newdrvn
+   711 31AC 00			     .byte 0
+   712 31AD			rdname
+   713 31AD 54 43 44 69 73 6B +      .byte 'TCDisk '
+   714 31B4			rddrvch
+   715 31B4 41 9B		     .byte 'A',$9B
+   716 31B6			maxvar
+   717 31B6 4D 41 58 44 52 56 +      .byte 'MAXDRV',$9B
+   718 				;
+   719 				; Display an error when SIO table is full
+   720 				;
+   721 31BD			sio_full
+   722 31BD 20 00 00		     jsr PRINTF
+   723 31C0 54 68 65 21 43 61 +      .byte 'The!Cart Ramdisk not installed:',$9b
+   724 31E0 20 20 53 49 4F 20 +      .byte '  SIO table full',$9B,0
+   725 31F2 60			     rts
+   726 				;
+   727 				; Cartridge ram not found
+   728 				;
+   729 31F3			nocartram:
+   730 31F3 20 00 00		     jsr PRINTF
+   731 31F6 4E 6F 20 72 61 6D +      .byte 'No ramdisk because The!Cart is locked:',$9B
+   732 321D 20 20 20 55 73 65 +      .byte '   Use SHIFT-Fire or SHIFT-Return in',$9B
+   733 3242 20 20 20 54 68 65 +      .byte '   The!Cart main menu to unlock RAM.',$9B,0
+   734 3268 60			     rts
+   735
+   736 				;
+   737 				; ******************************************************************************
+   738 				;
+   739 3269 FE FF 01 00		     blk reloc main  
+   740 				;
+   741 				; An I/O is requested
+   742 				;
+   743 0000			rdsio
+   744 0000,0234> 08		     php
+   745 0001 20 0E 00		     jsr sio_handler
+   746 0004 98			     tya
+   747 0005 28			     plp
+   748 0006 C9 FF		     cmp #$FF
+   749 0008 F0 02		     beq set_carry
+   750 000A 18			     clc
+   751 000B 60			     rts
+   752 000C			set_carry
+   753 000C 38			     sec
+   754 000D 60			     rts
+   755 				;
+   756 				; Ramdisk SIO handler
+   757 				;
+   758 000E			sio_handler
+   759 000E AD 00 03		     lda DDEVIC
+   760 0011 29 F0		     and #$f0
+   761 0013 C9 30		     cmp #$30
+   762 0015 D0 30		     bne ?nordsio
+   763 0017 AD 01 03		     lda DUNIT
+   764 001A C9 10		     cmp #$10
+   765 001C B0 04		     bcs ?isrddrv
+   766 				;
+   767 				; get drive number from new swap table
+   768 				;
+   769 001E AA			     tax
+   770 001F BD 01 00		     lda COMTAB2+2-1,x
+   771 0022			?isrddrv
+   772 0022 CD 9D 01		     cmp ramdisk_drive
+   773 0025 D0 20		     bne ?nordsio
+   774 0027 A2 01		     ldx #$01
+   775 0029			?sbb
+   776 0029 BD 04 03		     lda DBUFAL,x
+   777 002C 95 34		     sta BUFEN,x
+   778 002E 9D 6E 01		     sta _rtofast+1,x
+   779 0031 9D 29 01		     sta _wfromfast+1,x
+   780 0034 CA			     dex
+   781 0035 10 F2		     bpl ?sbb
+   782 0037 AD 02 03		     lda DCMND
+   783 003A A2 04		     ldx #$04
+   784 003C			?nextcmd
+   785 003C DD AF 01		     cmp sio_cmds,x
+   786 003F F0 13		     beq ?callcmd
+   787 0041 CA			     dex
+   788 0042 10 F8		     bpl ?nextcmd
+   789 0044			?rwerr
+   790 0044 A0 8B		     ldy #139 ;NAK
+   791 0046 60			     rts
+   792 0047			?nordsio
+   793 0047 A0 FF		     ldy #$FF
+   794 0049 60			     rts
+   795
+   796 				;
+   797 				; other commands (status, percom)
+   798 				;
+   799 004A			?jother
+   800 004A E0 04		     cpx #$04
+   801 004C F0 03		     beq ?go_percom
+   802 004E 4C 7E 01		     jmp READSTATUS
+   803 0051			?go_percom
+   804 0051 4C 84 01		     jmp READPERCOM
+   805
+   806 				;
+   807 				; check for read sector or write sector
+   808 				;
+   809 0054			?callcmd
+   810 0054 E0 03		     cpx #$03
+   811 0056 B0 F2		     bcs ?jother
+   812 				;
+   813 				; we know that we have a read or write
+   814 				;
+   815 0058 AD A1 01		     lda spt_lo
+   816 005B CD 0A 03		     cmp DAUX1
+   817 005E AD A0 01		     lda spt_hi
+   818 0061 ED 0B 03		     sbc DAUX2
+   819 0064 90 DE		     bcc ?rwerr
+   820 				;
+   821 				; compute buffer address in cartridge RAM
+   822 				;
+   823 0066 AD 0A 03		     lda DAUX1               ; get low byte of sector
+   824 0069 38			     sec                     ; set Bit7
+   825 006A 6A			     ror                     ; save Bit0 in carry
+   826 006B 29 BF		     and #$bf                ; clear Bit6
+   827 006D 8D 41 01		     sta _wtofast+2
+   828 0070 8D 55 01		     sta _rfromfast+2
+   829 0073 A9 00		     lda #$00
+   830 0075 6A			     ror                     ; make carry Bit7
+   831 0076 8D 40 01		     sta _wtofast+1
+   832 0079 8D 54 01		     sta _rfromfast+1
+   833 				;
+   834 				; compute bank number in RAM.
+   835 				; we have 128 sectors in a 16KB bank so we need
+   836 				; to shift right DAUX1/2 by 6 (or left by 2)
+   837 				;
+   838 007C AD 0A 03		     lda DAUX1               ; get low byte of sector
+   839 007F 0A			     asl                     ; save Bit8 in carry 
+   840 0080 AD 0B 03		     lda DAUX2               ; get high byte of sector
+   841 0083 2A			     rol                     ; get Bit8 of low byte 
+   842 0084 0A			     asl                     ; get bank number with LSB 0
+   843 0085 A8			     tay
+   844 				;
+   845 				; save THE!CART registers and disable interrupts
+   846 				;
+   847 0086 20 9B 00		     jsr save_cart_regs
+   848 0089 20 CA 00		     jsr set_cart_regs
+   849 				;
+   850 				; call read or write routine
+   851 				;
+   852 008C A2 00		     ldx #0
+   853 008E 2C 03 03		     bit DSTATS
+   854 0091 10 04		     bpl ?jread
+   855
+   856 0093 20 20 01		     jsr WRITESECTOR
+   857 0096 60			     rts
+   858 				     
+   859 0097			?jread
+   860 0097 20 4E 01		     jsr READSECTOR
+   861 009A 60			     rts
+   862 				;
+   863 				; save THE!CART registers into hide_cart_ram code
+   864 				;
+   865 009B			save_cart_regs
+   866 				     
+   867 009B A9 FF		     lda #$FF
+   868 009D 85 42		     sta CRITIC 
+   869 009F A5 14		     lda RTCLOK+2
+   870 00A1			_wait2
+   871 00A1 C5 14		     cmp RTCLOK+2
+   872 00A3 F0 FC		     beq _wait2
+   873
+   874 00A5 78			     sei
+   875 00A6 A9 00		     lda #0
+   876 00A8 8D 0E D4		     sta NMIEN
+   877
+   878 00AB AD A6 D5		     lda TCMOSL
+   879 00AE 8D FD 00		     sta _hpatchTCMOSL+1
+   880 00B1 AD A7 D5		     lda TCMOFR
+   881 00B4 8D 0C 01		     sta _hpatchTCMOFR+1
+   882 00B7 AD A0 D5		     lda TCPBRL
+   883 00BA 8D 07 01		     sta _hpatchTCPBRL+1
+   884 00BD AD A1 D5		     lda TCPBRH
+   885 00C0 8D 02 01		     sta _hpatchTCPBRH+1
+   886 00C3 AD A2 D5		     lda TCPBEN
+   887 00C6 8D 11 01		     sta _hpatchTCPBEN+1
+   888
+   889 00C9 60			     rts
+   890 				;
+   891 				; save THE!CART registers into show_cart_ram code
+   892 				;
+   893 00CA			set_cart_regs
+   894
+   895 00CA A9 21		     lda #TCMOSL.16K
+   896 00CC 8D E3 00		     sta _spatchTCMOSL+1
+   897 00CF A9 03		     lda #TCMOFR.PBRAM
+   898 00D1 8D E8 00		     sta _spatchTCMOFR+1
+   899 00D4 8C ED 00		     sty _spatchTCPBRL+1
+   900 00D7 A9 00		     lda #$00
+   901 00D9 8D F2 00		     sta _spatchTCPBRH+1
+   902 00DC A9 01		     lda #$01
+   903 00DE 8D F7 00		     sta _spatchTCPBEN+1
+   904
+   905 00E1 60			     rts
+   906 				;
+   907 				; enable THE!CART ram
+   908 				;
+   909 00E2			show_cart_ram
+   910
+   911 00E2			_spatchTCMOSL
+   912 00E2 A0 00		     ldy #0
+   913 00E4 8C A6 D5		     sty TCMOSL
+   914 00E7			_spatchTCMOFR
+   915 00E7 A0 00		     ldy #0
+   916 00E9 8C A7 D5		     sty TCMOFR
+   917 00EC			_spatchTCPBRL
+   918 00EC A0 00		     ldy #0
+   919 00EE 8C A0 D5		     sty TCPBRL
+   920 00F1			_spatchTCPBRH
+   921 00F1 A0 00		     ldy #0
+   922 00F3 8C A1 D5		     sty TCPBRH
+   923 00F6			_spatchTCPBEN
+   924 00F6 A0 00		     ldy #0
+   925 00F8 8C A2 D5		     sty TCPBEN
+   926
+   927 00FB 60			     rts
+   928 				;
+   929 				; remove THE!CART ram
+   930 				;
+   931 00FC			hide_cart_ram
+   932
+   933 00FC			_hpatchTCMOSL
+   934 00FC A0 00		     ldy #0
+   935 00FE 8C A6 D5		     sty TCMOSL
+   936 0101			_hpatchTCPBRH
+   937 0101 A0 00		     ldy #0
+   938 0103 8C A1 D5		     sty TCPBRH
+   939 0106			_hpatchTCPBRL
+   940 0106 A0 00		     ldy #0
+   941 0108 8C A0 D5		     sty TCPBRL
+   942 010B			_hpatchTCMOFR
+   943 010B A0 00		     ldy #0
+   944 010D 8C A7 D5		     sty TCMOFR
+   945 0110			_hpatchTCPBEN
+   946 0110 A0 00		     ldy #0
+   947 0112 8C A2 D5		     sty TCPBEN
+   948
+   949 0115 A9 E0		     lda #$E0
+   950 0117 8D 0E D4		     sta NMIEN
+   951 011A 58			     cli
+   952
+   953 011B A9 00		     lda #$00
+   954 011D 85 42		     sta CRITIC 
+   955
+   956 011F 60			     rts
+   957 				;
+   958 				; Write sector command
+   959 				;
+   960 0120			WRITESECTOR
+   961
+   962 0120 AD 87 07		     lda SYSCALL
+   963 0123 20 F1 07		     jsr jext_on
+   964 0126 A2 00		     ldx #0
+   965 0128			_wfromfast
+   966 0128 BD FF FF		     lda $FFFF,x
+   967 012B 9D B4 01		     sta ramdisk_buffer,x
+   968 012E E8			     inx
+   969 012F EC 08 03		     cpx DBYT
+   970 0132 D0 F4		     bne _wfromfast
+   971 0134 20 F4 07		     jsr jext_off
+   972
+   973 0137 20 E2 00		     jsr show_cart_ram
+   974 013A A2 00		     ldx #0
+   975 013C			_wfromfast_buf
+   976 013C BD B4 01		     lda ramdisk_buffer,x
+   977 013F			_wtofast
+   978 013F 9D FF FF		     sta $FFFF,x
+   979 0142 E8			     inx
+   980 0143 EC 08 03		     cpx DBYT
+   981 0146 D0 F4		     bne _wfromfast_buf
+   982 0148 20 FC 00		     jsr hide_cart_ram
+   983 				     
+   984 014B 4C 79 01		     jmp ?operation_ok
+   985 				     
+   986 				;
+   987 				; Read sector command
+   988 				;
+   989 014E			READSECTOR
+   990 				     
+   991 014E 20 E2 00		     jsr show_cart_ram
+   992 0151 A2 00		     ldx #0
+   993 0153			_rfromfast
+   994 0153 BD FF FF		     lda $FFFF,x
+   995 0156 9D B4 01		     sta ramdisk_buffer,x
+   996 0159 E8			     inx
+   997 015A EC 08 03		     cpx DBYT
+   998 015D D0 F4		     bne _rfromfast     
+   999 015F 20 FC 00		     jsr hide_cart_ram
+  1000
+  1001
+  1002 0162 AD 87 07		     lda SYSCALL
+  1003 0165 20 F1 07		     jsr jext_on
+  1004 0168 A2 00		     ldx #0
+  1005 016A			_rfromfast_buf
+  1006 016A BD B4 01		     lda ramdisk_buffer,x
+  1007 016D			_rtofast
+  1008 016D 9D FF FF		     sta $FFFF,x
+  1009 0170 E8			     inx
+  1010 0171 EC 08 03		     cpx DBYT
+  1011 0174 D0 F4		     bne _rfromfast_buf
+  1012 0176 20 F4 07		     jsr jext_off
+  1013
+  1014 0179			?operation_ok
+  1015 0179 A9 01		     lda #$01
+  1016 017B A8			     tay
+  1017 017C 18			     clc
+  1018 017D 60			     rts
+  1019 				;
+  1020 				; Read Status and Read Percom commands
+  1021 				;
+  1022 017E			READSTATUS
+  1023 017E A2 0F		     ldx #$0f
+  1024 0180 A0 03		     ldy #$03
+  1025 0182 D0 04		     bne ?rdperc
+  1026 0184			READPERCOM
+  1027 0184 A2 0B		     ldx #$0b
+  1028 0186 A0 0B		     ldy #$0b
+  1029 0188			?rdperc
+  1030 0188 AD 87 07		     lda SYSCALL
+  1031 018B 20 F1 07		     jsr jext_on
+  1032 018E			?nxtpb
+  1033 018E BD 9E 01		     lda tpercom,x
+  1034 0191 91 34		     sta (BUFEN),y
+  1035 0193 CA			     dex
+  1036 0194 88			     dey
+  1037 0195 10 F7		     bpl ?nxtpb
+  1038 0197 20 F4 07		     jsr jext_off
+  1039 019A 4C 79 01		     jmp ?operation_ok
+  1040 				;
+  1041 				; ramdisk drive number
+  1042 				;
+  1043 019D			ramdisk_drive
+  1044 019D 0F			     .byte 15
+  1045 				;
+  1046 				; Read percom answer
+  1047 				;
+  1048 019E			tpercom
+  1049 019E 01			     .byte 1    ;no of tracks
+  1050 019F 01			     .byte 1    ;step rate
+  1051 01A0			spt_hi
+  1052 01A0 00			     .byte 0    ;sector per track hi - $0E for 470KB
+  1053 01A1			spt_lo
+  1054 01A1 00			     .byte 0    ;sector per track lo - $B0 for 470KB
+  1055 01A2 00			     .byte 0    ;no of sides - 1
+  1056 01A3 04			     .byte 4    ;record method (4=MFM)
+  1057 01A4 00			     .byte 0    ;bytes per sector hi
+  1058 01A5 80			     .byte $80  ;bytes per sector lo (128 bytes)
+  1059 01A6 FF			     .byte $FF  ;drive online
+  1060 01A7 00			     .byte 0    ;unused
+  1061 01A8 00			     .byte 0    ;unused
+  1062 01A9 00			     .byte 0    ;unused
+  1063 				;
+  1064 				; Read status answer
+  1065 				;
+  1066 01AA			tstatus
+  1067 01AA 10			     .byte $10
+  1068 01AB FF			     .byte $FF
+  1069 01AC E0			     .byte $E0
+  1070 				;
+  1071 				; Number of sectors of this ramdisk (128 bytes)
+  1072 				;
+  1073 01AD			ramdisk_sectors
+  1074 01AD 00 00		     .word 0
+  1075 01AF			sio_cmds
+  1076 01AF 52 57 50 53 4E	     .byte 'RWPSN'
+  1077 01B4			ramdisk_buffer
+  1078 01B4 00 00 00 00 00 00 + :128 .byte 0
+  1079
+  1080 				     end
+  1080 0234 FD FF 01 00 00	BLK UPDATE ADDRESS
+  1080 0234 FD 12 30		
+  1080 0234 FD 26 30		
+  1080 0234 FD 2B 30		
+  1080 0234 FD 6E 30		
+  1080 0234 FD 73 30		
+  1080 0234 FD 78 30		
+  1080 0234 FD 7D 30		
+  1080 0234 FD 80 30		
+  1080 0234 FD 84 30		
+  1080 0234 FD 88 30		
+  1080 0234 FD 8C 30		
+  1080 0234 FD 8F 30		
+  1080 0234 FD AC 30		
+  1080 0234 FD B4 30		
+  1080 0234 FD BC 30		
+  1080 0234 FD BF 30		
+  1080 0234 FD C2 30		
+  1080 0234 FD C5 30		
+  1080 0234 FD 6B 31		
+  1080 0234 FD A1 31		
+  1080 0234 FE 01 02 21 0C 03 + 
+  1080 0234 FC			
+  1080 0234			BLK UPDATE SYMBOL
+  1080 0234 FB FF 42 55 49 4C + BUILDDIR
+  1080 0234 FD 75 31		
+  1080 0234 FC			
+  1080 0234 FB FF 43 4F 4D 54 + COMTAB  
+  1080 0234 FD 35 30		
+  1080 0234 FD 5B 30		
+  1080 0234 FD 65 30		
+  1080 0234 FC			
+  1080 0234 FB FF 43 4F 4D 54 + COMTAB2 
+  1080 0234 FE 01 20		
+  1080 0234 FC			
+  1080 0234 FB FF 44 45 56 53 + DEVSPEC 
+  1080 0234 FD 0F 30		
+  1080 0234 FC			
+  1080 0234 FB FF 47 45 54 45 + GETENV  
+  1080 0234 FD 19 30		
+  1080 0234 FC			
+  1080 0234 FB FF 49 4E 53 54 + INSTALL 
+  1080 0234 FD 9D 31		
+  1080 0234 FC			
+  1080 0234 FB FF 50 52 49 4E + PRINTF  
+  1080 0234 FD 3E 31		
+  1080 0234 FD 78 31		
+  1080 0234 FD BE 31		
+  1080 0234 FD F4 31		
+  1080 0234 FC			
+  1080 0234 FB FF 55 5F 47 45 + U_GETPAR
+  1080 0234 FD 2E 30		
+  1080 0234 FC			
