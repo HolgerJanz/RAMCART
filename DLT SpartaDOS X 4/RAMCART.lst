@@ -474,20 +474,20 @@ mads 1.9.9
    473 				;
    474 				; check if we are running on THE!CART hardware
    475 				;
-   476 3000-3268> AD A6 D5	     lda TCMOSL
+   476 3000-325B> AD A6 D5	     lda TCMOSL
    477 3003 C9 FF		     cmp #TCMOSL.XLLOCK
    478 3005 F0 04		     beq ?skipped
    479 3007 C9 D5		     cmp #TCMOSL.XELOCK
    480 3009 D0 03		     bne ?thecart_hardware
    481 300B			?skipped
-   482 300B 4C F3 31		     jmp nocartram
+   482 300B 4C EB 31		     jmp nocartram
    483 				;
    484 				; find the maximum drive number and store it in ramdisk_drive
    485 				;
    486 300E			?thecart_hardware
    487 300E AD FE FF		     lda DEVSPEC-2
-   488 3011 8D 9D 01		     sta ramdisk_drive
-   489 3014 A9 B6		     lda #<maxvar
+   488 3011 8D 91 01		     sta ramdisk_drive
+   489 3014 A9 B1		     lda #<maxvar
    490 3016 A2 31		     ldx #>maxvar
    491 3018 20 00 00		     jsr GETENV
    492 301B 30 10		     bmi ?nomxd
@@ -495,9 +495,9 @@ mads 1.9.9
    494 3020 38			     sec
    495 3021 E9 40		     sbc #$40
    496 3023 30 08		     bmi ?nomxd
-   497 3025 CD 9D 01		     cmp ramdisk_drive
+   497 3025 CD 91 01		     cmp ramdisk_drive
    498 3028 B0 03		     bcs ?nomxd
-   499 302A 8D 9D 01		     sta ramdisk_drive
+   499 302A 8D 91 01		     sta ramdisk_drive
    500 302D			?nomxd
    501 				;
    502 				; check if a drive number has been provided in the command
@@ -512,51 +512,51 @@ mads 1.9.9
    511 303B C9 3A		     cmp #'9'+1
    512 303D B0 20		     bcs ?epar1
    513 303F 48			     pha
-   514 3040 AD AC 31		     lda newdrvn
+   514 3040 AD A7 31		     lda newdrvn
    515 3043 0A			     asl
-   516 3044 8D A0 31		     sta multmp
+   516 3044 8D 9B 31		     sta multmp
    517 3047 0A			     asl
    518 3048 0A			     asl
    519 3049 18			     clc
-   520 304A 6D A0 31		     adc multmp
-   521 304D 8D AC 31		     sta newdrvn
+   520 304A 6D 9B 31		     adc multmp
+   521 304D 8D A7 31		     sta newdrvn
    522 3050 68			     pla
    523 3051 29 0F		     and #$0F
-   524 3053 6D AC 31		     adc newdrvn
-   525 3056 8D AC 31		     sta newdrvn
+   524 3053 6D A7 31		     adc newdrvn
+   525 3056 8D A7 31		     sta newdrvn
    526 3059 E8			     inx
    527 305A EC 1A 00		     cpx COMTAB+TRAILS
    528 305D 90 D5		     bcc ?ppar1
    529 305F			?epar1
-   530 305F AD AC 31		     lda newdrvn
+   530 305F AD A7 31		     lda newdrvn
    531 3062 D0 05		     bne ?num
    532 3064 AD 21 00		     lda COMTAB+CONFNAM
    533 3067 29 1F		     and #$1f
    534 3069			?num
    535 3069 C9 10		     cmp #16
    536 306B B0 08		     bcs ?no_parameters
-   537 306D CD 9D 01		     cmp ramdisk_drive
+   537 306D CD 91 01		     cmp ramdisk_drive
    538 3070 B0 03		     bcs ?no_parameters
-   539 3072 8D 9D 01		     sta ramdisk_drive
+   539 3072 8D 91 01		     sta ramdisk_drive
    540 				;
    541 				; use max size 
    542 				;
    543 3075			?no_parameters
    544 3075 A9 00		     lda #<RAMDISK_SIZE
-   545 3077 8D AD 01		     sta ramdisk_sectors
+   545 3077 8D A1 01		     sta ramdisk_sectors
    546 307A A2 02		     ldx #>RAMDISK_SIZE
-   547 307C 8E AE 01		     stx ramdisk_sectors+1
+   547 307C 8E A2 01		     stx ramdisk_sectors+1
    548 				;
    549 				; convert ramdisk size (in Kb) into number of sectors (sector len = 128 bytes)
    550 				;
-   551 307F AD AD 01		     lda ramdisk_sectors
+   551 307F AD A1 01		     lda ramdisk_sectors
    552 3082 0A			     asl
-   553 3083 2E AE 01		     rol ramdisk_sectors+1
+   553 3083 2E A2 01		     rol ramdisk_sectors+1
    554 3086 0A			     asl
-   555 3087 2E AE 01		     rol ramdisk_sectors+1
+   555 3087 2E A2 01		     rol ramdisk_sectors+1
    556 308A 0A			     asl
-   557 308B 2E AE 01		     rol ramdisk_sectors+1
-   558 308E 8D AD 01		     sta ramdisk_sectors
+   557 308B 2E A2 01		     rol ramdisk_sectors+1
+   558 308E 8D A1 01		     sta ramdisk_sectors
    559 				;
    560 				; find a free entry in the SIO table
    561 				;
@@ -567,568 +567,568 @@ mads 1.9.9
    566 3098 CA			     dex
    567 3099 CA			     dex
    568 309A 10 F7		     bpl ?next_sio_entry
-   569 309C 4C BD 31		     jmp sio_full
+   569 309C 4C B8 31		     jmp sio_full
    570 				;
    571 				; save SIO handler
    572 				;
    573 309F			?free_sio_entry
-   574 309F AD A1 31		     lda prdsio
+   574 309F AD 9C 31		     lda prdsio
    575 30A2 9D 18 07		     sta SIOHAND,x
-   576 30A5 AD A2 31		     lda prdsio+1
+   576 30A5 AD 9D 31		     lda prdsio+1
    577 30A8 9D 19 07		     sta SIOHAND+1,x
    578 				;
    579 				; set ramdisk name
    580 				;
-   581 30AB AD 9D 01		     lda ramdisk_drive
-   582 30AE 09 40		     ora #$40
-   583 30B0 8D B4 31		     sta rddrvch
-   584 30B3 AD 9D 01		     lda ramdisk_drive
-   585 30B6 09 30		     ora #$30
-   586 30B8 8D 98 31		     sta report_drive
-   587 				;
-   588 				; set max sector number
-   589 				;
-   590 30BB AD AE 01		     lda ramdisk_sectors+1
-   591 30BE 8D A0 01		     sta spt_hi
-   592 30C1 AD AD 01		     lda ramdisk_sectors
-   593 30C4 8D A1 01		     sta spt_lo
-   594 				;
-   595 				; check if there is a ramdisk content to preserve
-   596 				; by looking at the magic bytes at the start of RAM
-   597 				; Disable interrupts before switching to RAM because of
-   598 				; cartridge lock and preserve THE!CART registers
-   599 				;
-   600 30C7 A9 FF		     lda #$FF
-   601 30C9 85 42		     sta CRITIC 
-   602 30CB A5 14		     lda RTCLOK+2
-   603 30CD			_wait1
-   604 30CD C5 14		     cmp RTCLOK+2
-   605 30CF F0 FC		     beq _wait1
-   606
-   607 30D1 78			     sei                ; disable all interrupts
-   608 30D2 A9 00		     lda #$00
-   609 30D4 8D 0E D4		     sta NMIEN
+   581 30AB AD 91 01		     lda ramdisk_drive
+   582 30AE 09 30		     ora #$30
+   583 30B0 8D AF 31		     sta rddrvch
+   584 30B3 8D 93 31		     sta report_drive
+   585 30B6 8D 5D 31		     sta preserved_drive
+   586 				;
+   587 				; set max sector number
+   588 				;
+   589 30B9 AD A2 01		     lda ramdisk_sectors+1
+   590 30BC 8D 94 01		     sta spt_hi
+   591 30BF AD A1 01		     lda ramdisk_sectors
+   592 30C2 8D 95 01		     sta spt_lo
+   593 				;
+   594 				; check if there is a ramdisk content to preserve
+   595 				; by looking at the magic bytes at the start of RAM
+   596 				; Disable interrupts before switching to RAM because of
+   597 				; cartridge lock and preserve THE!CART registers
+   598 				;
+   599
+   600 30C5 AD A2 D5		     lda TCPBEN         ; save register
+   601 30C8 48			     pha
+   602 30C9 AD A7 D5		     lda TCMOFR
+   603 30CC 48			     pha
+   604 30CD AD A0 D5		     lda TCPBRL
+   605 30D0 48			     pha
+   606 30D1 AD A1 D5		     lda TCPBRH
+   607 30D4 48			     pha
+   608 30D5 AD A6 D5		     lda TCMOSL
+   609 30D8 48			     pha
    610
-   611 30D7 AD A2 D5		     lda TCPBEN         ; save register
-   612 30DA 48			     pha
-   613 30DB AD A7 D5		     lda TCMOFR
-   614 30DE 48			     pha
-   615 30DF AD A0 D5		     lda TCPBRL
-   616 30E2 48			     pha
-   617 30E3 AD A1 D5		     lda TCPBRH
-   618 30E6 48			     pha
-   619 30E7 AD A6 D5		     lda TCMOSL
-   620 30EA 48			     pha
+   611 30D9 A9 FF		     lda #$FF           ; start critical
+   612 30DB 85 42		     sta CRITIC 
+   613 30DD A5 14		     lda RTCLOK+2
+   614 30DF			_wait1
+   615 30DF C5 14		     cmp RTCLOK+2
+   616 30E1 F0 FC		     beq _wait1
+   617
+   618 30E3 78			     sei                ; disable all interrupts
+   619 30E4 A9 00		     lda #$00
+   620 30E6 8D 0E D4		     sta NMIEN
    621
-   622 30EB A9 21		     lda #TCMOSL.16K    ; set 16k mode at $8000-$BFFF
-   623 30ED 8D A6 D5		     sta TCMOSL
-   624 30F0 A9 03		     lda #TCMOFR.PBRAM  ; set to RAM
-   625 30F2 8D A7 D5		     sta TCMOFR
-   626 30F5 A9 00		     lda #$00
-   627 30F7 8D A0 D5		     sta TCPBRL              ; get bank number from X
-   628 30FA 8D A1 D5		     sta TCPBRH              ; set high to $00
-   629 30FD A9 01		     lda #$01
-   630 30FF 8D A2 D5		     sta TCPBEN              ; enable
+   622 30E9 A9 21		     lda #TCMOSL.16K    ; set 16k mode at $8000-$BFFF
+   623 30EB 8D A6 D5		     sta TCMOSL
+   624 30EE A9 03		     lda #TCMOFR.PBRAM  ; set to RAM
+   625 30F0 8D A7 D5		     sta TCMOFR
+   626 30F3 A9 00		     lda #$00
+   627 30F5 8D A0 D5		     sta TCPBRL         ; get bank number from X
+   628 30F8 8D A1 D5		     sta TCPBRH         ; set high to $00
+   629 30FB A9 01		     lda #$01
+   630 30FD 8D A2 D5		     sta TCPBEN         ; enable
    631
-   632 3102 A9 00		     lda #0
-   633 3104 8D AB 31		     sta no_magic            ; used to store if magic is found (0=yes)
+   632 3100 A9 00		     lda #0
+   633 3102 8D A6 31		     sta no_magic       ; used to store if magic is found (0=yes)
    634
-   635 3107 A2 07		     ldx #7
-   636 3109			next_magic
-   637 3109 BD A3 31		     lda magic,x
-   638 310C DD 00 80		     cmp $8000,x
-   639 310F F0 06		     beq good_magic
-   640 3111 9D 00 80		     sta $8000,x
-   641 3114 CE AB 31		     dec no_magic
-   642 3117			good_magic
-   643 3117 CA			     dex
-   644 3118 10 EF		     bpl next_magic
+   635 3105 A2 07		     ldx #7
+   636 3107			next_magic
+   637 3107 BD 9E 31		     lda magic,x
+   638 310A DD 00 80		     cmp $8000,x
+   639 310D F0 06		     beq good_magic
+   640 310F 9D 00 80		     sta $8000,x
+   641 3112 CE A6 31		     dec no_magic
+   642 3115			good_magic
+   643 3115 CA			     dex
+   644 3116 10 EF		     bpl next_magic
    645
-   646 311A 68			     pla                ; restore register
-   647 311B 8D A6 D5		     sta TCMOSL
-   648 311E 68			     pla
-   649 311F 8D A1 D5		     sta TCPBRH
-   650 3122 68			     pla
-   651 3123 8D A0 D5		     sta TCPBRL
-   652 3126 68			     pla
-   653 3127 8D A7 D5		     sta TCMOFR
-   654 312A 68			     pla
-   655 312B 8D A2 D5		     sta TCPBEN
+   646 3118 68			     pla                ; restore register
+   647 3119 8D A6 D5		     sta TCMOSL
+   648 311C 68			     pla
+   649 311D 8D A1 D5		     sta TCPBRH
+   650 3120 68			     pla
+   651 3121 8D A0 D5		     sta TCPBRL
+   652 3124 68			     pla
+   653 3125 8D A7 D5		     sta TCMOFR
+   654 3128 68			     pla
+   655 3129 8D A2 D5		     sta TCPBEN
    656
-   657 312E A9 E0		     lda #$E0           ; enable interrupts
-   658 3130 8D 0E D4		     sta NMIEN
-   659 3133 58			     cli
+   657 312C A9 E0		     lda #$E0           ; enable interrupts
+   658 312E 8D 0E D4		     sta NMIEN
+   659 3131 58			     cli
    660
-   661 3134 A9 00		     lda #$00           ; reset crirical
-   662 3136 85 42		     sta CRITIC 
+   661 3132 A9 00		     lda #$00           ; reset crirical
+   662 3134 85 42		     sta CRITIC 
    663 				;
    664 				; check if ramdisk is already initialized
    665 				;
-   666 3138 AD AB 31		     lda no_magic
-   667 313B 30 28		     bmi ?erase_content
+   666 3136 AD A6 31		     lda no_magic
+   667 3139 30 29		     bmi ?erase_content
    668 				;
    669 				; ramdisk has a previous content
    670 				;
-   671 313D 20 00 00		     jsr PRINTF
-   672 3140 54 68 65 21 43 41 +      .byte 'The!CART Ramdisk ver43 preserved',$9B,0
-   673 3162 4C 9C 31		     jmp ?end
-   674 				;
-   675 				; ramdisk must be initialised because no previous content has been found
-   676 				; Build SpartaDos disk structure
-   677 				;
-   678 3165			?erase_content
-   679 3165 A9 31		     lda #$31
-   680 3167 8D 00 03		     sta DDEVIC
-   681 316A AD 9D 01		     lda ramdisk_drive
-   682 316D 8D 01 03		     sta DUNIT
-   683 3170 A9 AD		     lda #<rdname
-   684 3172 A2 31		     ldx #>rdname
-   685 3174 20 00 00		     jsr BUILDDIR
-   686 				;
-   687 				; ramdisk is initialized
+   671 313B 20 00 00		     jsr PRINTF
+   672 313E 52 61 6D 63 61 72 +      .byte 'Ramcart ver47 preserved drive D'
+   673 315D			preserved_drive
+   674 315D 3F 3A 9B 00		     .byte '?:',$9B,0
+   675 3161 4C 97 31		     jmp ?end
+   676 				;
+   677 				; ramdisk must be initialised because no previous content has been found
+   678 				; Build SpartaDos disk structure
+   679 				;
+   680 3164			?erase_content
+   681 3164 A9 31		     lda #$31
+   682 3166 8D 00 03		     sta DDEVIC
+   683 3169 AD 91 01		     lda ramdisk_drive
+   684 316C 8D 01 03		     sta DUNIT
+   685 316F A9 A8		     lda #<rdname
+   686 3171 A2 31		     ldx #>rdname
+   687 3173 20 00 00		     jsr BUILDDIR
    688 				;
-   689 3177 20 00 00		     jsr PRINTF
-   690 317A 54 68 65 21 43 61 +      .byte 'The!Cart Ramdisk ver44 drive D'
-   691 3198			report_drive
-   692 3198 3F 3A 9B 00		     .byte '?:',$9B,0
-   693 				;
-   694 				; mark the device as being installed
+   689 				; ramdisk is initialized
+   690 				;
+   691 3176 20 00 00		     jsr PRINTF
+   692 3179 52 61 6D 63 61 72 +      .byte 'Ramcart ver47 init drive D'
+   693 3193			report_drive
+   694 3193 3F 3A 9B 00		     .byte '?:',$9B,0
    695 				;
-   696 319C			?end
-   697 319C CE 00 00		     dec INSTALL
-   698 319F 60			     rts
-   699 				;
-   700 				; Strings and variables
+   696 				; mark the device as being installed
+   697 				;
+   698 3197			?end
+   699 3197 CE 00 00		     dec INSTALL
+   700 319A 60			     rts
    701 				;
-   702 31A0			multmp
-   703 31A0 00			     .byte 0
-   704 31A1			prdsio
-   705 31A1 00 00		     .word rdsio
-   706 31A3			magic
-   707 31A3 34 23 32 21 2D 28 +      .byte "TCRAMHJX"
-   708 31AB			no_magic
-   709 31AB 00			     .byte 0
-   710 31AC			newdrvn
-   711 31AC 00			     .byte 0
-   712 31AD			rdname
-   713 31AD 54 43 44 69 73 6B +      .byte 'TCDisk '
-   714 31B4			rddrvch
-   715 31B4 41 9B		     .byte 'A',$9B
-   716 31B6			maxvar
-   717 31B6 4D 41 58 44 52 56 +      .byte 'MAXDRV',$9B
-   718 				;
-   719 				; Display an error when SIO table is full
+   702 				; Strings and variables
+   703 				;
+   704 319B			multmp
+   705 319B 00			     .byte 0
+   706 319C			prdsio
+   707 319C 00 00		     .word rdsio
+   708 319E			magic
+   709 319E 34 23 32 21 2D 28 +      .byte "TCRAMHJX"
+   710 31A6			no_magic
+   711 31A6 00			     .byte 0
+   712 31A7			newdrvn
+   713 31A7 00			     .byte 0
+   714 31A8			rdname
+   715 31A8 52 41 4D 43 41 52 +      .byte 'RAMCART'
+   716 31AF			rddrvch
+   717 31AF 31 9B		     .byte '1',$9B
+   718 31B1			maxvar
+   719 31B1 4D 41 58 44 52 56 +      .byte 'MAXDRV',$9B
    720 				;
-   721 31BD			sio_full
-   722 31BD 20 00 00		     jsr PRINTF
-   723 31C0 54 68 65 21 43 61 +      .byte 'The!Cart Ramdisk not installed:',$9b
-   724 31E0 20 20 53 49 4F 20 +      .byte '  SIO table full',$9B,0
-   725 31F2 60			     rts
-   726 				;
-   727 				; Cartridge ram not found
+   721 				; Display an error when SIO table is full
+   722 				;
+   723 31B8			sio_full
+   724 31B8 20 00 00		     jsr PRINTF
+   725 31BB 52 61 6D 63 61 72 +      .byte 'Ramcart ver47 not installed:',$9b
+   726 31D8 20 20 53 49 4F 20 +      .byte '  SIO table full',$9B,0
+   727 31EA 60			     rts
    728 				;
-   729 31F3			nocartram:
-   730 31F3 20 00 00		     jsr PRINTF
-   731 31F6 4E 6F 20 72 61 6D +      .byte 'No ramdisk because The!Cart is locked:',$9B
-   732 321D 20 20 20 55 73 65 +      .byte '   Use SHIFT-Fire or SHIFT-Return in',$9B
-   733 3242 20 20 20 54 68 65 +      .byte '   The!Cart main menu to unlock RAM.',$9B,0
-   734 3268 60			     rts
-   735
-   736 				;
-   737 				; ******************************************************************************
+   729 				; Cartridge ram not found
+   730 				;
+   731 31EB			nocartram:
+   732 31EB 20 00 00		     jsr PRINTF
+   733 31EE 52 61 6D 63 61 72 +      .byte 'Ramcart ver47 The!Cart is locked:',$9B
+   734 3210 20 20 20 55 73 65 +      .byte '   Use SHIFT-RETURN or SHIFT-Fire in',$9B
+   735 3235 20 20 20 54 68 65 +      .byte '   The!Cart main menu to unlock RAM.',$9B,0
+   736 325B 60			     rts
+   737
    738 				;
-   739 3269 FE FF 01 00		     blk reloc main  
+   739 				; ******************************************************************************
    740 				;
-   741 				; An I/O is requested
+   741 325C FE FF 01 00		     blk reloc main  
    742 				;
-   743 0000			rdsio
-   744 0000,0234> 08		     php
-   745 0001 20 0E 00		     jsr sio_handler
-   746 0004 98			     tya
-   747 0005 28			     plp
-   748 0006 C9 FF		     cmp #$FF
-   749 0008 F0 02		     beq set_carry
-   750 000A 18			     clc
-   751 000B 60			     rts
-   752 000C			set_carry
-   753 000C 38			     sec
-   754 000D 60			     rts
-   755 				;
-   756 				; Ramdisk SIO handler
+   743 				; An I/O is requested
+   744 				;
+   745 0000			rdsio
+   746 0000,0228> 08		     php
+   747 0001 20 0E 00		     jsr sio_handler
+   748 0004 98			     tya
+   749 0005 28			     plp
+   750 0006 C9 FF		     cmp #$FF
+   751 0008 F0 02		     beq set_carry
+   752 000A 18			     clc
+   753 000B 60			     rts
+   754 000C			set_carry
+   755 000C 38			     sec
+   756 000D 60			     rts
    757 				;
-   758 000E			sio_handler
-   759 000E AD 00 03		     lda DDEVIC
-   760 0011 29 F0		     and #$f0
-   761 0013 C9 30		     cmp #$30
-   762 0015 D0 30		     bne ?nordsio
-   763 0017 AD 01 03		     lda DUNIT
-   764 001A C9 10		     cmp #$10
-   765 001C B0 04		     bcs ?isrddrv
-   766 				;
-   767 				; get drive number from new swap table
+   758 				; Ramdisk SIO handler
+   759 				;
+   760 000E			sio_handler
+   761 000E AD 00 03		     lda DDEVIC
+   762 0011 29 F0		     and #$f0
+   763 0013 C9 30		     cmp #$30
+   764 0015 D0 30		     bne ?nordsio
+   765 0017 AD 01 03		     lda DUNIT
+   766 001A C9 10		     cmp #$10
+   767 001C B0 04		     bcs ?isrddrv
    768 				;
-   769 001E AA			     tax
-   770 001F BD 01 00		     lda COMTAB2+2-1,x
-   771 0022			?isrddrv
-   772 0022 CD 9D 01		     cmp ramdisk_drive
-   773 0025 D0 20		     bne ?nordsio
-   774 0027 A2 01		     ldx #$01
-   775 0029			?sbb
-   776 0029 BD 04 03		     lda DBUFAL,x
-   777 002C 95 34		     sta BUFEN,x
-   778 002E 9D 6E 01		     sta _rtofast+1,x
-   779 0031 9D 29 01		     sta _wfromfast+1,x
-   780 0034 CA			     dex
-   781 0035 10 F2		     bpl ?sbb
-   782 0037 AD 02 03		     lda DCMND
-   783 003A A2 04		     ldx #$04
-   784 003C			?nextcmd
-   785 003C DD AF 01		     cmp sio_cmds,x
-   786 003F F0 13		     beq ?callcmd
-   787 0041 CA			     dex
-   788 0042 10 F8		     bpl ?nextcmd
-   789 0044			?rwerr
-   790 0044 A0 8B		     ldy #139 ;NAK
-   791 0046 60			     rts
-   792 0047			?nordsio
-   793 0047 A0 FF		     ldy #$FF
-   794 0049 60			     rts
-   795
-   796 				;
-   797 				; other commands (status, percom)
+   769 				; get drive number from new swap table
+   770 				;
+   771 001E AA			     tax
+   772 001F BD 01 00		     lda COMTAB2+2-1,x
+   773 0022			?isrddrv
+   774 0022 CD 91 01		     cmp ramdisk_drive
+   775 0025 D0 20		     bne ?nordsio
+   776 0027 A2 01		     ldx #$01
+   777 0029			?sbb
+   778 0029 BD 04 03		     lda DBUFAL,x
+   779 002C 95 34		     sta BUFEN,x
+   780 002E 9D 65 01		     sta _rtofast+1,x
+   781 0031 9D 29 01		     sta _wfromfast+1,x
+   782 0034 CA			     dex
+   783 0035 10 F2		     bpl ?sbb
+   784 0037 AD 02 03		     lda DCMND
+   785 003A A2 04		     ldx #$04
+   786 003C			?nextcmd
+   787 003C DD A3 01		     cmp sio_cmds,x
+   788 003F F0 13		     beq ?callcmd
+   789 0041 CA			     dex
+   790 0042 10 F8		     bpl ?nextcmd
+   791 0044			?rwerr
+   792 0044 A0 8B		     ldy #139 ;NAK
+   793 0046 60			     rts
+   794 0047			?nordsio
+   795 0047 A0 FF		     ldy #$FF
+   796 0049 60			     rts
+   797
    798 				;
-   799 004A			?jother
-   800 004A E0 04		     cpx #$04
-   801 004C F0 03		     beq ?go_percom
-   802 004E 4C 7E 01		     jmp READSTATUS
-   803 0051			?go_percom
-   804 0051 4C 84 01		     jmp READPERCOM
-   805
-   806 				;
-   807 				; check for read sector or write sector
+   799 				; other commands (status, percom)
+   800 				;
+   801 004A			?jother
+   802 004A E0 04		     cpx #$04
+   803 004C F0 03		     beq ?go_percom
+   804 004E 4C 72 01		     jmp READSTATUS
+   805 0051			?go_percom
+   806 0051 4C 78 01		     jmp READPERCOM
+   807
    808 				;
-   809 0054			?callcmd
-   810 0054 E0 03		     cpx #$03
-   811 0056 B0 F2		     bcs ?jother
-   812 				;
-   813 				; we know that we have a read or write
+   809 				; check for read sector or write sector
+   810 				;
+   811 0054			?callcmd
+   812 0054 E0 03		     cpx #$03
+   813 0056 B0 F2		     bcs ?jother
    814 				;
-   815 0058 AD A1 01		     lda spt_lo
-   816 005B CD 0A 03		     cmp DAUX1
-   817 005E AD A0 01		     lda spt_hi
-   818 0061 ED 0B 03		     sbc DAUX2
-   819 0064 90 DE		     bcc ?rwerr
-   820 				;
-   821 				; compute buffer address in cartridge RAM
+   815 				; we know that we have a read or write
+   816 				;
+   817 0058 AD 95 01		     lda spt_lo
+   818 005B CD 0A 03		     cmp DAUX1
+   819 005E AD 94 01		     lda spt_hi
+   820 0061 ED 0B 03		     sbc DAUX2
+   821 0064 90 DE		     bcc ?rwerr
    822 				;
-   823 0066 AD 0A 03		     lda DAUX1               ; get low byte of sector
-   824 0069 38			     sec                     ; set Bit7
-   825 006A 6A			     ror                     ; save Bit0 in carry
-   826 006B 29 BF		     and #$bf                ; clear Bit6
-   827 006D 8D 41 01		     sta _wtofast+2
-   828 0070 8D 55 01		     sta _rfromfast+2
-   829 0073 A9 00		     lda #$00
-   830 0075 6A			     ror                     ; make carry Bit7
-   831 0076 8D 40 01		     sta _wtofast+1
-   832 0079 8D 54 01		     sta _rfromfast+1
-   833 				;
-   834 				; compute bank number in RAM.
-   835 				; we have 128 sectors in a 16KB bank so we need
-   836 				; to shift right DAUX1/2 by 6 (or left by 2)
-   837 				;
-   838 007C AD 0A 03		     lda DAUX1               ; get low byte of sector
-   839 007F 0A			     asl                     ; save Bit8 in carry 
-   840 0080 AD 0B 03		     lda DAUX2               ; get high byte of sector
-   841 0083 2A			     rol                     ; get Bit8 of low byte 
-   842 0084 0A			     asl                     ; get bank number with LSB 0
-   843 0085 A8			     tay
-   844 				;
-   845 				; save THE!CART registers and disable interrupts
+   823 				; compute buffer address in cartridge RAM
+   824 				;
+   825 0066 AD 0A 03		     lda DAUX1               ; get low byte of sector
+   826 0069 38			     sec                     ; set Bit7
+   827 006A 6A			     ror                     ; save Bit0 in carry
+   828 006B 29 BF		     and #$bf                ; clear Bit6
+   829 006D 8D 3E 01		     sta _wtofast+2
+   830 0070 8D 4F 01		     sta _rfromfast+2
+   831 0073 A9 00		     lda #$00
+   832 0075 6A			     ror                     ; make carry Bit7
+   833 0076 8D 3D 01		     sta _wtofast+1
+   834 0079 8D 4E 01		     sta _rfromfast+1
+   835 				;
+   836 				; compute bank number in RAM.
+   837 				; we have 128 sectors in a 16KB bank so we need
+   838 				; to shift right DAUX1/2 by 6 (or left by 2)
+   839 				;
+   840 007C AD 0A 03		     lda DAUX1               ; get low byte of sector
+   841 007F 0A			     asl                     ; save Bit8 in carry 
+   842 0080 AD 0B 03		     lda DAUX2               ; get high byte of sector
+   843 0083 2A			     rol                     ; get Bit8 of low byte 
+   844 0084 0A			     asl                     ; get bank number with LSB 0
+   845 0085 A8			     tay
    846 				;
-   847 0086 20 9B 00		     jsr save_cart_regs
-   848 0089 20 CA 00		     jsr set_cart_regs
-   849 				;
-   850 				; call read or write routine
+   847 				; save THE!CART registers and disable interrupts
+   848 				;
+   849 0086 20 9B 00		     jsr save_cart_regs
+   850 0089 20 BA 00		     jsr set_cart_regs
    851 				;
-   852 008C A2 00		     ldx #0
-   853 008E 2C 03 03		     bit DSTATS
-   854 0091 10 04		     bpl ?jread
-   855
-   856 0093 20 20 01		     jsr WRITESECTOR
-   857 0096 60			     rts
-   858 				     
-   859 0097			?jread
-   860 0097 20 4E 01		     jsr READSECTOR
-   861 009A 60			     rts
-   862 				;
-   863 				; save THE!CART registers into hide_cart_ram code
+   852 				; call read or write routine
+   853 				;
+   854 008C A2 00		     ldx #0
+   855 008E 2C 03 03		     bit DSTATS
+   856 0091 10 04		     bpl ?jread
+   857
+   858 0093 20 20 01		     jsr WRITESECTOR
+   859 0096 60			     rts
+   860 				     
+   861 0097			?jread
+   862 0097 20 48 01		     jsr READSECTOR
+   863 009A 60			     rts
    864 				;
-   865 009B			save_cart_regs
-   866 				     
-   867 009B A9 FF		     lda #$FF
-   868 009D 85 42		     sta CRITIC 
-   869 009F A5 14		     lda RTCLOK+2
-   870 00A1			_wait2
-   871 00A1 C5 14		     cmp RTCLOK+2
-   872 00A3 F0 FC		     beq _wait2
-   873
-   874 00A5 78			     sei
-   875 00A6 A9 00		     lda #0
-   876 00A8 8D 0E D4		     sta NMIEN
-   877
-   878 00AB AD A6 D5		     lda TCMOSL
-   879 00AE 8D FD 00		     sta _hpatchTCMOSL+1
-   880 00B1 AD A7 D5		     lda TCMOFR
-   881 00B4 8D 0C 01		     sta _hpatchTCMOFR+1
-   882 00B7 AD A0 D5		     lda TCPBRL
-   883 00BA 8D 07 01		     sta _hpatchTCPBRL+1
-   884 00BD AD A1 D5		     lda TCPBRH
-   885 00C0 8D 02 01		     sta _hpatchTCPBRH+1
-   886 00C3 AD A2 D5		     lda TCPBEN
-   887 00C6 8D 11 01		     sta _hpatchTCPBEN+1
-   888
-   889 00C9 60			     rts
-   890 				;
-   891 				; save THE!CART registers into show_cart_ram code
-   892 				;
-   893 00CA			set_cart_regs
-   894
-   895 00CA A9 21		     lda #TCMOSL.16K
-   896 00CC 8D E3 00		     sta _spatchTCMOSL+1
-   897 00CF A9 03		     lda #TCMOFR.PBRAM
-   898 00D1 8D E8 00		     sta _spatchTCMOFR+1
-   899 00D4 8C ED 00		     sty _spatchTCPBRL+1
-   900 00D7 A9 00		     lda #$00
-   901 00D9 8D F2 00		     sta _spatchTCPBRH+1
-   902 00DC A9 01		     lda #$01
-   903 00DE 8D F7 00		     sta _spatchTCPBEN+1
-   904
-   905 00E1 60			     rts
-   906 				;
-   907 				; enable THE!CART ram
-   908 				;
-   909 00E2			show_cart_ram
-   910
-   911 00E2			_spatchTCMOSL
-   912 00E2 A0 00		     ldy #0
-   913 00E4 8C A6 D5		     sty TCMOSL
-   914 00E7			_spatchTCMOFR
-   915 00E7 A0 00		     ldy #0
-   916 00E9 8C A7 D5		     sty TCMOFR
-   917 00EC			_spatchTCPBRL
-   918 00EC A0 00		     ldy #0
-   919 00EE 8C A0 D5		     sty TCPBRL
-   920 00F1			_spatchTCPBRH
-   921 00F1 A0 00		     ldy #0
-   922 00F3 8C A1 D5		     sty TCPBRH
-   923 00F6			_spatchTCPBEN
-   924 00F6 A0 00		     ldy #0
-   925 00F8 8C A2 D5		     sty TCPBEN
-   926
-   927 00FB 60			     rts
-   928 				;
-   929 				; remove THE!CART ram
+   865 				; save THE!CART registers into hide_cart_ram code
+   866 				;
+   867 009B			save_cart_regs
+   868
+   869 009B AD A6 D5		     lda TCMOSL
+   870 009E 8D FD 00		     sta _hpatchTCMOSL+1
+   871 00A1 AD A7 D5		     lda TCMOFR
+   872 00A4 8D 0C 01		     sta _hpatchTCMOFR+1
+   873 00A7 AD A0 D5		     lda TCPBRL
+   874 00AA 8D 07 01		     sta _hpatchTCPBRL+1
+   875 00AD AD A1 D5		     lda TCPBRH
+   876 00B0 8D 02 01		     sta _hpatchTCPBRH+1
+   877 00B3 AD A2 D5		     lda TCPBEN
+   878 00B6 8D 11 01		     sta _hpatchTCPBEN+1
+   879
+   880 00B9 60			     rts
+   881 				;
+   882 				; save THE!CART registers into show_cart_ram code
+   883 				;
+   884 00BA			set_cart_regs
+   885
+   886 00BA A9 21		     lda #TCMOSL.16K
+   887 00BC 8D E3 00		     sta _spatchTCMOSL+1
+   888 00BF A9 03		     lda #TCMOFR.PBRAM
+   889 00C1 8D E8 00		     sta _spatchTCMOFR+1
+   890 00C4 8C ED 00		     sty _spatchTCPBRL+1
+   891 00C7 A9 00		     lda #$00
+   892 00C9 8D F2 00		     sta _spatchTCPBRH+1
+   893 00CC A9 01		     lda #$01
+   894 00CE 8D F7 00		     sta _spatchTCPBEN+1
+   895
+   896 00D1 60			     rts
+   897 				;
+   898 				; enable THE!CART ram
+   899 				;
+   900 00D2			show_cart_ram
+   901 				     
+   902 00D2 A9 FF		     lda #$FF
+   903 00D4 85 42		     sta CRITIC 
+   904 00D6 A5 14		     lda RTCLOK+2
+   905 00D8			_wait2
+   906 00D8 C5 14		     cmp RTCLOK+2
+   907 00DA F0 FC		     beq _wait2
+   908
+   909 00DC 78			     sei
+   910 00DD A9 00		     lda #0
+   911 00DF 8D 0E D4		     sta NMIEN
+   912
+   913 00E2			_spatchTCMOSL
+   914 00E2 A0 00		     ldy #0
+   915 00E4 8C A6 D5		     sty TCMOSL
+   916 00E7			_spatchTCMOFR
+   917 00E7 A0 00		     ldy #0
+   918 00E9 8C A7 D5		     sty TCMOFR
+   919 00EC			_spatchTCPBRL
+   920 00EC A0 00		     ldy #0
+   921 00EE 8C A0 D5		     sty TCPBRL
+   922 00F1			_spatchTCPBRH
+   923 00F1 A0 00		     ldy #0
+   924 00F3 8C A1 D5		     sty TCPBRH
+   925 00F6			_spatchTCPBEN
+   926 00F6 A0 00		     ldy #0
+   927 00F8 8C A2 D5		     sty TCPBEN
+   928
+   929 00FB 60			     rts
    930 				;
-   931 00FC			hide_cart_ram
-   932
-   933 00FC			_hpatchTCMOSL
-   934 00FC A0 00		     ldy #0
-   935 00FE 8C A6 D5		     sty TCMOSL
-   936 0101			_hpatchTCPBRH
-   937 0101 A0 00		     ldy #0
-   938 0103 8C A1 D5		     sty TCPBRH
-   939 0106			_hpatchTCPBRL
-   940 0106 A0 00		     ldy #0
-   941 0108 8C A0 D5		     sty TCPBRL
-   942 010B			_hpatchTCMOFR
-   943 010B A0 00		     ldy #0
-   944 010D 8C A7 D5		     sty TCMOFR
-   945 0110			_hpatchTCPBEN
-   946 0110 A0 00		     ldy #0
-   947 0112 8C A2 D5		     sty TCPBEN
-   948
-   949 0115 A9 E0		     lda #$E0
-   950 0117 8D 0E D4		     sta NMIEN
-   951 011A 58			     cli
-   952
-   953 011B A9 00		     lda #$00
-   954 011D 85 42		     sta CRITIC 
-   955
-   956 011F 60			     rts
-   957 				;
-   958 				; Write sector command
+   931 				; remove THE!CART ram
+   932 				;
+   933 00FC			hide_cart_ram
+   934
+   935 00FC			_hpatchTCMOSL
+   936 00FC A0 00		     ldy #0
+   937 00FE 8C A6 D5		     sty TCMOSL
+   938 0101			_hpatchTCPBRH
+   939 0101 A0 00		     ldy #0
+   940 0103 8C A1 D5		     sty TCPBRH
+   941 0106			_hpatchTCPBRL
+   942 0106 A0 00		     ldy #0
+   943 0108 8C A0 D5		     sty TCPBRL
+   944 010B			_hpatchTCMOFR
+   945 010B A0 00		     ldy #0
+   946 010D 8C A7 D5		     sty TCMOFR
+   947 0110			_hpatchTCPBEN
+   948 0110 A0 00		     ldy #0
+   949 0112 8C A2 D5		     sty TCPBEN
+   950
+   951 0115 A9 E0		     lda #$E0
+   952 0117 8D 0E D4		     sta NMIEN
+   953 011A 58			     cli
+   954
+   955 011B A9 00		     lda #$00
+   956 011D 85 42		     sta CRITIC 
+   957
+   958 011F 60			     rts
    959 				;
-   960 0120			WRITESECTOR
-   961
-   962 0120 AD 87 07		     lda SYSCALL
-   963 0123 20 F1 07		     jsr jext_on
-   964 0126 A2 00		     ldx #0
-   965 0128			_wfromfast
-   966 0128 BD FF FF		     lda $FFFF,x
-   967 012B 9D B4 01		     sta ramdisk_buffer,x
-   968 012E E8			     inx
-   969 012F EC 08 03		     cpx DBYT
-   970 0132 D0 F4		     bne _wfromfast
-   971 0134 20 F4 07		     jsr jext_off
-   972
-   973 0137 20 E2 00		     jsr show_cart_ram
-   974 013A A2 00		     ldx #0
-   975 013C			_wfromfast_buf
-   976 013C BD B4 01		     lda ramdisk_buffer,x
-   977 013F			_wtofast
-   978 013F 9D FF FF		     sta $FFFF,x
-   979 0142 E8			     inx
-   980 0143 EC 08 03		     cpx DBYT
-   981 0146 D0 F4		     bne _wfromfast_buf
-   982 0148 20 FC 00		     jsr hide_cart_ram
-   983 				     
-   984 014B 4C 79 01		     jmp ?operation_ok
+   960 				; Write sector command
+   961 				;
+   962 0120			WRITESECTOR
+   963
+   964 0120 AD 87 07		     lda SYSCALL
+   965 0123 20 F1 07		     jsr jext_on
+   966 0126 A2 7F		     ldx #$7f
+   967 0128			_wfromfast
+   968 0128 BD FF FF		     lda $FFFF,x
+   969 012B 9D A8 01		     sta ramdisk_buffer,x
+   970 012E CA			     dex
+   971 				;     cpx DBYT
+   972 012F 10 F7		     bpl _wfromfast
+   973 0131 20 F4 07		     jsr jext_off
+   974
+   975 0134 20 D2 00		     jsr show_cart_ram
+   976 0137 A2 7F		     ldx #$7f
+   977 0139			_wfromfast_buf
+   978 0139 BD A8 01		     lda ramdisk_buffer,x
+   979 013C			_wtofast
+   980 013C 9D FF FF		     sta $FFFF,x
+   981 013F CA			     dex
+   982 				;     cpx DBYT
+   983 0140 10 F7		     bpl _wfromfast_buf
+   984 0142 20 FC 00		     jsr hide_cart_ram
    985 				     
-   986 				;
-   987 				; Read sector command
+   986 0145 4C 6D 01		     jmp ?operation_ok
+   987 				     
    988 				;
-   989 014E			READSECTOR
-   990 				     
-   991 014E 20 E2 00		     jsr show_cart_ram
-   992 0151 A2 00		     ldx #0
-   993 0153			_rfromfast
-   994 0153 BD FF FF		     lda $FFFF,x
-   995 0156 9D B4 01		     sta ramdisk_buffer,x
-   996 0159 E8			     inx
-   997 015A EC 08 03		     cpx DBYT
-   998 015D D0 F4		     bne _rfromfast     
-   999 015F 20 FC 00		     jsr hide_cart_ram
-  1000
-  1001
-  1002 0162 AD 87 07		     lda SYSCALL
-  1003 0165 20 F1 07		     jsr jext_on
-  1004 0168 A2 00		     ldx #0
-  1005 016A			_rfromfast_buf
-  1006 016A BD B4 01		     lda ramdisk_buffer,x
-  1007 016D			_rtofast
-  1008 016D 9D FF FF		     sta $FFFF,x
-  1009 0170 E8			     inx
-  1010 0171 EC 08 03		     cpx DBYT
-  1011 0174 D0 F4		     bne _rfromfast_buf
-  1012 0176 20 F4 07		     jsr jext_off
-  1013
-  1014 0179			?operation_ok
-  1015 0179 A9 01		     lda #$01
-  1016 017B A8			     tay
-  1017 017C 18			     clc
-  1018 017D 60			     rts
-  1019 				;
-  1020 				; Read Status and Read Percom commands
-  1021 				;
-  1022 017E			READSTATUS
-  1023 017E A2 0F		     ldx #$0f
-  1024 0180 A0 03		     ldy #$03
-  1025 0182 D0 04		     bne ?rdperc
-  1026 0184			READPERCOM
-  1027 0184 A2 0B		     ldx #$0b
-  1028 0186 A0 0B		     ldy #$0b
-  1029 0188			?rdperc
-  1030 0188 AD 87 07		     lda SYSCALL
-  1031 018B 20 F1 07		     jsr jext_on
-  1032 018E			?nxtpb
-  1033 018E BD 9E 01		     lda tpercom,x
-  1034 0191 91 34		     sta (BUFEN),y
-  1035 0193 CA			     dex
-  1036 0194 88			     dey
-  1037 0195 10 F7		     bpl ?nxtpb
-  1038 0197 20 F4 07		     jsr jext_off
-  1039 019A 4C 79 01		     jmp ?operation_ok
-  1040 				;
-  1041 				; ramdisk drive number
-  1042 				;
-  1043 019D			ramdisk_drive
-  1044 019D 0F			     .byte 15
-  1045 				;
-  1046 				; Read percom answer
-  1047 				;
-  1048 019E			tpercom
-  1049 019E 01			     .byte 1    ;no of tracks
-  1050 019F 01			     .byte 1    ;step rate
-  1051 01A0			spt_hi
-  1052 01A0 00			     .byte 0    ;sector per track hi - $0E for 470KB
-  1053 01A1			spt_lo
-  1054 01A1 00			     .byte 0    ;sector per track lo - $B0 for 470KB
-  1055 01A2 00			     .byte 0    ;no of sides - 1
-  1056 01A3 04			     .byte 4    ;record method (4=MFM)
-  1057 01A4 00			     .byte 0    ;bytes per sector hi
-  1058 01A5 80			     .byte $80  ;bytes per sector lo (128 bytes)
-  1059 01A6 FF			     .byte $FF  ;drive online
-  1060 01A7 00			     .byte 0    ;unused
-  1061 01A8 00			     .byte 0    ;unused
-  1062 01A9 00			     .byte 0    ;unused
-  1063 				;
-  1064 				; Read status answer
-  1065 				;
-  1066 01AA			tstatus
-  1067 01AA 10			     .byte $10
-  1068 01AB FF			     .byte $FF
-  1069 01AC E0			     .byte $E0
-  1070 				;
-  1071 				; Number of sectors of this ramdisk (128 bytes)
-  1072 				;
-  1073 01AD			ramdisk_sectors
-  1074 01AD 00 00		     .word 0
-  1075 01AF			sio_cmds
-  1076 01AF 52 57 50 53 4E	     .byte 'RWPSN'
-  1077 01B4			ramdisk_buffer
-  1078 01B4 00 00 00 00 00 00 + :128 .byte 0
-  1079
-  1080 				     end
-  1080 0234 FD FF 01 00 00	BLK UPDATE ADDRESS
-  1080 0234 FD 12 30		
-  1080 0234 FD 26 30		
-  1080 0234 FD 2B 30		
-  1080 0234 FD 6E 30		
-  1080 0234 FD 73 30		
-  1080 0234 FD 78 30		
-  1080 0234 FD 7D 30		
-  1080 0234 FD 80 30		
-  1080 0234 FD 84 30		
-  1080 0234 FD 88 30		
-  1080 0234 FD 8C 30		
-  1080 0234 FD 8F 30		
-  1080 0234 FD AC 30		
-  1080 0234 FD B4 30		
-  1080 0234 FD BC 30		
-  1080 0234 FD BF 30		
-  1080 0234 FD C2 30		
-  1080 0234 FD C5 30		
-  1080 0234 FD 6B 31		
-  1080 0234 FD A1 31		
-  1080 0234 FE 01 02 21 0C 03 + 
-  1080 0234 FC			
-  1080 0234			BLK UPDATE SYMBOL
-  1080 0234 FB FF 42 55 49 4C + BUILDDIR
-  1080 0234 FD 75 31		
-  1080 0234 FC			
-  1080 0234 FB FF 43 4F 4D 54 + COMTAB  
-  1080 0234 FD 35 30		
-  1080 0234 FD 5B 30		
-  1080 0234 FD 65 30		
-  1080 0234 FC			
-  1080 0234 FB FF 43 4F 4D 54 + COMTAB2 
-  1080 0234 FE 01 20		
-  1080 0234 FC			
-  1080 0234 FB FF 44 45 56 53 + DEVSPEC 
-  1080 0234 FD 0F 30		
-  1080 0234 FC			
-  1080 0234 FB FF 47 45 54 45 + GETENV  
-  1080 0234 FD 19 30		
-  1080 0234 FC			
-  1080 0234 FB FF 49 4E 53 54 + INSTALL 
-  1080 0234 FD 9D 31		
-  1080 0234 FC			
-  1080 0234 FB FF 50 52 49 4E + PRINTF  
-  1080 0234 FD 3E 31		
-  1080 0234 FD 78 31		
-  1080 0234 FD BE 31		
-  1080 0234 FD F4 31		
-  1080 0234 FC			
-  1080 0234 FB FF 55 5F 47 45 + U_GETPAR
-  1080 0234 FD 2E 30		
-  1080 0234 FC			
+   989 				; Read sector command
+   990 				;
+   991 0148			READSECTOR
+   992 				     
+   993 0148 20 D2 00		     jsr show_cart_ram
+   994 014B A2 7F		     ldx #$7f
+   995 014D			_rfromfast
+   996 014D BD FF FF		     lda $FFFF,x
+   997 0150 9D A8 01		     sta ramdisk_buffer,x
+   998 0153 CA			     dex
+   999 				;     cpx DBYT
+  1000 0154 10 F7		     bpl _rfromfast     
+  1001 0156 20 FC 00		     jsr hide_cart_ram
+  1002
+  1003 0159 AD 87 07		     lda SYSCALL
+  1004 015C 20 F1 07		     jsr jext_on
+  1005 015F A2 7F		     ldx #$7f
+  1006 0161			_rfromfast_buf
+  1007 0161 BD A8 01		     lda ramdisk_buffer,x
+  1008 0164			_rtofast
+  1009 0164 9D FF FF		     sta $FFFF,x
+  1010 0167 CA			     dex
+  1011 				;     cpx DBYT
+  1012 0168 10 F7		     bpl _rfromfast_buf
+  1013 016A 20 F4 07		     jsr jext_off
+  1014
+  1015 016D			?operation_ok
+  1016 016D A9 01		     lda #$01
+  1017 016F A8			     tay
+  1018 0170 18			     clc
+  1019 0171 60			     rts
+  1020 				;
+  1021 				; Read Status and Read Percom commands
+  1022 				;
+  1023 0172			READSTATUS
+  1024 0172 A2 0F		     ldx #$0f
+  1025 0174 A0 03		     ldy #$03
+  1026 0176 D0 04		     bne ?rdperc
+  1027 0178			READPERCOM
+  1028 0178 A2 0B		     ldx #$0b
+  1029 017A A0 0B		     ldy #$0b
+  1030 017C			?rdperc
+  1031 017C AD 87 07		     lda SYSCALL
+  1032 017F 20 F1 07		     jsr jext_on
+  1033 0182			?nxtpb
+  1034 0182 BD 92 01		     lda tpercom,x
+  1035 0185 91 34		     sta (BUFEN),y
+  1036 0187 CA			     dex
+  1037 0188 88			     dey
+  1038 0189 10 F7		     bpl ?nxtpb
+  1039 018B 20 F4 07		     jsr jext_off
+  1040 018E 4C 6D 01		     jmp ?operation_ok
+  1041 				;
+  1042 				; ramdisk drive number
+  1043 				;
+  1044 0191			ramdisk_drive
+  1045 0191 0F			     .byte 15
+  1046 				;
+  1047 				; Read percom answer
+  1048 				;
+  1049 0192			tpercom
+  1050 0192 01			     .byte 1    ;no of tracks
+  1051 0193 01			     .byte 1    ;step rate
+  1052 0194			spt_hi
+  1053 0194 00			     .byte 0    ;sector per track hi - $0E for 470KB
+  1054 0195			spt_lo
+  1055 0195 00			     .byte 0    ;sector per track lo - $B0 for 470KB
+  1056 0196 00			     .byte 0    ;no of sides - 1
+  1057 0197 04			     .byte 4    ;record method (4=MFM)
+  1058 0198 00			     .byte 0    ;bytes per sector hi
+  1059 0199 80			     .byte $80  ;bytes per sector lo (128 bytes)
+  1060 019A FF			     .byte $FF  ;drive online
+  1061 019B 00			     .byte 0    ;unused
+  1062 019C 00			     .byte 0    ;unused
+  1063 019D 00			     .byte 0    ;unused
+  1064 				;
+  1065 				; Read status answer
+  1066 				;
+  1067 019E			tstatus
+  1068 019E 10			     .byte $10
+  1069 019F FF			     .byte $FF
+  1070 01A0 E0			     .byte $E0
+  1071 				;
+  1072 				; Number of sectors of this ramdisk (128 bytes)
+  1073 				;
+  1074 01A1			ramdisk_sectors
+  1075 01A1 00 00		     .word 0
+  1076 01A3			sio_cmds
+  1077 01A3 52 57 50 53 4E	     .byte 'RWPSN'
+  1078 01A8			ramdisk_buffer
+  1079 01A8 00 00 00 00 00 00 + :128 .byte 0
+  1080
+  1081 				     end
+  1081 0228 FD FF 01 00 00	BLK UPDATE ADDRESS
+  1081 0228 FD 12 30		
+  1081 0228 FD 26 30		
+  1081 0228 FD 2B 30		
+  1081 0228 FD 6E 30		
+  1081 0228 FD 73 30		
+  1081 0228 FD 78 30		
+  1081 0228 FD 7D 30		
+  1081 0228 FD 80 30		
+  1081 0228 FD 84 30		
+  1081 0228 FD 88 30		
+  1081 0228 FD 8C 30		
+  1081 0228 FD 8F 30		
+  1081 0228 FD AC 30		
+  1081 0228 FD BA 30		
+  1081 0228 FD BD 30		
+  1081 0228 FD C0 30		
+  1081 0228 FD C3 30		
+  1081 0228 FD 6A 31		
+  1081 0228 FD 9C 31		
+  1081 0228 FE 01 02 21 0C 03 + 
+  1081 0228 FC			
+  1081 0228			BLK UPDATE SYMBOL
+  1081 0228 FB FF 42 55 49 4C + BUILDDIR
+  1081 0228 FD 74 31		
+  1081 0228 FC			
+  1081 0228 FB FF 43 4F 4D 54 + COMTAB  
+  1081 0228 FD 35 30		
+  1081 0228 FD 5B 30		
+  1081 0228 FD 65 30		
+  1081 0228 FC			
+  1081 0228 FB FF 43 4F 4D 54 + COMTAB2 
+  1081 0228 FE 01 20		
+  1081 0228 FC			
+  1081 0228 FB FF 44 45 56 53 + DEVSPEC 
+  1081 0228 FD 0F 30		
+  1081 0228 FC			
+  1081 0228 FB FF 47 45 54 45 + GETENV  
+  1081 0228 FD 19 30		
+  1081 0228 FC			
+  1081 0228 FB FF 49 4E 53 54 + INSTALL 
+  1081 0228 FD 98 31		
+  1081 0228 FC			
+  1081 0228 FB FF 50 52 49 4E + PRINTF  
+  1081 0228 FD 3C 31		
+  1081 0228 FD 77 31		
+  1081 0228 FD B9 31		
+  1081 0228 FD EC 31		
+  1081 0228 FC			
+  1081 0228 FB FF 55 5F 47 45 + U_GETPAR
+  1081 0228 FD 2E 30		
+  1081 0228 FC			

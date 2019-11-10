@@ -579,11 +579,10 @@ RAMDISK_SIZE = 512
 ; set ramdisk name
 ;
      lda ramdisk_drive
-     ora #$40
-     sta rddrvch
-     lda ramdisk_drive
      ora #$30
+     sta rddrvch
      sta report_drive
+     sta preserved_drive
 ;
 ; set max sector number
 ;
@@ -597,16 +596,6 @@ RAMDISK_SIZE = 512
 ; Disable interrupts before switching to RAM because of
 ; cartridge lock and preserve THE!CART registers
 ;
-     lda #$FF
-     sta CRITIC 
-     lda RTCLOK+2
-_wait1
-     cmp RTCLOK+2
-     beq _wait1
-
-     sei                ; disable all interrupts
-     lda #$00
-     sta NMIEN
 
      lda TCPBEN         ; save register
      pha
@@ -619,18 +608,29 @@ _wait1
      lda TCMOSL
      pha
 
+     lda #$FF           ; start critical
+     sta CRITIC 
+     lda RTCLOK+2
+_wait1
+     cmp RTCLOK+2
+     beq _wait1
+
+     sei                ; disable all interrupts
+     lda #$00
+     sta NMIEN
+
      lda #TCMOSL.16K    ; set 16k mode at $8000-$BFFF
      sta TCMOSL
      lda #TCMOFR.PBRAM  ; set to RAM
      sta TCMOFR
      lda #$00
-     sta TCPBRL              ; get bank number from X
-     sta TCPBRH              ; set high to $00
+     sta TCPBRL         ; get bank number from X
+     sta TCPBRH         ; set high to $00
      lda #$01
-     sta TCPBEN              ; enable
+     sta TCPBEN         ; enable
 
      lda #0
-     sta no_magic            ; used to store if magic is found (0=yes)
+     sta no_magic       ; used to store if magic is found (0=yes)
 
      ldx #7
 next_magic
@@ -669,7 +669,9 @@ good_magic
 ; ramdisk has a previous content
 ;
      jsr PRINTF
-     .byte 'The!CART Ramdisk ver43 preserved',$9B,0
+     .byte 'Ramcart ver47 preserved drive D'
+preserved_drive
+     .byte '?:',$9B,0
      jmp ?end
 ;
 ; ramdisk must be initialised because no previous content has been found
@@ -687,7 +689,7 @@ good_magic
 ; ramdisk is initialized
 ;
      jsr PRINTF
-     .byte 'The!Cart Ramdisk ver44 drive D'
+     .byte 'Ramcart ver47 init drive D'
 report_drive
      .byte '?:',$9B,0
 ;
@@ -710,9 +712,9 @@ no_magic
 newdrvn
      .byte 0
 rdname
-     .byte 'TCDisk '
+     .byte 'RAMCART'
 rddrvch
-     .byte 'A',$9B
+     .byte '1',$9B
 maxvar
      .byte 'MAXDRV',$9B
 ;
@@ -720,7 +722,7 @@ maxvar
 ;
 sio_full
      jsr PRINTF
-     .byte 'The!Cart Ramdisk not installed:',$9b
+     .byte 'Ramcart ver47 not installed:',$9b
      .byte '  SIO table full',$9B,0
      rts
 ;
@@ -728,8 +730,8 @@ sio_full
 ;
 nocartram:
      jsr PRINTF
-     .byte 'No ramdisk because The!Cart is locked:',$9B
-     .byte '   Use SHIFT-Fire or SHIFT-Return in',$9B
+     .byte 'Ramcart ver47 The!Cart is locked:',$9B
+     .byte '   Use SHIFT-RETURN or SHIFT-Fire in',$9B
      .byte '   The!Cart main menu to unlock RAM.',$9B,0
      rts
 
@@ -863,17 +865,6 @@ sio_handler
 ; save THE!CART registers into hide_cart_ram code
 ;
 save_cart_regs
-     
-     lda #$FF
-     sta CRITIC 
-     lda RTCLOK+2
-_wait2
-     cmp RTCLOK+2
-     beq _wait2
-
-     sei
-     lda #0
-     sta NMIEN
 
      lda TCMOSL
      sta _hpatchTCMOSL+1
@@ -907,6 +898,17 @@ set_cart_regs
 ; enable THE!CART ram
 ;
 show_cart_ram
+     
+     lda #$FF
+     sta CRITIC 
+     lda RTCLOK+2
+_wait2
+     cmp RTCLOK+2
+     beq _wait2
+
+     sei
+     lda #0
+     sta NMIEN
 
 _spatchTCMOSL
      ldy #0
@@ -961,24 +963,24 @@ WRITESECTOR
 
      lda SYSCALL
      jsr jext_on
-     ldx #0
+     ldx #$7f
 _wfromfast
      lda $FFFF,x
      sta ramdisk_buffer,x
-     inx
-     cpx DBYT
-     bne _wfromfast
+     dex
+;     cpx DBYT
+     bpl _wfromfast
      jsr jext_off
 
      jsr show_cart_ram
-     ldx #0
+     ldx #$7f
 _wfromfast_buf
      lda ramdisk_buffer,x
 _wtofast
      sta $FFFF,x
-     inx
-     cpx DBYT
-     bne _wfromfast_buf
+     dex
+;     cpx DBYT
+     bpl _wfromfast_buf
      jsr hide_cart_ram
      
      jmp ?operation_ok
@@ -989,26 +991,25 @@ _wtofast
 READSECTOR
      
      jsr show_cart_ram
-     ldx #0
+     ldx #$7f
 _rfromfast
      lda $FFFF,x
      sta ramdisk_buffer,x
-     inx
-     cpx DBYT
-     bne _rfromfast     
+     dex
+;     cpx DBYT
+     bpl _rfromfast     
      jsr hide_cart_ram
-
 
      lda SYSCALL
      jsr jext_on
-     ldx #0
+     ldx #$7f
 _rfromfast_buf
      lda ramdisk_buffer,x
 _rtofast
      sta $FFFF,x
-     inx
-     cpx DBYT
-     bne _rfromfast_buf
+     dex
+;     cpx DBYT
+     bpl _rfromfast_buf
      jsr jext_off
 
 ?operation_ok
