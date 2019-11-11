@@ -968,7 +968,6 @@ _wfromfast
      lda $FFFF,x
      sta ramdisk_buffer,x
      dex
-;     cpx DBYT
      bpl _wfromfast
      jsr jext_off
 
@@ -979,7 +978,6 @@ _wfromfast_buf
 _wtofast
      sta $FFFF,x
      dex
-;     cpx DBYT
      bpl _wfromfast_buf
      jsr hide_cart_ram
      
@@ -996,7 +994,6 @@ _rfromfast
      lda $FFFF,x
      sta ramdisk_buffer,x
      dex
-;     cpx DBYT
      bpl _rfromfast     
      jsr hide_cart_ram
 
@@ -1008,7 +1005,6 @@ _rfromfast_buf
 _rtofast
      sta $FFFF,x
      dex
-;     cpx DBYT
      bpl _rfromfast_buf
      jsr jext_off
 
@@ -1070,6 +1066,7 @@ tstatus
      .byte $E0
 ;
 ; Number of sectors of this ramdisk (128 bytes)
+; and sector buffer
 ;
 ramdisk_sectors
      .word 0

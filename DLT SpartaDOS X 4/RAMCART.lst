@@ -969,166 +969,163 @@ mads 1.9.9
    968 0128 BD FF FF		     lda $FFFF,x
    969 012B 9D A8 01		     sta ramdisk_buffer,x
    970 012E CA			     dex
-   971 				;     cpx DBYT
-   972 012F 10 F7		     bpl _wfromfast
-   973 0131 20 F4 07		     jsr jext_off
-   974
-   975 0134 20 D2 00		     jsr show_cart_ram
-   976 0137 A2 7F		     ldx #$7f
-   977 0139			_wfromfast_buf
-   978 0139 BD A8 01		     lda ramdisk_buffer,x
-   979 013C			_wtofast
-   980 013C 9D FF FF		     sta $FFFF,x
-   981 013F CA			     dex
-   982 				;     cpx DBYT
-   983 0140 10 F7		     bpl _wfromfast_buf
-   984 0142 20 FC 00		     jsr hide_cart_ram
+   971 012F 10 F7		     bpl _wfromfast
+   972 0131 20 F4 07		     jsr jext_off
+   973
+   974 0134 20 D2 00		     jsr show_cart_ram
+   975 0137 A2 7F		     ldx #$7f
+   976 0139			_wfromfast_buf
+   977 0139 BD A8 01		     lda ramdisk_buffer,x
+   978 013C			_wtofast
+   979 013C 9D FF FF		     sta $FFFF,x
+   980 013F CA			     dex
+   981 0140 10 F7		     bpl _wfromfast_buf
+   982 0142 20 FC 00		     jsr hide_cart_ram
+   983 				     
+   984 0145 4C 6D 01		     jmp ?operation_ok
    985 				     
-   986 0145 4C 6D 01		     jmp ?operation_ok
-   987 				     
+   986 				;
+   987 				; Read sector command
    988 				;
-   989 				; Read sector command
-   990 				;
-   991 0148			READSECTOR
-   992 				     
-   993 0148 20 D2 00		     jsr show_cart_ram
-   994 014B A2 7F		     ldx #$7f
-   995 014D			_rfromfast
-   996 014D BD FF FF		     lda $FFFF,x
-   997 0150 9D A8 01		     sta ramdisk_buffer,x
-   998 0153 CA			     dex
-   999 				;     cpx DBYT
-  1000 0154 10 F7		     bpl _rfromfast     
-  1001 0156 20 FC 00		     jsr hide_cart_ram
-  1002
-  1003 0159 AD 87 07		     lda SYSCALL
-  1004 015C 20 F1 07		     jsr jext_on
-  1005 015F A2 7F		     ldx #$7f
-  1006 0161			_rfromfast_buf
-  1007 0161 BD A8 01		     lda ramdisk_buffer,x
-  1008 0164			_rtofast
-  1009 0164 9D FF FF		     sta $FFFF,x
-  1010 0167 CA			     dex
-  1011 				;     cpx DBYT
-  1012 0168 10 F7		     bpl _rfromfast_buf
-  1013 016A 20 F4 07		     jsr jext_off
-  1014
-  1015 016D			?operation_ok
-  1016 016D A9 01		     lda #$01
-  1017 016F A8			     tay
-  1018 0170 18			     clc
-  1019 0171 60			     rts
-  1020 				;
-  1021 				; Read Status and Read Percom commands
-  1022 				;
-  1023 0172			READSTATUS
-  1024 0172 A2 0F		     ldx #$0f
-  1025 0174 A0 03		     ldy #$03
-  1026 0176 D0 04		     bne ?rdperc
-  1027 0178			READPERCOM
-  1028 0178 A2 0B		     ldx #$0b
-  1029 017A A0 0B		     ldy #$0b
-  1030 017C			?rdperc
-  1031 017C AD 87 07		     lda SYSCALL
-  1032 017F 20 F1 07		     jsr jext_on
-  1033 0182			?nxtpb
-  1034 0182 BD 92 01		     lda tpercom,x
-  1035 0185 91 34		     sta (BUFEN),y
-  1036 0187 CA			     dex
-  1037 0188 88			     dey
-  1038 0189 10 F7		     bpl ?nxtpb
-  1039 018B 20 F4 07		     jsr jext_off
-  1040 018E 4C 6D 01		     jmp ?operation_ok
-  1041 				;
-  1042 				; ramdisk drive number
-  1043 				;
-  1044 0191			ramdisk_drive
-  1045 0191 0F			     .byte 15
-  1046 				;
-  1047 				; Read percom answer
-  1048 				;
-  1049 0192			tpercom
-  1050 0192 01			     .byte 1    ;no of tracks
-  1051 0193 01			     .byte 1    ;step rate
-  1052 0194			spt_hi
-  1053 0194 00			     .byte 0    ;sector per track hi - $0E for 470KB
-  1054 0195			spt_lo
-  1055 0195 00			     .byte 0    ;sector per track lo - $B0 for 470KB
-  1056 0196 00			     .byte 0    ;no of sides - 1
-  1057 0197 04			     .byte 4    ;record method (4=MFM)
-  1058 0198 00			     .byte 0    ;bytes per sector hi
-  1059 0199 80			     .byte $80  ;bytes per sector lo (128 bytes)
-  1060 019A FF			     .byte $FF  ;drive online
-  1061 019B 00			     .byte 0    ;unused
-  1062 019C 00			     .byte 0    ;unused
-  1063 019D 00			     .byte 0    ;unused
-  1064 				;
-  1065 				; Read status answer
-  1066 				;
-  1067 019E			tstatus
-  1068 019E 10			     .byte $10
-  1069 019F FF			     .byte $FF
-  1070 01A0 E0			     .byte $E0
-  1071 				;
-  1072 				; Number of sectors of this ramdisk (128 bytes)
-  1073 				;
-  1074 01A1			ramdisk_sectors
-  1075 01A1 00 00		     .word 0
-  1076 01A3			sio_cmds
-  1077 01A3 52 57 50 53 4E	     .byte 'RWPSN'
-  1078 01A8			ramdisk_buffer
-  1079 01A8 00 00 00 00 00 00 + :128 .byte 0
-  1080
-  1081 				     end
-  1081 0228 FD FF 01 00 00	BLK UPDATE ADDRESS
-  1081 0228 FD 12 30		
-  1081 0228 FD 26 30		
-  1081 0228 FD 2B 30		
-  1081 0228 FD 6E 30		
-  1081 0228 FD 73 30		
-  1081 0228 FD 78 30		
-  1081 0228 FD 7D 30		
-  1081 0228 FD 80 30		
-  1081 0228 FD 84 30		
-  1081 0228 FD 88 30		
-  1081 0228 FD 8C 30		
-  1081 0228 FD 8F 30		
-  1081 0228 FD AC 30		
-  1081 0228 FD BA 30		
-  1081 0228 FD BD 30		
-  1081 0228 FD C0 30		
-  1081 0228 FD C3 30		
-  1081 0228 FD 6A 31		
-  1081 0228 FD 9C 31		
-  1081 0228 FE 01 02 21 0C 03 + 
-  1081 0228 FC			
-  1081 0228			BLK UPDATE SYMBOL
-  1081 0228 FB FF 42 55 49 4C + BUILDDIR
-  1081 0228 FD 74 31		
-  1081 0228 FC			
-  1081 0228 FB FF 43 4F 4D 54 + COMTAB  
-  1081 0228 FD 35 30		
-  1081 0228 FD 5B 30		
-  1081 0228 FD 65 30		
-  1081 0228 FC			
-  1081 0228 FB FF 43 4F 4D 54 + COMTAB2 
-  1081 0228 FE 01 20		
-  1081 0228 FC			
-  1081 0228 FB FF 44 45 56 53 + DEVSPEC 
-  1081 0228 FD 0F 30		
-  1081 0228 FC			
-  1081 0228 FB FF 47 45 54 45 + GETENV  
-  1081 0228 FD 19 30		
-  1081 0228 FC			
-  1081 0228 FB FF 49 4E 53 54 + INSTALL 
-  1081 0228 FD 98 31		
-  1081 0228 FC			
-  1081 0228 FB FF 50 52 49 4E + PRINTF  
-  1081 0228 FD 3C 31		
-  1081 0228 FD 77 31		
-  1081 0228 FD B9 31		
-  1081 0228 FD EC 31		
-  1081 0228 FC			
-  1081 0228 FB FF 55 5F 47 45 + U_GETPAR
-  1081 0228 FD 2E 30		
-  1081 0228 FC			
+   989 0148			READSECTOR
+   990 				     
+   991 0148 20 D2 00		     jsr show_cart_ram
+   992 014B A2 7F		     ldx #$7f
+   993 014D			_rfromfast
+   994 014D BD FF FF		     lda $FFFF,x
+   995 0150 9D A8 01		     sta ramdisk_buffer,x
+   996 0153 CA			     dex
+   997 0154 10 F7		     bpl _rfromfast     
+   998 0156 20 FC 00		     jsr hide_cart_ram
+   999
+  1000 0159 AD 87 07		     lda SYSCALL
+  1001 015C 20 F1 07		     jsr jext_on
+  1002 015F A2 7F		     ldx #$7f
+  1003 0161			_rfromfast_buf
+  1004 0161 BD A8 01		     lda ramdisk_buffer,x
+  1005 0164			_rtofast
+  1006 0164 9D FF FF		     sta $FFFF,x
+  1007 0167 CA			     dex
+  1008 0168 10 F7		     bpl _rfromfast_buf
+  1009 016A 20 F4 07		     jsr jext_off
+  1010
+  1011 016D			?operation_ok
+  1012 016D A9 01		     lda #$01
+  1013 016F A8			     tay
+  1014 0170 18			     clc
+  1015 0171 60			     rts
+  1016 				;
+  1017 				; Read Status and Read Percom commands
+  1018 				;
+  1019 0172			READSTATUS
+  1020 0172 A2 0F		     ldx #$0f
+  1021 0174 A0 03		     ldy #$03
+  1022 0176 D0 04		     bne ?rdperc
+  1023 0178			READPERCOM
+  1024 0178 A2 0B		     ldx #$0b
+  1025 017A A0 0B		     ldy #$0b
+  1026 017C			?rdperc
+  1027 017C AD 87 07		     lda SYSCALL
+  1028 017F 20 F1 07		     jsr jext_on
+  1029 0182			?nxtpb
+  1030 0182 BD 92 01		     lda tpercom,x
+  1031 0185 91 34		     sta (BUFEN),y
+  1032 0187 CA			     dex
+  1033 0188 88			     dey
+  1034 0189 10 F7		     bpl ?nxtpb
+  1035 018B 20 F4 07		     jsr jext_off
+  1036 018E 4C 6D 01		     jmp ?operation_ok
+  1037 				;
+  1038 				; ramdisk drive number
+  1039 				;
+  1040 0191			ramdisk_drive
+  1041 0191 0F			     .byte 15
+  1042 				;
+  1043 				; Read percom answer
+  1044 				;
+  1045 0192			tpercom
+  1046 0192 01			     .byte 1    ;no of tracks
+  1047 0193 01			     .byte 1    ;step rate
+  1048 0194			spt_hi
+  1049 0194 00			     .byte 0    ;sector per track hi - $0E for 470KB
+  1050 0195			spt_lo
+  1051 0195 00			     .byte 0    ;sector per track lo - $B0 for 470KB
+  1052 0196 00			     .byte 0    ;no of sides - 1
+  1053 0197 04			     .byte 4    ;record method (4=MFM)
+  1054 0198 00			     .byte 0    ;bytes per sector hi
+  1055 0199 80			     .byte $80  ;bytes per sector lo (128 bytes)
+  1056 019A FF			     .byte $FF  ;drive online
+  1057 019B 00			     .byte 0    ;unused
+  1058 019C 00			     .byte 0    ;unused
+  1059 019D 00			     .byte 0    ;unused
+  1060 				;
+  1061 				; Read status answer
+  1062 				;
+  1063 019E			tstatus
+  1064 019E 10			     .byte $10
+  1065 019F FF			     .byte $FF
+  1066 01A0 E0			     .byte $E0
+  1067 				;
+  1068 				; Number of sectors of this ramdisk (128 bytes)
+  1069 				; and sector buffer
+  1070 				;
+  1071 01A1			ramdisk_sectors
+  1072 01A1 00 00		     .word 0
+  1073 01A3			sio_cmds
+  1074 01A3 52 57 50 53 4E	     .byte 'RWPSN'
+  1075 01A8			ramdisk_buffer
+  1076 01A8 00 00 00 00 00 00 + :128 .byte 0
+  1077
+  1078 				     end
+  1078 0228 FD FF 01 00 00	BLK UPDATE ADDRESS
+  1078 0228 FD 12 30		
+  1078 0228 FD 26 30		
+  1078 0228 FD 2B 30		
+  1078 0228 FD 6E 30		
+  1078 0228 FD 73 30		
+  1078 0228 FD 78 30		
+  1078 0228 FD 7D 30		
+  1078 0228 FD 80 30		
+  1078 0228 FD 84 30		
+  1078 0228 FD 88 30		
+  1078 0228 FD 8C 30		
+  1078 0228 FD 8F 30		
+  1078 0228 FD AC 30		
+  1078 0228 FD BA 30		
+  1078 0228 FD BD 30		
+  1078 0228 FD C0 30		
+  1078 0228 FD C3 30		
+  1078 0228 FD 6A 31		
+  1078 0228 FD 9C 31		
+  1078 0228 FE 01 02 21 0C 03 + 
+  1078 0228 FC			
+  1078 0228			BLK UPDATE SYMBOL
+  1078 0228 FB FF 42 55 49 4C + BUILDDIR
+  1078 0228 FD 74 31		
+  1078 0228 FC			
+  1078 0228 FB FF 43 4F 4D 54 + COMTAB  
+  1078 0228 FD 35 30		
+  1078 0228 FD 5B 30		
+  1078 0228 FD 65 30		
+  1078 0228 FC			
+  1078 0228 FB FF 43 4F 4D 54 + COMTAB2 
+  1078 0228 FE 01 20		
+  1078 0228 FC			
+  1078 0228 FB FF 44 45 56 53 + DEVSPEC 
+  1078 0228 FD 0F 30		
+  1078 0228 FC			
+  1078 0228 FB FF 47 45 54 45 + GETENV  
+  1078 0228 FD 19 30		
+  1078 0228 FC			
+  1078 0228 FB FF 49 4E 53 54 + INSTALL 
+  1078 0228 FD 98 31		
+  1078 0228 FC			
+  1078 0228 FB FF 50 52 49 4E + PRINTF  
+  1078 0228 FD 3C 31		
+  1078 0228 FD 77 31		
+  1078 0228 FD B9 31		
+  1078 0228 FD EC 31		
+  1078 0228 FC			
+  1078 0228 FB FF 55 5F 47 45 + U_GETPAR
+  1078 0228 FD 2E 30		
+  1078 0228 FC			
