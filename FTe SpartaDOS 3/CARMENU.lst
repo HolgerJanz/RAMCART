@@ -1,0 +1,29 @@
+mads 1.9.9
+     1 				; Start The!Cart Menu
+     2
+     3 				        org $2000
+     4
+     5 FFFF> 2000-202A> E6 42	        inc $42         ; begin critical
+     6
+     7 2002 A9 00		        lda #$00
+     8 2004 85 09		        sta $09         ; set no boot
+     9
+    10 2006 A9 01		        lda #$01
+    11 2008 8D 44 02		        sta $244        ; reboot
+    12
+    13 200B A9 00		        lda #$00
+    14 200D 8D A0 D5		        sta $d5a0
+    15 2010 A9 00		        lda #$00        ; set P bank 0
+    16 2012 8D A1 D5		        sta $d5a1
+    17 				        
+    18 2015 A9 00		        lda #$00
+    19 2017 8D A3 D5		        sta $d5a3       ; set S bank 0
+    20 201A 8D A4 D5		        sta $d5a4
+    21 201D 8D A5 D5		        sta $d5a5       ; disable S
+    22 2020 8D A7 D5		        sta $d5a7       ; cfg flash r/o
+    23
+    24 2023 A9 01		        lda #$01        ; set mode 8k
+    25 2025 8D A6 D5		        sta $d5a6
+    26 				                
+    27 2028 4C 77 E4		        jmp $e477       ; cold start
+    28 				        
