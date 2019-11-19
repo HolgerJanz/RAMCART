@@ -1,4 +1,4 @@
-; Start The!Cart Menu (8k, $0000)
+; Disable Cartridge (8k, $0000)
 
 ; OS equ
 SDMCTL  = $022f
@@ -36,29 +36,22 @@ TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
         sta NMIEN
 
         lda #$00
-        sta TCPBRL
-        lda #$00        ; set P bank 0
+        sta TCPBRL      ; set P bank 0
         sta TCPBRH
-        
-        lda #$00
+        sta TCPBEN      ; disable P
+
         sta TCSBRL      ; set S bank 0
         sta TCSBRH
         sta TCSBEN      ; disable S
 
         sta TCMOFR      ; cfg flash r/o
-        lda #TCMOSL.8K  ; set mode 8k
-        sta TCMOSL
+        sta TCMOSL      ; off
 
-        lda #$01        ; set cartridge flag
+        lda #$00        ; set cartridge flag
         sta TRIG3
         sta GINTLK
         
         lda #$00        ; set cart check sum
-        tax
-        clc
-_ccloop adc $bff0,x
-        inx
-        bne _ccloop
         sta CARTCK
 
         jmp WARMST       ; warm start

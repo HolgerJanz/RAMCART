@@ -1,4 +1,4 @@
-; Start The!Cart Menu (8k, $0000)
+; Start Assembler Editor (8k, $1ff0)
 
 ; OS equ
 SDMCTL  = $022f
@@ -35,13 +35,13 @@ TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
         lda #$00
         sta NMIEN
 
-        lda #$00
+        lda #$f0
         sta TCPBRL
-        lda #$00        ; set P bank 0
+        lda #$1f        ; set P bank 
         sta TCPBRH
         
         lda #$00
-        sta TCSBRL      ; set S bank 0
+        sta TCSBRL      ; set S bank 
         sta TCSBRH
         sta TCSBEN      ; disable S
 

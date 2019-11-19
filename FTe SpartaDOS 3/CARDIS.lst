@@ -1,5 +1,5 @@
 mads 1.9.9
-     1 				; Start The!Cart Menu (8k, $0000)
+     1 				; Disable Cartridge (8k, $0000)
      2
      3 				; OS equ
      4 = 022F			SDMCTL  = $022f
@@ -28,7 +28,7 @@ mads 1.9.9
     27 				; Main
     28 				        org $2000
     29
-    30 FFFF> 2000-2042> A9 00	        lda #$00        ; switch off DMA
+    30 FFFF> 2000-2037> A9 00	        lda #$00        ; switch off DMA
     31 2002 8D 2F 02		        sta SDMCTL
     32 2005 8D 00 D4		        sta DMACTL
     33
@@ -37,30 +37,23 @@ mads 1.9.9
     36 200B 8D 0E D4		        sta NMIEN
     37
     38 200E A9 00		        lda #$00
-    39 2010 8D A0 D5		        sta TCPBRL
-    40 2013 A9 00		        lda #$00        ; set P bank 0
-    41 2015 8D A1 D5		        sta TCPBRH
-    42 				        
-    43 2018 A9 00		        lda #$00
-    44 201A 8D A3 D5		        sta TCSBRL      ; set S bank 0
-    45 201D 8D A4 D5		        sta TCSBRH
-    46 2020 8D A5 D5		        sta TCSBEN      ; disable S
-    47
-    48 2023 8D A7 D5		        sta TCMOFR      ; cfg flash r/o
-    49 2026 A9 01		        lda #TCMOSL.8K  ; set mode 8k
-    50 2028 8D A6 D5		        sta TCMOSL
-    51
-    52 202B A9 01		        lda #$01        ; set cartridge flag
-    53 202D 8D 13 D0		        sta TRIG3
-    54 2030 8D FA 03		        sta GINTLK
-    55 				        
-    56 2033 A9 00		        lda #$00        ; set cart check sum
-    57 2035 AA			        tax
-    58 2036 18			        clc
-    59 2037 7D F0 BF		_ccloop adc $bff0,x
-    60 203A E8			        inx
-    61 203B D0 FA		        bne _ccloop
-    62 203D 8D EB 03		        sta CARTCK
-    63
-    64 2040 4C 74 E4		        jmp WARMST       ; warm start
-    65 				        
+    39 2010 8D A0 D5		        sta TCPBRL      ; set P bank 0
+    40 2013 8D A1 D5		        sta TCPBRH
+    41 2016 8D A2 D5		        sta TCPBEN      ; disable P
+    42
+    43 2019 8D A3 D5		        sta TCSBRL      ; set S bank 0
+    44 201C 8D A4 D5		        sta TCSBRH
+    45 201F 8D A5 D5		        sta TCSBEN      ; disable S
+    46
+    47 2022 8D A7 D5		        sta TCMOFR      ; cfg flash r/o
+    48 2025 8D A6 D5		        sta TCMOSL      ; off
+    49
+    50 2028 A9 00		        lda #$00        ; set cartridge flag
+    51 202A 8D 13 D0		        sta TRIG3
+    52 202D 8D FA 03		        sta GINTLK
+    53 				        
+    54 2030 A9 00		        lda #$00        ; set cart check sum
+    55 2032 8D EB 03		        sta CARTCK
+    56
+    57 2035 4C 74 E4		        jmp WARMST       ; warm start
+    58 				        

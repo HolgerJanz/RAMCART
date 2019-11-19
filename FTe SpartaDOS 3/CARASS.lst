@@ -1,5 +1,5 @@
 mads 1.9.9
-     1 				; Start The!Cart Menu (8k, $0000)
+     1 				; Start Assembler Editor (8k, $1ff0)
      2
      3 				; OS equ
      4 = 022F			SDMCTL  = $022f
@@ -36,13 +36,13 @@ mads 1.9.9
     35 2009 A9 00		        lda #$00
     36 200B 8D 0E D4		        sta NMIEN
     37
-    38 200E A9 00		        lda #$00
+    38 200E A9 F0		        lda #$f0
     39 2010 8D A0 D5		        sta TCPBRL
-    40 2013 A9 00		        lda #$00        ; set P bank 0
+    40 2013 A9 1F		        lda #$1f        ; set P bank 
     41 2015 8D A1 D5		        sta TCPBRH
     42 				        
     43 2018 A9 00		        lda #$00
-    44 201A 8D A3 D5		        sta TCSBRL      ; set S bank 0
+    44 201A 8D A3 D5		        sta TCSBRL      ; set S bank 
     45 201D 8D A4 D5		        sta TCSBRH
     46 2020 8D A5 D5		        sta TCSBEN      ; disable S
     47
