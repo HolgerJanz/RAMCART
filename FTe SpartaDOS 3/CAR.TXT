@@ -1,0 +1,9 @@
+CAR*.COM Statements for Cartridge Switch
+----------------------------------------
+
+CARMENU.COM - Switch to Menu of The!Cart
+CARDIS.COM  - Disable Cartridge
+
+Adapt bank number for your The!Cart:
+CARASS.COM  - Switch to Assembler Editor
+CARBAS.COM  - Switch to BASIC C
