@@ -61,5 +61,8 @@ _ccloop adc $bff0,x
         bne _ccloop
         sta CARTCK
 
-        jmp WARMST       ; warm start
+        pla             ; clear return adr from stack 
+        pla
+        
+        jmp WARMST      ; warm start
         

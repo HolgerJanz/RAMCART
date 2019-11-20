@@ -28,7 +28,7 @@ mads 1.9.9
     27 				; Main
     28 				        org $2000
     29
-    30 FFFF> 2000-2037> A9 00	        lda #$00        ; switch off DMA
+    30 FFFF> 2000-2039> A9 00	        lda #$00        ; switch off DMA
     31 2002 8D 2F 02		        sta SDMCTL
     32 2005 8D 00 D4		        sta DMACTL
     33
@@ -55,5 +55,8 @@ mads 1.9.9
     54 2030 A9 00		        lda #$00        ; set cart check sum
     55 2032 8D EB 03		        sta CARTCK
     56
-    57 2035 4C 74 E4		        jmp WARMST       ; warm start
-    58 				        
+    57 2035 68			        pla             ; clear return adr from stack 
+    58 2036 68			        pla
+    59 				        
+    60 2037 4C 74 E4		        jmp WARMST      ; warm start
+    61 				        

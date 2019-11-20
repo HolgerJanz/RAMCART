@@ -54,5 +54,8 @@ TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
         lda #$00        ; set cart check sum
         sta CARTCK
 
-        jmp WARMST       ; warm start
+        pla             ; clear return adr from stack 
+        pla
+        
+        jmp WARMST      ; warm start
         
