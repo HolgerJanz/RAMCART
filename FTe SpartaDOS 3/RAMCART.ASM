@@ -219,8 +219,7 @@ M_cart_pop  .macro
 ; saves register and sync: pushes bank register on stack
 M_cart_sync_push .macro
             M_cart_push
-            lda #$FF
-            sta CRITIC 
+            inc CRITIC 
             jsr WAITSYNC        ; wait for vblank
             sei
             lda #$00
@@ -243,8 +242,7 @@ M_cart_sync_pop  .macro
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
-            lda #$00
-            sta CRITIC 
+            dec CRITIC 
             .endm
 
 ; set bank: number of bank in X, uses A
@@ -747,8 +745,7 @@ L3656       cpx #$20            ; check bank number
             bcs REAA020         ; intermediate jmp to NAK
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
             M_cart_push         ; save register
-            lda #$01
-            sta CRITIC
+            inc CRITIC
             lda RTCLOK+2
 WAITLOOP2   cmp RTCLOK+2
             beq WAITLOOP2
@@ -776,8 +773,7 @@ REAA006     sta BUFFERXX1,Y     ; 5 cycles +
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
-            lda #$00
-            sta CRITIC          ; 54 cycles
+            dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
 ; GET: write buffer to user data            
             ldy #$7F
@@ -802,8 +798,7 @@ PUTADRLP    sta $FFFF,Y
             lda #$E0            ; enable interrupts
             sta NMIEN
             cli
-            lda #$00
-            sta CRITIC          ; 54 cycles
+            dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; enable interrupts and set rc            
 RDSIOEND    ldy #$01

@@ -4,7 +4,10 @@
 ;
 ; OS equ
 ;
+
 DOSVEC  = $000a
+CRITIC  = $0042
+
 SDMCTL  = $022f
 GINTLK  = $3fa
 CARTCK  = $3eb
@@ -335,6 +338,7 @@ errnfd.begin
 errnfd.end
 
 erruse.begin
+        .byte '  THECART ver42 by HJX',$9B
         .byte '  Use THECART name:',$9B
 erruse.end
 
