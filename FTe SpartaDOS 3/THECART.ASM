@@ -282,6 +282,7 @@ found   jsr close
         lda #$01        ; set cartridge flag
         sta TRIG3
         sta GINTLK
+        
         lda #$00        ; set cart check sum
         tax
         clc
@@ -301,6 +302,7 @@ _end    pla             ; clear return adr from stack
         pla
         
         jmp WARMST      ; warm start
+
 ; THE END
 
 
