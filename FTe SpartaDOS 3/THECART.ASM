@@ -48,6 +48,8 @@ XIO.WRITE = 8   ; Write
 XIO.GET   = 7   ; Get
 XIO.PUT   = 11  ; Put
 
+XIO.STAT.EOF = $88
+
 CIOV = $E456   ; the classic location
 
 ;
@@ -195,15 +197,10 @@ TCCOLO = $d5af
         sty paridy      ;set index to parameter
 
 ; read sys file        
-        ldx #<fname
-        ldy #>fname
         jsr open
         bmi prserr
                 
-rdnext  ldx #<pbuffer   ; read line
-        ldy #>pbuffer
-        lda #$11
-        jsr read
+rdnext  jsr input       ; read line
         bmi filerr
                 
         lda #' '
@@ -229,7 +226,7 @@ prserr  jsr close
         rts
 
 ; exit with file error                  
-filerr  lda #$88        ; ignore end of file
+filerr  lda #XIO.STAT.EOF     ; ignore end of file
         cmp IOCB1.STAT
         beq filend
         lda lcnt
@@ -254,21 +251,8 @@ filend  ldx #<errnfd.begin
 ; read mode and bank
 found   jsr close
 
-        ldx pbuffer+9   ; read mode
-        ldy pbuffer+10
-        jsr convah
-        sta mode
-
-        ldx pbuffer+12  ; read bank low
-        ldy pbuffer+13
-        jsr convah
-        sta bankh
-
-        ldx pbuffer+14  ; read bank high
-        ldy pbuffer+15
-        jsr convah
-        sta bankl
-
+        jsr rpara
+        
 ; switch The!Cart
         lda #$00        ; switch off DMA
         sta SDMCTL
@@ -338,7 +322,7 @@ errnfd.begin
 errnfd.end
 
 erruse.begin
-        .byte '  THECART ver42 by HJX',$9B
+        .byte '  THECART ver43 by HJX',$9B
         .byte '  Use THECART name:',$9B
 erruse.end
 
@@ -363,22 +347,63 @@ list    ldx #<erruse.begin
         ldy #>erruse.begin
         lda #erruse.end-erruse.begin
         jsr print
-        ldx #<fname
-        ldy #>fname
+        
         jsr open
-_list   ldx #<pbuffer   ; read line
-        ldy #>pbuffer
-        lda #$11
-        jsr read
+_list   jsr input       ; read line
         bmi _endlst
-        lda #$9b
+
+        lda #' '        ; reset current mark
+        sta lbuffer+3
+        
+        jsr rpara
+        
+        lda TCMOSL      ; cmp current with para
+        cmp mode
+        bne _print
+
+        lda TCPBRH
+        cmp bankh
+        bne _print
+
+        lda TCPBRL
+        cmp bankl
+        bne _print
+
+        lda #'>'        ; set current mark
+        sta lbuffer+3
+
+_print  lda #$9b        ; set return after name
         sta pbuffer+8
+
         ldx #<lbuffer
         ldy #>lbuffer
         lda #$0d
         jsr print
+        
         jmp _list 
+
 _endlst jsr close
+        rts
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Read parameter (mode, bank low and bank high)
+;
+rpara   ldx pbuffer+9   ; read mode
+        ldy pbuffer+10
+        jsr convah
+        sta mode
+
+        ldx pbuffer+12  ; read bank low
+        ldy pbuffer+13
+        jsr convah
+        sta bankh
+
+        ldx pbuffer+14  ; read bank high
+        ldy pbuffer+15
+        jsr convah
+        sta bankl
+        
         rts
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -493,8 +518,10 @@ print ; print message
 ;
 
 open ; open file
-        stx IOCB1.BUF
-        sty IOCB1.BUF+1
+        lda #<fname
+        sta IOCB1.BUF
+        lda #>fname
+        sta IOCB1.BUF+1
         lda #XIO.READ
         sta IOCB1.AUX1
         lda #$00
@@ -512,9 +539,12 @@ open ; open file
 ; IN    X,Y    low, high byte of address to buffer
 ;       A      length of buffer
 
-read ; open file
-        stx IOCB1.BUF
-        sty IOCB1.BUF+1
+input ; input file
+        lda #<pbuffer
+        sta IOCB1.BUF
+        lda #>pbuffer
+        sta IOCB1.BUF+1
+        lda #$11
         sta IOCB1.BUFLEN
         lda #$00
         sta IOCB1.BUFLEN+1        
