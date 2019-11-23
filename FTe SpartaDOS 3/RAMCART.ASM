@@ -224,16 +224,6 @@ M_cart_sync_push .macro
             sei
             lda #$00
             sta NMIEN
-; set new The!Cart mode
-            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
-            sta TCMOSL          
-            lda #TCMOFR.PBRAM       ; set to RAM
-            sta TCMOFR
-            lda #$00                     
-            sta TCPBRL              ; get bank number from X
-            sta TCPBRH              ; set high to $00
-            lda #$01
-            sta TCPBEN              ; enable        
             .endm
 
 ; restores register from stack anf sync: pops from stack
@@ -260,65 +250,22 @@ M_cart_set  .macro
             lda #$01
             sta TCPBEN              ; enable        
             .endm
-
-; set bank: number of bank in X, uses A
-M_cart_set_bank  .macro
-            txa
-            asl   
-            sta TCPBRL              ; get bank number from X
-            .endm
-
 ;
 ; Start of code
 ;
             org $3000
             
-; save the!cart registers
-            M_cart_sync_push            
-; try to save and write banks            
-            ldx #$1F
-BNKSAVWRT   M_cart_set_bank
-            lda $9000
-            sta BNKSAVBUF,X
-            stx $9000
-;            lda $B000
-;            sta BNKSAVBUF2,X
-;            stx $B000
-            dex
-            bpl BNKSAVWRT
-; check banks
-BNKCHK      inx
-            M_cart_set_bank            
-            cpx $9000
-            bne BNKSTOP
-;            cpx $B000
-;            bne BNKSTOP
-            cpx #$1F
-            bne BNKCHK
-            inx
-BNKSTOP     stx BNKCNT
-; restore banks
-            ldx #$00
-BNKRESTR    M_cart_set_bank
-            lda BNKSAVBUF,X
-            sta $9000
-;            lda BNKSAVBUF2,X
-;            sta $B000
-            inx
-            cpx #$20
-            bne BNKRESTR            
-; restore the!cart registers
-            M_cart_sync_pop
-
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers48 HJX',$9B,$FF
+            .byte 'THE!RAMDISK for THE!CART vers49 HJX',$9B,$FF
 
-; check bank count
-            ldx BNKCNT
-            cpx #$20
-            beq RAMDISKINI
-
+; check for The!Cart
+             lda TCMOSL
+             cmp #TCMOSL.XLLOCK
+             beq NORAMDISK
+             cmp #TCMOSL.XELOCK
+             bne RAMDISKINI
+NORAMDISK
 ; no banks            
             jsr PRINT
             .byte '  Error - 512k RAM THE!CART not found',$9B
@@ -342,7 +289,6 @@ RAMDISKINI
 CRNAME      jmp $FFFF
 
 CHKFRMT     .byte $FF
-BNKCNT      .byte $00
 
 ; set crunch name address
 PRSPARM     lda DOSVEC
@@ -430,90 +376,76 @@ REAA003     jsr SETMEMLO      ;realloc $33DB
             bmi FRMTRD
             rts
 
-; wait for sync            
-WAITSYNC    lda RTCLOK+2
-WAITLOOP    cmp RTCLOK+2
-            beq WAITLOOP
-            rts
-            
 ; format ramdisk
 FRMTRD      jsr PRINT
             .byte '  RAM Cart 512K formatted',$9B,$FF
 
-; save register
-            M_cart_sync_push
-; set sector for VTOC part 1
+            jsr cart_save
+
+; clear sector 1
             ldx #$00
-            M_cart_set_bank
-; clear loop
+            jsr cart_set
             lda #$00
-            tay
+            ldy #$7f
 FRMTCLP1    sta $8000,Y
-            sta $8100,Y
-            iny
-            bne FRMTCLP1
-; restore register
-            M_cart_sync_pop
+            dey
+            bpl FRMTCLP1
+            jsr cart_restore
 
-; save register
-            M_cart_sync_push
-; set sector for VTOC part 2
-            ldx #$00
-            M_cart_set_bank
-; clear loop
+; set sector 2-5 to $ff VTOV 512k = 4096 sectors
+; = 4 VTOC sectors
+_loop25     ldx #$00
+            jsr cart_set
+            lda #$ff
+            ldy #$7f
+FRMTCLP25   sta $8080,Y
+            dey
+            bpl FRMTCLP25
+            jsr cart_restore
+            lda FRMTCLP25+1
+            clc
+            adc #$80
+            sta FRMTCLP25+1
+            lda FRMTCLP25+2
+            adc #$00
+            sta FRMTCLP25+2
+_loopcnt25  lda #$04
+            dec _loopcnt25+1
+            bne _loop25
+
+; clear sector 6-8 
+_loop68     ldx #$00
+            jsr cart_set
             lda #$00
-            tay
-FRMTCLP2    sta $8200,Y
-            sta $8300,Y
-            iny
-            bne FRMTCLP2
-; restore register
-            M_cart_sync_pop
+            ldy #$7f
+FRMTCLP68   sta $8280,Y
+            dey
+            bpl FRMTCLP68
+            jsr cart_restore
+            lda FRMTCLP68+1
+            clc
+            adc #$80
+            sta FRMTCLP68+1
+            lda FRMTCLP68+2
+            adc #$00
+            sta FRMTCLP68+2
+_loopcnt68  lda #$03
+            dec _loopcnt68+1
+            bne _loop68
 
-
-; save register
-            M_cart_sync_push
-; set sector for VTOC
-            ldx #$00
-            M_cart_set_bank
 ; header loop            
+            ldx #$00
+            jsr cart_set
             ldy #$2A
 FRMTHLP     lda RDHEAD,Y
             sta $8000,Y
             dey
             bpl FRMTHLP
-; restore register
-            M_cart_sync_pop
+            jsr cart_restore
 
-; save register
-            M_cart_sync_push
-; set sector for VTOC
-            ldx #$00
-            M_cart_set_bank
-; set free sector VTOC             
-            lda #$20            ; 16k bank count
-            lsr
-            lsr
-            tax
-FRMTVTOCLP  jsr FRMTSETVTOC
-            lda FRMTVTOCIT+1
-            clc
-            adc #$40
-            sta FRMTVTOCIT+1
-            lda FRMTVTOCIT+2
-            adc #$00
-            sta FRMTVTOCIT+2
-            dex
-            bne FRMTVTOCLP
-; restore register
-            M_cart_sync_pop
-
-; save register
-            M_cart_sync_push
-; set sector for VTOC
-            ldx #$00
-            M_cart_set_bank
  ; set map sector
+            ldx #$00
+            jsr cart_set
             lda #$04 
             sta $800F     ; number of bit map sectors used on the disk
             clc
@@ -539,20 +471,11 @@ L349B       lda RDMAIN,X
             iny
             cpx #$11
             bne L349B
-; restore register
-            M_cart_sync_pop
+            jsr cart_restore
+
 ; finished
             rts
             
-; set VTOC            
-FRMTSETVTOC ldy #$00
-            lda #$FF
-FRMTVTOCIT  sta $8080,Y
-            iny
-            cpy #$40
-            bne FRMTVTOCIT
-            rts
-
 RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
             .byte $30,$03,$00 ;original $00,$04,$FB,$03
             .word $1000,$0ff8 ; 512k
@@ -564,7 +487,76 @@ RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
 RDMAIN      .byte $08,$00,$00,$11,$00,$00
             .byte 'MAIN       '
 
+; wait for sync            
+WAITSYNC    lda RTCLOK+2
+WAITLOOP    cmp RTCLOK+2
+            beq WAITLOOP
+            rts
 
+cart_save
+            lda TCMOSL
+            sta _tcmosl
+            lda TCMOFR
+            sta _tcmofr
+            lda TCPBRL
+            sta _tcpbrl
+            lda TCPBRH
+            sta _tcpbrh
+            lda TCPBEN
+            sta _tcpben
+
+            rts
+
+cart_restore
+            lda _tcmosl
+            sta TCMOSL
+            lda _tcmofr
+            sta TCMOFR
+            lda _tcpbrl
+            sta TCPBRL
+            lda _tcpbrh
+            sta TCPBRH
+            lda _tcpben
+            sta TCPBEN
+
+            lda _nmien          ; enable interrupts
+            sta NMIEN
+            cli
+            dec CRITIC 
+
+            rts
+
+cart_set
+            inc CRITIC 
+            jsr WAITSYNC        ; wait for vblank
+            sei
+            lda NMIEN
+            sta _nmien
+            lda #$00
+            sta NMIEN
+
+            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+            sta TCMOSL          
+            lda #TCMOFR.PBRAM       ; set to RAM
+            sta TCMOFR
+            txa
+            asl   
+            sta TCPBRL              ; get bank number from X
+            lda #$00                     
+            sta TCPBRH              ; set high to $00
+            lda #$01
+            sta TCPBEN              ; enable        
+
+            rts            
+
+_tcmosl     .byte $00
+_tcmofr     .byte $00
+_tcpbrl     .byte $00
+_tcpbrh     .byte $00
+_tcpben     .byte $00
+
+_nmien      .byte $00
+            
 ; print subroutine            
 PRINT       pla
             sta PRINTITER+1
