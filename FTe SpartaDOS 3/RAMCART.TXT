@@ -1,7 +1,7 @@
 RAMCART - Ramdisk Driver for THE!CART
 and SpartaDOS 3
 
-RAMCART Dx: [/N]
+RAMCART Dx: [/N|A|F]
 RAMCARTF Dx: [/N]
 
 RAMCART[F] is a ramdisk driver for
@@ -12,6 +12,9 @@ will not be formatted. Without the
 option /N the ramdisk will be
 formatted with 4096 sectors of 128
 Bytes and SpartaDOS file system.
+Option /A formats only if needed
+and option /F only formats without
+installing driver.
 XINIT can be used to format with
 a different size. The original
 ramdisk driver of SpartaDOS can be

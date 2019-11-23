@@ -216,25 +216,6 @@ M_cart_pop  .macro
             sta TCMOSL          
             .endm
  
-; saves register and sync: pushes bank register on stack
-M_cart_sync_push .macro
-            M_cart_push
-            inc CRITIC 
-            jsr WAITSYNC        ; wait for vblank
-            sei
-            lda #$00
-            sta NMIEN
-            .endm
-
-; restores register from stack anf sync: pops from stack
-M_cart_sync_pop  .macro
-            M_cart_pop
-            lda #$E0            ; enable interrupts
-            sta NMIEN
-            cli
-            dec CRITIC 
-            .endm
-
 ; set bank: number of bank in X, uses A
 M_cart_set  .macro
 ; set new The!Cart mode
@@ -257,7 +238,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK for THE!CART vers49 HJX',$9B,$FF
+            .byte 'THE!RAMDISK ver50 for THE!CART by HJX',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -316,20 +297,43 @@ PRSPARM     lda DOSVEC
             bne PARAMERR
 PRSPARLOOP  iny
             lda (DOSVEC),Y
+
             cmp #$9B         ; end of parameter
             beq PRSPAREND
-PRSPARNXT   cmp #'N'         ; format ?
+            
+            cmp #'A'         ; try to preserve
+            bne PRSPARNXT1
+            jsr checkfrmt
+            bcc PRSPARLOOP
+            inc CHKFRMT
+            jmp PRSPARLOOP
+
+PRSPARNXT1  cmp #'F'         ; just format
+            bne PRSPARNXT2
+            jmp FRMTRD
+
+PRSPARNXT2  cmp #'N'         ; format ?
             bne PARAMERR
 ; check format at startup to preserve existing RAM disk            
             inc CHKFRMT
+
             jmp PRSPARLOOP
+
+PRSPAREND   jmp STARTINST
+
 PARAMERR    jsr PRINT
             .byte '  Error - Wrong parameter',$9B
-            .byte '  Use RAMCART Dn: [/N]',$9B,$FF
+            .byte '  Use RAMCART Dn: [/N|A|F]',$9B
+            .byte '    N - driver no format',$9B
+            .byte '    A - driver auto format if needed',$9B
+            .byte '    F - format no driver',$9B
+            .byte '    w/o option driver and format',$9B,$FF
             rts
 
+STARTINST   jsr PRINT
+            .byte '  Install driver',$9B,$FF
 ; set jsr to original DOSINI
-PRSPAREND   lda DOSINI
+            lda DOSINI
             sta JSRDOSINI+1
             lda DOSINI+1
             sta JSRDOSINI+2
@@ -378,7 +382,7 @@ REAA003     jsr SETMEMLO      ;realloc $33DB
 
 ; format ramdisk
 FRMTRD      jsr PRINT
-            .byte '  RAM Cart 512K formatted',$9B,$FF
+            .byte '  Formatted 512k',$9B,$FF
 
             jsr cart_save
 
@@ -478,14 +482,34 @@ L349B       lda RDMAIN,X
             
 RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
             .byte $30,$03,$00 ;original $00,$04,$FB,$03
-            .word $1000,$0ff8 ; 512k
+            .word $1000,$0ff6 ; 512k
             .byte $01, $02,$00,$20,$00,$00,$00
             .byte 'CART512K'
             .byte $00,$80,$22,$00,$00,$00,$00,$00
             .byte $00,$16,$00,$00,$00
 
-RDMAIN      .byte $08,$00,$00,$11,$00,$00
+RDMAIN      .byte $08,$00,$00,$17,$00,$00
             .byte 'MAIN       '
+
+; check preformat
+checkfrmt
+            jsr cart_save
+            ldx #$00
+            jsr cart_set
+            ldx #$16
+_nxtchar    lda RDHEAD,x
+            cmp $8000,x
+            bne _nofrmt
+            inx
+            cpx #$1E
+            bne _nxtchar
+            jsr cart_restore
+            sec
+            rts
+            
+_nofrmt     jsr cart_restore
+            clc
+            rts
 
 ; wait for sync            
 WAITSYNC    lda RTCLOK+2
@@ -742,6 +766,8 @@ L3656       cpx #$20            ; check bank number
 WAITLOOP2   cmp RTCLOK+2
             beq WAITLOOP2
             sei                 ; 40 cycles
+            lda NMIEN
+            pha
             lda #$00
             sta NMIEN
             M_cart_set          ; set bank, number in X
@@ -761,9 +787,10 @@ REAA006     sta BUFFERXX1,Y     ; 5 cycles +
             bpl L367B           ; 4 cycles + * 128 = 2176
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; restore bank for write to user buffer
+            pla
+            tax
             M_cart_pop          ; restore register            
-            lda #$E0            ; enable interrupts
-            sta NMIEN
+            stx NMIEN
             cli
             dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
@@ -786,9 +813,10 @@ PUTADRLP    sta $FFFF,Y
             bpl L369B         ; 4 cycles + * 128 = 2176 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; restore register
+            pla
+            tax
             M_cart_pop          ; restore register
-            lda #$E0            ; enable interrupts
-            sta NMIEN
+            stx NMIEN
             cli
             dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
