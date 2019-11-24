@@ -1,4 +1,4 @@
-; The!Cart Rom Switch
+; The!Cart Bank Switch
 
 
 ;

@@ -238,7 +238,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK ver50 for THE!CART by HJX',$9B,$FF
+            .byte 'THE!RAMDISK ver51 for THE!CART by HJX',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -482,7 +482,7 @@ L349B       lda RDMAIN,X
             
 RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
             .byte $30,$03,$00 ;original $00,$04,$FB,$03
-            .word $1000,$0ff6 ; 512k
+            .word $1000,$0ff8 ; 512k
             .byte $01, $02,$00,$20,$00,$00,$00
             .byte 'CART512K'
             .byte $00,$80,$22,$00,$00,$00,$00,$00
@@ -496,13 +496,23 @@ checkfrmt
             jsr cart_save
             ldx #$00
             jsr cart_set
-            ldx #$16
-_nxtchar    lda RDHEAD,x
+
+            ldx #$16            ; check volume name
+_nxtcharv   lda RDHEAD,x
             cmp $8000,x
             bne _nofrmt
             inx
             cpx #$1E
-            bne _nxtchar
+            bne _nxtcharv
+            
+            ldx #$06            ; check main dir name
+_nxtcharm   lda RDMAIN,x
+            cmp $8300,x
+            bne _nofrmt
+            inx
+            cpx #$11
+            bne _nxtcharm    
+            
             jsr cart_restore
             sec
             rts
@@ -723,12 +733,7 @@ PUTGETSEC   lda #$00
             sbc #$00
             asl BUFRHI
             rol
-            bit DBYTLO
-            bmi L3631
-REAA017     asl CONFSECSIZ
-            asl BUFRHI
-            rol
-L3631       tax                 ; set X with memory bank number
+            tax                 ; set X with memory bank number
             lda BUFRHI
             lsr
             lsr
@@ -871,7 +876,6 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA014+1 ;$35E2
             .word REAA015+1 ;$35FA
             .word REAA016+1 ;$35FF
-            .word REAA017+1 ;$362C
             .word REAA020+1 ;$3610
             .word REAA021+1
             .word REAA022+1
