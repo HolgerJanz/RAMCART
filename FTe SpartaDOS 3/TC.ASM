@@ -324,7 +324,7 @@ errnfd.begin
 errnfd.end
 
 erruse.begin
-        .byte '  THECART ver43 by HJX',$9B
+        .byte '  THECART ver44 by HJX',$9B
         .byte '  Use THECART name:',$9B
 erruse.end
 
@@ -336,7 +336,7 @@ mode    .byte $00
 bankl   .byte $00
 bankh   .byte $00
         
-fname   .byte 'D1:>THECART.SYS',$9b
+fname   .byte 'D1:>TC.SYS',$9b
 lbuffer .byte '    '
 pbuffer .byte '________________',$9b,$FF
 
