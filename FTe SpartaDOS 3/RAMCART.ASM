@@ -386,110 +386,162 @@ FRMTRD      jsr PRINT
 
             jsr cart_save
 
-; clear sector 1
-            ldx #$00
+; clear sector 0-3
+_loop03     ldx #$00
             jsr cart_set
             lda #$00
             ldy #$7f
-FRMTCLP1    sta $8000,Y
+FRMTCLP03   sta $8000,Y
             dey
-            bpl FRMTCLP1
+            bpl FRMTCLP03
             jsr cart_restore
-
-; set sector 2-5 to $ff VTOV 512k = 4096 sectors
-; = 4 VTOC sectors
-_loop25     ldx #$00
-            jsr cart_set
-            lda #$ff
-            ldy #$7f
-FRMTCLP25   sta $8080,Y
-            dey
-            bpl FRMTCLP25
-            jsr cart_restore
-            lda FRMTCLP25+1
+            lda FRMTCLP03+1
             clc
             adc #$80
-            sta FRMTCLP25+1
-            lda FRMTCLP25+2
+            sta FRMTCLP03+1
+            lda FRMTCLP03+2
             adc #$00
-            sta FRMTCLP25+2
-_loopcnt25  lda #$04
-            dec _loopcnt25+1
-            bne _loop25
-
-; clear sector 6-8 
-_loop68     ldx #$00
-            jsr cart_set
-            lda #$00
-            ldy #$7f
-FRMTCLP68   sta $8280,Y
-            dey
-            bpl FRMTCLP68
-            jsr cart_restore
-            lda FRMTCLP68+1
-            clc
-            adc #$80
-            sta FRMTCLP68+1
-            lda FRMTCLP68+2
-            adc #$00
-            sta FRMTCLP68+2
-_loopcnt68  lda #$03
-            dec _loopcnt68+1
-            bne _loop68
+            sta FRMTCLP03+2
+_loopcnt03  lda #$04
+            dec _loopcnt03+1
+            bne _loop03
 
 ; header loop            
             ldx #$00
             jsr cart_set
-            ldy #$2A
-FRMTHLP     lda RDHEAD,Y
-            sta $8000,Y
+            ldy #$2b
+_loopheader lda RDHEAD,Y
+            sta $8080,Y
             dey
-            bpl FRMTHLP
+            bpl _loopheader
             jsr cart_restore
 
- ; set map sector
+
+; set sector 4-7 to $ff VTOV 512k = 4096 sectors
+; = 4 VTOC sectors
+_loop47     ldx #$00
+            jsr cart_set
+            lda #$ff
+            ldy #$7f
+FRMTCLP47   sta $8200,Y
+            dey
+            bpl FRMTCLP47
+            jsr cart_restore
+            lda FRMTCLP47+1
+            clc
+            adc #$80
+            sta FRMTCLP47+1
+            lda FRMTCLP47+2
+            adc #$00
+            sta FRMTCLP47+2
+_loopcnt47  lda #$04
+            dec _loopcnt47+1
+            bne _loop47
+
+; clear sector 8-9 
+_loop89     ldx #$00
+            jsr cart_set
+            lda #$00
+            ldy #$7f
+FRMTCLP89   sta $8400,Y
+            dey
+            bpl FRMTCLP89
+            jsr cart_restore
+            lda FRMTCLP89+1
+            clc
+            adc #$80
+            sta FRMTCLP89+1
+            lda FRMTCLP89+2
+            adc #$00
+            sta FRMTCLP89+2
+_loopcnt89  lda #$02
+            dec _loopcnt89+1
+            bne _loop89
+
             ldx #$00
             jsr cart_set
-            lda #$04 
-            sta $800F     ; number of bit map sectors used on the disk
-            clc
-            adc #$02
-            sta $8009     ; first sector map of the MAIN directory
-            lda #$00 
-            sta $8080
-            lda #$80      ; low address of MAIN sector map
-            sta BUFRLO
-            lda #$82      ; high address of MAIN sector map
-            sta BUFRHI   
-            clc
-            ldy #$04
-            lda $8009
-            adc #$01
-            sta (BUFRLO),Y
-; set MAIN sector map            
+; write magic for Ebiguy
+            lda MAGIC
+            sta $8000
+            
+            lda MAGIC+1
+            sta $8000+1
+            
+            lda MAGIC+2
+            sta $8000+2
+            
+            lda MAGIC+3
+            sta $8000+3
+            
+            lda MAGIC+4
+            sta $8000+4
+            
+            lda MAGIC+5
+            sta $8000+5
+            
+            lda MAGIC+6
+            sta $8000+6
+            
+            lda MAGIC+7
+            sta $8000+7
+; mark used sectors
+            lda #$00
+            sta $8200   ; sector 0-7
+            lda #$3f
+            sta $8201   ; sector 8-9
+;            lda #$fe
+;            sta $83ff   ; sector 4096 does not exit
+; set sector map for MAIN
+            lda #$00    ; two words $0000 (first and last)
+            sta $8400
+            sta $8401
+            sta $8402
+            sta $8403
+            lda #$09    ;  and third $0009 start of main
+            sta $8404
+; set MAIN directory            
             ldx #$00
-            ldy #$80
-L349B       lda RDMAIN,X
-            sta (BUFRLO),Y
+_loopmain   lda RDMAIN,x
+            sta $8480,x
             inx
-            iny
-            cpx #$11
-            bne L349B
+            cpx #$17
+            bne _loopmain
             jsr cart_restore
 
 ; finished
             rts
             
-RDHEAD      .byte $00,$03,$00,$07,$E0,$07,$4C,$80
-            .byte $30,$03,$00 ;original $00,$04,$FB,$03
-            .word $1000,$0ff8 ; 512k
-            .byte $01, $02,$00,$20,$00,$00,$00
-            .byte 'CART512K'
-            .byte $00,$80,$22,$00,$00,$00,$00,$00
-            .byte $00,$16,$00,$00,$00
+MAGIC       .byte $34,$23,$32,$21,$2D,$24,$33,$2B
+            
+RDHEAD      .byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
+            .byte $03 ; Number of sectors to boot.
+            .byte $00,$30 ; Address where the boot sectors are loaded to
+            .byte $0e,$07 ; This address is copied to DOSINI
+            .byte $4c,$80,$30 ; After boot jump here: jmp $3080
+            .byte $08,$00 ; Sector number of the first sector map of the MAIN directory
+            .word $0fff ; total sector count
+            .word $0ff6 ; free sector count
+            .byte $04 ; Number of bit map sectors on the disk
+            .byte $04,$00 ; Sector number of the first bit map sector
+            .byte $28,$00 ; Sector number to begin the file data sector allocation search
+            .byte $0A,$00 ; Sector number to begin the directory data sector allocation search
+            .byte 'CART512K' ; Volume name, 8 chars
+            .byte $01 ; Tracks on disk (1 for ramdisks and HDs)
+            .byte $80 ; Sector size ($80=128,$00=256,$01=512)
+            .byte $20 ; File system version ($20=SD1.1-4.2 version 2.0, $21=Sd4.4> version 2.1) 
+            .byte $00,$00,$00,$00,$00 ; reserved - no known use
+            .byte $00 ; Volume sequence number
+            .byte $00 ; Volume random number
+            .byte $00,$00 ; Sector number of the first sector map of the file to be loaded when the disk is booted
+            .byte $00 ; Lock flag ($ff=locked, $00=unlocked)
+            .byte $00
 
-RDMAIN      .byte $08,$00,$00,$17,$00,$00
-            .byte 'MAIN       '
+RDMAIN      .byte $28 ; Bits 7-0: OpenWrite,-,SubDir,Del,Used,Arc,Hid,Prot
+            .word $0000 ; First sector map of parent directory (MAIN=0)
+            .byte $17,$00,$00 ; length of directory in bytes (always times 23 bytes)
+RDMAINNAME  .byte 'MAIN       ' ; Name 11 chars
+            .byte $0b,$07,$47 ; Date DD/MM/YY
+            .byte $0b,$0b,$0b ; Time HH:MM:SS
 
 ; check preformat
 checkfrmt
@@ -497,21 +549,12 @@ checkfrmt
             ldx #$00
             jsr cart_set
 
-            ldx #$16            ; check volume name
-_nxtcharv   lda RDHEAD,x
-            cmp $8000,x
+_nxtcharv   lda RDMAINNAME,x    ; check volume name
+            cmp $8486,x
             bne _nofrmt
             inx
-            cpx #$1E
+            cpx #$0b
             bne _nxtcharv
-            
-            ldx #$06            ; check main dir name
-_nxtcharm   lda RDMAIN,x
-            cmp $8300,x
-            bne _nofrmt
-            inx
-            cpx #$11
-            bne _nxtcharm    
             
             jsr cart_restore
             sec
@@ -725,12 +768,15 @@ REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
 ; buffer address and calc byte count
 PUTGETSEC   lda #$00
             sta BUFRLO
+
             lda DAUX1
-            sec
-            sbc #$01
+;            sec
+;            sbc #$01
             sta BUFRHI
+
             lda DAUX2
-            sbc #$00
+;            sbc #$00
+;
             asl BUFRHI
             rol
             tax                 ; set X with memory bank number
