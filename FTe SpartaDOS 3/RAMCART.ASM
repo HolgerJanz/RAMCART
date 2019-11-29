@@ -238,7 +238,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK ver51 for THE!CART by HJX',$9B,$FF
+            .byte 'THE!RAMDISK ver52 for THE!CART by HJX',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -414,6 +414,8 @@ _loopheader lda RDHEAD,Y
             sta $8080,Y
             dey
             bpl _loopheader
+            lda #$60    ; write RTS to second boot sector
+            sta $8100   ; see header jmp $3080
             jsr cart_restore
 
 
@@ -513,13 +515,14 @@ _loopmain   lda RDMAIN,x
             
 MAGIC       .byte $34,$23,$32,$21,$2D,$24,$33,$2B
             
+; load boot sector to $3000 start $3080 and RTS ($60)
 RDHEAD      .byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
             .byte $03 ; Number of sectors to boot.
             .byte $00,$30 ; Address where the boot sectors are loaded to
-            .byte $0e,$07 ; This address is copied to DOSINI
-            .byte $4c,$80,$30 ; After boot jump here: jmp $3080
+            .byte $E0,$07 ; This address is copied to DOSINI
+            .byte $4c,$80,$30 ; After boot jump here: jmp $3080 (just RTS)
             .byte $08,$00 ; Sector number of the first sector map of the MAIN directory
-            .word $0fff ; total sector count
+            .word $1000 ; total sector count
             .word $0ff6 ; free sector count
             .byte $04 ; Number of bit map sectors on the disk
             .byte $04,$00 ; Sector number of the first bit map sector
