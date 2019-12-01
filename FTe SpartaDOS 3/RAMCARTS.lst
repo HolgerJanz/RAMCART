@@ -1,0 +1,659 @@
+mads 1.9.9
+     1 				;
+     2 				; Store RAMCART RAM to flash
+     3 				;
+     4
+     5
+     6 				; OS equ
+     7
+     8
+     9 = 0006			TRAMSZ   EQU $06
+    10 = 0008			WARMST   EQU $08
+    11 = 0009			BOOT_    EQU $09
+    12 = 000C			DOSINI   EQU $0C
+    13 = 000E			APPMHI   EQU $0E
+    14 = 0010			IRQENS   EQU $10
+    15 = 0011			IRQSTAT  EQU $11
+    16 = 0012			RTCLOK   EQU $12
+    17
+    18 = 0020			ichidz   EQU $20
+    19 = 0021			ICDNOZ   EQU $21
+    20 = 0022			ICCOMZ   EQU $22
+    21 = 0023			ICSTZ    EQU $23
+    22 = 0024			ICBAZ    EQU $24
+    23 = 0026			ICPTZ    EQU $26
+    24 = 0028			ICBLZ    EQU $28
+    25 = 002A			ICAX1Z   EQU $2A
+    26 = 002B			ICAX2Z   EQU $2B
+    27 = 002C			ICAX3Z   EQU $2C
+    28 = 002E			ICAX5Z   EQU $2E
+    29 = 002F			ICAX6Z   EQU $2F
+    30 = 0030			SIOSTAT  EQU $30
+    31 = 0031			CHKSUM   EQU $31
+    32 = 0032			BUFR     EQU $32
+    33 = 0034			BUFEN    EQU $34
+    34 = 0041			IOSNDEN  EQU $41
+    35 = 0042			CRITIC   EQU $42
+    36 = 0043			ZBUFA    EQU $43
+    37 = 0045			ZDRVA    EQU $45
+    38 = 0047			INIFLG   EQU $47
+    39 = 004D			ATRACT   EQU $4D
+    40 = 0052			LMARGN   EQU $52
+    41 = 0053			RMARGN   EQU $53
+    42 = 0054			VCP      EQU $54
+    43 = 0055			HCP      EQU $55
+    44 = 0058			SAVMSC   EQU $58
+    45
+    46 = 0063			LOGCOL   EQU $63
+    47 = 006A			RAMTOP   EQU $6A
+    48
+    49 = 0218			TIMCNT1  equ $218
+    50 = 0222			VVBLKI   EQU $222
+    51 = 0226			TIMVEC1  EQU $226
+    52 = 022F			DMACTLS  EQU $22F
+    53 = 0230			DLPTRS   EQU $230
+    54 = 023A			CDEVIC   EQU $23A
+    55 = 023B			CCMND    EQU $23B
+    56 = 023C			CAUX1    EQU $23C
+    57 = 023D			CAUX2    EQU $23D
+    58 = 0244			COLDST   EQU $244
+    59 = 0247			PDVMSK   EQU $247
+    60 = 0248			PDVRS    EQU $248
+    61 = 029C			CRETRY   EQU $29C
+    62 = 02B6			INVFLG   EQU $2B6
+    63 = 02BD			DRETRY   EQU $2BD
+    64 = 02BE			SHFLOK   EQU $2BE
+    65 = 02C5			COLPF1S  EQU $2C5
+    66 = 02C6			COLPF2S  EQU $2C6
+    67 = 02C7			COLPF3S  EQU $2C7
+    68 = 02C8			COLBAKS  EQU $2C8
+    69 = 02D9			KRPDEL   EQU $2D9
+    70 = 02DA			KEYREP   EQU $2DA
+    71 = 02DB			NOCLIK   EQU $2DB
+    72 = 02DC			hlpflg   equ $02dc
+    73 = 02E0			RUNAD    EQU $2E0
+    74 = 02E2			INITAD   EQU $2E2
+    75 = 02E5			MEMTOP   EQU $2E5
+    76 = 02E7			MEMLO    EQU $2E7
+    77 = 02EA			dvstat   EQU $2ea
+    78 = 02F0			CRSINH   EQU $2F0
+    79 = 02F2			oldkbc   equ $02f2
+    80 = 02F4			CHBAS    EQU $2F4
+    81 = 02FB			ATACHR   EQU $2FB
+    82 = 02FC			KBCODES  EQU $2FC
+    83 = 02FE			DSPFLG   EQU $2FE
+    84 = 02FF			SSFLAG   EQU $2FF
+    85 = 022F			SDMCTL   EQU $022F
+    86
+    87 = 0300			DCB      EQU $300
+    88 = 0300			DDEVIC   EQU $300
+    89 = 0301			DUNIT    EQU $301
+    90 = 0302			DCMND    EQU $302
+    91 = 0303			DSTATS   EQU $303
+    92 = 0304			DBUFA    EQU $304
+    93 = 0304			DBUFAL   EQU $304
+    94 = 0305			DBUFAH   EQU $305
+    95 = 0306			DTIMLO   EQU $306
+    96 = 0308			DBYT     EQU $308
+    97 = 0308			DBYTL    EQU $308
+    98 = 0309			DBYTH    EQU $309
+    99 = 030A			DAUX     EQU $30A
+   100 = 030A			DAUX1    EQU $30A
+   101 = 030B			DAUX2    EQU $30B
+   102 = 030F			CASFLG   EQU $30F
+   103 = 0318			STACKP   EQU $318
+   104 = 0319			TSTAT    EQU $319
+   105 = 031A			HATABS   EQU $31A
+   106 = 0341			ICDNO    EQU $341
+   107 = 0342			ICCMD    EQU $342
+   108 = 0344			ICBUFA   EQU $344
+   109 = 0346			ICPUTB   EQU $346
+   110 = 0348			ICBUFL   EQU $348
+   111 = 034A			ICAX1    EQU $34A
+   112 = 034B			ICAX2    EQU $34B
+   113 = 034C			ICAX3    EQU $34C
+   114 = 034D			ICAX4    EQU $34D
+   115 = 034E			ICAX5    EQU $34E
+   116 = 034F			ICAX6    EQU $34F
+   117 = 03EB			CARTCK   EQU $3EB
+   118 = 03F8			BASICF   EQU $3F8
+   119 = 03FA			GINTLK   EQU $3FA
+   120
+   121 = 0580			BUF580   EQU $580
+   122
+   123
+   124 = BFF0			CART     EQU $BFF0
+   125 = BFFA			CARTRUN  EQU $BFFA
+   126
+   127 = CFFF			ABANK    EQU $CFFF
+   128
+   129 = D013			TRIG3    EQU $D013
+   130 = D014			PAL      EQU $D014
+   131 = D01F			CONSOL   EQU $D01F
+   132 = D000			GTIA     EQU $D000
+   133 = D1FF			PDVREG   EQU $D1FF
+   134 = D201			AUDC1    EQU $D201
+   135 = D203			AUDC2    EQU $D203
+   136 = D204			AUDF3    EQU $D204
+   137 = D205			AUDC3    EQU $D205
+   138 = D206			AUDF4    EQU $D206
+   139 = D207			AUDC4    EQU $D207
+   140 = D208			AUDCTL   EQU $D208
+   141 = D209			KBCODE   EQU $D209
+   142 = D20A			RANDOM   EQU $D20A
+   143 = D20A			SKSTRES  EQU $D20A
+   144 = D20D			SEROUT   EQU $D20D
+   145 = D20D			SERIN    EQU $D20D
+   146 = D20E			IRQST    EQU $D20E
+   147 = D20E			IRQEN    EQU $D20E
+   148 = D20F			SKCTL    EQU $D20F
+   149 = D20F			SKSTAT   EQU $D20F
+   150 = D300			PORTA    EQU $D300
+   151 = D301			PORTB    EQU $D301
+   152 = D302			PACTL    EQU $D302
+   153 = D303			PBCTL    EQU $D303
+   154 = D400			DMACTL   EQU $D400
+   155 = D402			DLPTR    EQU $D402
+   156 = D40A			WSYNC    EQU $D40A
+   157 = D40B			VCOUNT   EQU $D40B
+   158 = D40E			NMIEN    EQU $D40E
+   159 = D40F			NMIST    EQU $D40F
+   160
+   161 = D500			CART_ON  EQU $D500
+   162 = D508			CART_OF  EQU $D508
+   163
+   164 = D805			PDIOR    EQU $D805
+   165
+   166 = E000			CHARSET1 EQU $E000
+   167 = E400			DEVHAT   EQU $E400
+   168 = E420			KBDVEC   EQU $E420
+   169 = E424			VKBGBYT  EQU $E424
+   170 = E456			JCIOMAIN EQU $E456
+   171 = E459			JSIOINT  EQU $E459
+   172 = E45C			SETVBLV  EQU $E45C
+   173 = E477			JRESETCD EQU $E477
+   174 = E46B			JNMIENBL EQU $E46B
+   175
+   176 = E459			SIOV     EQU $E459
+   177 = E45F			JSYSVBL  EQU $E45F
+   178 = E462			JEXITVBL EQU $E462
+   179 = E486			JNEWDEVC EQU $E486
+   180
+   181 = FFFA			NMIVEC   EQU $FFFA
+   182 = FFFC			RESETVEC EQU $FFFC
+   183 = FFFE			IRQVEC   EQU $FFFE
+   184
+   185
+   186 				; 
+   187 				; The!Cart Register (from-to,default)
+   188 				;
+   189
+   190 				; Mode Select
+   191 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+   192 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
+   193 				; other than the ones listed here are reserved (and result
+   194 				; in "cartridge off"):
+   195 				; $00: off, cartridge disabled
+   196 				; $01: 8k banks at $A000
+   197 				; $02: AtariMax 1MBit / 128k
+   198 				; $03: Atarimax 8MBit / 1MB
+   199 				; $04: OSS M091
+   200 				; $08: SDX 64k cart, $D5Ex banking
+   201 				; $09: Diamond GOS 64k cart, $D5Dx banking
+   202 				; $0A: Express 64k cart, $D57x banking
+   203 				; $0C: Atrax 128k cart
+   204 				; $0D: Williams 64k cart
+   205 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
+   206 				; $21: standard 16k cart at $8000-$BFFF
+   207 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+   208 				; $23: Blizzard 16k
+   209 				; $24: Sic!Cart 512k
+   210 				; $28: 16k Mega cart
+   211 				; $29: 32k Mega cart
+   212 				; $2A: 64k Mega cart
+   213 				; $2B: 128k Mega cart
+   214 				; $2C: 256k Mega cart
+   215 				; $2D: 512k Mega cart
+   216 				; $2E: 1024k Mega cart
+   217 				; $2F: 2048k Mega cart
+   218 				; $30: 32k XEGS cart
+   219 				; $31: 64k XEGS cart
+   220 				; $32: 128k XEGS cart
+   221 				; $33: 256k XEGS cart
+   222 				; $34: 512k XEGS cart
+   223 				; $35: 1024k XEGS cart
+   224 				; $38: 32k SWXEGS cart
+   225 				; $39: 64k SWXEGS cart
+   226 				; $3A: 128k SWXEGS cart
+   227 				; $3B: 256k SWXEGS cart
+   228 				; $3C: 512k SWXEGS cart
+   229 				; $3D: 1024k SWXEGS cart
+   230 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
+   231 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
+   232 = 0003			TCMOSL.AM1MB = $03
+   233 = 0020			TCMOSL.FLEXI = $20    ; flexi mode, separate 8k banks at $A000 and $8000
+   234 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+   235
+   236 				; how to figure out that The!Cart is not active?
+   237 				; If the address is not used then the XL returns $ff but
+   238 				; the XE (and old 800) return $d5 (high byte of address,
+   239 				; the value of the last bus cycle)
+   240 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+   241 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+   242
+   243 				; Mode Flash/RAM Select
+   244 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+   245 				; bit 0: primary bank write enable (0=readOnly, 1=write)
+   246 				; bit 1: primary bank source (0=flash, 1=RAM)
+   247 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
+   248 				; bit 3: secondary bank source (0=flash, 1=RAM)
+   249 = 0000			TCMOFR.FLASH = $00
+   250 = 0001			TCMOFR.PBFLW = $01    ; primary bank RAM
+   251 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
+   252 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
+   253
+   254 				; Primary Bank
+   255 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
+   256 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
+   257 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+   258
+   259 				; Secondary Bank 
+   260 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
+   261 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
+   262 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   263
+   264 				; SPI interface to EEPROM
+   265 = D5A8			TCINEP = $d5a8
+   266 				; bit 0: SPI CLK
+   267 				; bit 1: SPI CS
+   268 				; bit 7: SPI data in (on reads), SPI data out (on writes)
+   269
+   270 				; configuration lock
+   271 = D5AF			TCCOLO = $d5af
+   272 				; Writing to this register disables "The!Cart" registers
+   273 				; at $d5aX.
+   274
+   275
+   276 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   277 				;
+   278 				; Main
+   279 				;
+   280 				; The!Cart banks from $3fc0 - $3fff
+   281 				;
+   282 				        org $3000
+   283 				 
+   284 FFFF> 3000-3257> 20 5E +         jsr storeTCreg
+   285 				        
+   286 3003			_loopCopy
+   287
+   288 3003 20 43 30		        jsr setTCRAM
+   289 3006 20 C2 30		        jsr copy8k_A28
+   290
+   291 3009 20 27 30		        jsr setTCFLASH
+   292 300C 20 8D 31		        jsr copy8k_82A
+   293
+   294 300F EE 24 30		        inc _flashl
+   295 3012 EE 23 30		        inc _ram
+   296
+   297 3015 EE 26 30		        inc _lCnt
+   298 3018 A9 40		        lda #$40
+   299 301A CD 26 30		        cmp _lCnt
+   300 301D D0 E4		        bne _loopCopy
+   301 				        
+   302 301F 20 91 30		        jsr restoreTCreg
+   303 				        
+   304 3022 60			        rts
+   305 				        
+   306 3023 00			_ram    .byte $00
+   307 3024 C0			_flashl .byte $c0
+   308 3025 3F			_flashh .byte $3f
+   309 3026 00			_lCnt   .byte $00
+   310 				        
+   311 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   312 				;
+   313 				; Subroutines
+   314 				;
+   315
+   316 				;
+   317 				; Set flash The!Cart register
+   318 				;
+   319 3027			setTCFLASH
+   320
+   321 3027 A9 01		        lda #TCMOSL.8K
+   322 3029 8D A6 D5		        sta TCMOSL
+   323 				        
+   324 302C A9 01		        lda #TCMOFR.PBFLW
+   325 302E 8D A7 D5		        sta TCMOFR
+   326
+   327 3031 AD 24 30		        lda _flashl
+   328 3034 8D A0 D5		        sta TCPBRL
+   329
+   330 3037 AD 25 30		        lda _flashh
+   331 303A 8D A1 D5		        sta TCPBRH
+   332
+   333 303D A9 01		        lda #$01
+   334 303F 8D A2 D5		        sta TCPBEN
+   335
+   336 3042 60			        rts
+   337
+   338 				;
+   339 				; Set RAM The!Cart register
+   340 				;
+   341 3043			setTCRAM
+   342
+   343 3043 A9 01		        lda #TCMOSL.8K
+   344 3045 8D A6 D5		        sta TCMOSL
+   345 				        
+   346 3048 A9 03		        lda #TCMOFR.PBRAM
+   347 304A 8D A7 D5		        sta TCMOFR
+   348
+   349 304D AD 23 30		        lda _ram
+   350 3050 8D A0 D5		        sta TCPBRL
+   351
+   352 3053 A9 00		        lda #$00
+   353 3055 8D A1 D5		        sta TCPBRH
+   354
+   355 3058 A9 01		        lda #$01
+   356 305A 8D A2 D5		        sta TCPBEN
+   357
+   358 305D 60			        rts
+   359
+   360
+   361 				;
+   362 				; Store The!Cart register
+   363 				;
+   364 305E			storeTCreg
+   365
+   366 305E AD A6 D5		        lda TCMOSL
+   367 3061 8D BC 30		        sta _tcmosl
+   368
+   369 3064 AD A0 D5		        lda TCPBRL
+   370 3067 8D BE 30		        sta _tcpbrl
+   371
+   372 306A AD A1 D5		        lda TCPBRH
+   373 306D 8D BF 30		        sta _tcpbrh
+   374
+   375 3070 AD A7 D5		        lda TCMOFR
+   376 3073 8D BD 30		        sta _tcmofr
+   377
+   378 3076 AD A2 D5		        lda TCPBEN
+   379 3079 8D C0 30		        sta _tcpben
+   380 				        
+   381 307C AD 2F 02		        lda SDMCTL          ; DMA control
+   382 307F 8D C1 30		        sta _sdmctl
+   383 3082 A9 00		        lda #$00
+   384 3084 8D 2F 02		        sta SDMCTL
+   385 3087 8D 00 D4		        sta DMACTL
+   386 308A 78			        sei                 ; disable interrupts
+   387 308B A9 00		        lda #$00
+   388 308D 8D 0E D4		        sta NMIEN
+   389 				        
+   390 3090 60			        rts
+   391
+   392 				;
+   393 				; Restore The!Cart register
+   394 				;
+   395 3091			restoreTCreg
+   396
+   397 3091 AD BC 30		        lda _tcmosl
+   398 3094 8D A6 D5		        sta TCMOSL
+   399
+   400 3097 AD BE 30		        lda _tcpbrl
+   401 309A 8D A0 D5		        sta TCPBRL
+   402
+   403 309D AD BF 30		        lda _tcpbrh
+   404 30A0 8D A1 D5		        sta TCPBRH
+   405
+   406 30A3 AD BD 30		        lda _tcmofr
+   407 30A6 8D A7 D5		        sta TCMOFR
+   408
+   409 30A9 AD C0 30		        lda _tcpben
+   410 30AC 8D A2 D5		        sta TCPBEN
+   411
+   412 30AF AD C1 30		        lda _sdmctl         ; restore DMA control
+   413 30B2 8D 2F 02		        sta SDMCTL
+   414 30B5 A9 E0		        lda #$E0            ; enable interrupts
+   415 30B7 8D 0E D4		        sta NMIEN
+   416 30BA 58			        cli
+   417
+   418 30BB 60			        rts
+   419
+   420 30BC 00			_tcmosl .byte $00
+   421 30BD 00			_tcmofr .byte $00
+   422 30BE 00			_tcpbrl .byte $00
+   423 30BF 00			_tcpbrh .byte $00
+   424 30C0 00			_tcpben .byte $00
+   425 30C1 00			_sdmctl .byte $00
+   426
+   427 				;
+   428 				; copy 8k from $A000 to $8000
+   429 				;
+   430 30C2			copy8k_A28
+   431
+   432 30C2 A2 00		        ldx #$00
+   433
+   434 30C4			_loopCopyA28
+   435 30C4 BD 00 A0		        lda $a000,x
+   436 30C7 9D 00 40		        sta $4000,x
+   437
+   438 30CA BD 00 A1		        lda $a100,x
+   439 30CD 9D 00 41		        sta $4100,x
+   440
+   441 30D0 BD 00 A2		        lda $a200,x
+   442 30D3 9D 00 42		        sta $4200,x
+   443
+   444 30D6 BD 00 A3		        lda $a300,x
+   445 30D9 9D 00 43		        sta $4300,x
+   446
+   447 30DC BD 00 A4		        lda $a400,x
+   448 30DF 9D 00 44		        sta $4400,x
+   449
+   450 30E2 BD 00 A5		        lda $a500,x
+   451 30E5 9D 00 45		        sta $4500,x
+   452
+   453 30E8 BD 00 A6		        lda $a600,x
+   454 30EB 9D 00 46		        sta $4600,x
+   455
+   456 30EE BD 00 A7		        lda $a700,x
+   457 30F1 9D 00 47		        sta $4700,x
+   458
+   459 30F4 BD 00 A8		        lda $a800,x
+   460 30F7 9D 00 48		        sta $4800,x
+   461
+   462 30FA BD 00 A9		        lda $a900,x
+   463 30FD 9D 00 49		        sta $4900,x
+   464
+   465 3100 BD 00 AA		        lda $aa00,x
+   466 3103 9D 00 4A		        sta $4a00,x
+   467
+   468 3106 BD 00 AB		        lda $ab00,x
+   469 3109 9D 00 4B		        sta $4b00,x
+   470
+   471 310C BD 00 AC		        lda $ac00,x
+   472 310F 9D 00 4C		        sta $4c00,x
+   473
+   474 3112 BD 00 AD		        lda $ad00,x
+   475 3115 9D 00 4D		        sta $4d00,x
+   476
+   477 3118 BD 00 AE		        lda $ae00,x
+   478 311B 9D 00 4E		        sta $4e00,x
+   479
+   480 311E BD 00 AF		        lda $af00,x
+   481 3121 9D 00 4F		        sta $4f00,x
+   482
+   483 3124 E8			        inx
+   484 3125 D0 9D		        bne _loopCopyA28
+   485
+   486 3127 A2 00		        ldx #$00
+   487
+   488 3129			_loopCopyB29
+   489 3129 BD 00 B0		        lda $b000,x
+   490 312C 9D 00 50		        sta $5000,x
+   491
+   492 312F BD 00 B1		        lda $b100,x
+   493 3132 9D 00 51		        sta $5100,x
+   494
+   495 3135 BD 00 B2		        lda $b200,x
+   496 3138 9D 00 52		        sta $5200,x
+   497
+   498 313B BD 00 B3		        lda $b300,x
+   499 313E 9D 00 53		        sta $5300,x
+   500
+   501 3141 BD 00 B4		        lda $b400,x
+   502 3144 9D 00 54		        sta $5400,x
+   503
+   504 3147 BD 00 B5		        lda $b500,x
+   505 314A 9D 00 55		        sta $5500,x
+   506
+   507 314D BD 00 B6		        lda $b600,x
+   508 3150 9D 00 56		        sta $5600,x
+   509
+   510 3153 BD 00 B7		        lda $b700,x
+   511 3156 9D 00 57		        sta $5700,x
+   512
+   513 3159 BD 00 B8		        lda $b800,x
+   514 315C 9D 00 58		        sta $5800,x
+   515
+   516 315F BD 00 B9		        lda $b900,x
+   517 3162 9D 00 59		        sta $5900,x
+   518
+   519 3165 BD 00 BA		        lda $ba00,x
+   520 3168 9D 00 5A		        sta $5a00,x
+   521
+   522 316B BD 00 BB		        lda $bb00,x
+   523 316E 9D 00 5B		        sta $5b00,x
+   524
+   525 3171 BD 00 BC		        lda $bc00,x
+   526 3174 9D 00 5C		        sta $5c00,x
+   527
+   528 3177 BD 00 BD		        lda $bd00,x
+   529 317A 9D 00 5D		        sta $5d00,x
+   530
+   531 317D BD 00 BE		        lda $be00,x
+   532 3180 9D 00 5E		        sta $5e00,x
+   533
+   534 3183 BD 00 BF		        lda $bf00,x
+   535 3186 9D 00 5F		        sta $5f00,x
+   536
+   537 3189 E8			        inx
+   538 318A D0 9D		        bne _loopCopyB29
+   539
+   540 318C 60			        rts
+   541
+   542 				;
+   543 				; copy 8k from $8000 to $A000
+   544 				;
+   545 318D			copy8k_82A
+   546
+   547 318D A2 00		        ldx #$00
+   548
+   549 318F			_loopCopy82A
+   550 318F BD 00 40		        lda $4000,x
+   551 3192 9D 00 A0		        sta $a000,x
+   552
+   553 3195 BD 00 41		        lda $4100,x
+   554 3198 9D 00 A1		        sta $a100,x
+   555
+   556 319B BD 00 42		        lda $4200,x
+   557 319E 9D 00 A2		        sta $a200,x
+   558
+   559 31A1 BD 00 43		        lda $4300,x
+   560 31A4 9D 00 A3		        sta $a300,x
+   561
+   562 31A7 BD 00 44		        lda $4400,x
+   563 31AA 9D 00 A4		        sta $a400,x
+   564
+   565 31AD BD 00 45		        lda $4500,x
+   566 31B0 9D 00 A5		        sta $a500,x
+   567
+   568 31B3 BD 00 46		        lda $4600,x
+   569 31B6 9D 00 A6		        sta $a600,x
+   570
+   571 31B9 BD 00 47		        lda $4700,x
+   572 31BC 9D 00 A7		        sta $a700,x
+   573
+   574 31BF BD 00 48		        lda $4800,x
+   575 31C2 9D 00 A8		        sta $a800,x
+   576
+   577 31C5 BD 00 49		        lda $4900,x
+   578 31C8 9D 00 A9		        sta $a900,x
+   579
+   580 31CB BD 00 4A		        lda $4a00,x
+   581 31CE 9D 00 AA		        sta $aa00,x
+   582
+   583 31D1 BD 00 4B		        lda $4b00,x
+   584 31D4 9D 00 AB		        sta $ab00,x
+   585
+   586 31D7 BD 00 4C		        lda $4c00,x
+   587 31DA 9D 00 AC		        sta $ac00,x
+   588
+   589 31DD BD 00 4D		        lda $4d00,x
+   590 31E0 9D 00 AD		        sta $ad00,x
+   591
+   592 31E3 BD 00 4E		        lda $4e00,x
+   593 31E6 9D 00 AE		        sta $ae00,x
+   594
+   595 31E9 BD 00 4F		        lda $4f00,x
+   596 31EC 9D 00 AF		        sta $af00,x
+   597
+   598 31EF E8			        inx
+   599 31F0 D0 9D		        bne _loopCopy82A
+   600
+   601 31F2 A2 00		        ldx #$00
+   602
+   603 31F4			_loopCopy92B
+   604 31F4 BD 00 50		        lda $5000,x
+   605 31F7 9D 00 B0		        sta $b000,x
+   606
+   607 31FA BD 00 51		        lda $5100,x
+   608 31FD 9D 00 B1		        sta $b100,x
+   609
+   610 3200 BD 00 52		        lda $5200,x
+   611 3203 9D 00 B2		        sta $b200,x
+   612
+   613 3206 BD 00 53		        lda $5300,x
+   614 3209 9D 00 B3		        sta $b300,x
+   615
+   616 320C BD 00 54		        lda $5400,x
+   617 320F 9D 00 B4		        sta $b400,x
+   618
+   619 3212 BD 00 55		        lda $5500,x
+   620 3215 9D 00 B5		        sta $b500,x
+   621
+   622 3218 BD 00 56		        lda $5600,x
+   623 321B 9D 00 B6		        sta $b600,x
+   624
+   625 321E BD 00 57		        lda $5700,x
+   626 3221 9D 00 B7		        sta $b700,x
+   627
+   628 3224 BD 00 58		        lda $5800,x
+   629 3227 9D 00 B8		        sta $b800,x
+   630
+   631 322A BD 00 59		        lda $5900,x
+   632 322D 9D 00 B9		        sta $b900,x
+   633
+   634 3230 BD 00 5A		        lda $5a00,x
+   635 3233 9D 00 BA		        sta $ba00,x
+   636
+   637 3236 BD 00 5B		        lda $5b00,x
+   638 3239 9D 00 BB		        sta $bb00,x
+   639
+   640 323C BD 00 5C		        lda $5c00,x
+   641 323F 9D 00 BC		        sta $bc00,x
+   642
+   643 3242 BD 00 5D		        lda $5d00,x
+   644 3245 9D 00 BD		        sta $bd00,x
+   645
+   646 3248 BD 00 5E		        lda $5e00,x
+   647 324B 9D 00 BE		        sta $be00,x
+   648
+   649 324E BD 00 5F		        lda $5f00,x
+   650 3251 9D 00 BF		        sta $bf00,x
+   651
+   652 3254 E8			        inx
+   653 3255 D0 9D		        bne _loopCopy92B
+   654
+   655 3257 60			        rts
+   656
+   657
+   658 				        end

@@ -1,0 +1,73 @@
+;  libflash-ramloc - RAM locations for libflash
+;
+;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+; linear 32bit flash address (lo..hi)
+FLASHADR	.DC 4 0
+
+; linear 32bit flash address (lo..hi), internal use
+FLASHADI	.DC 4 0
+
+; error variable, set when flashing fails:
+; 0 = OK
+; 1 = flash error (timeout)
+; 2 = data error (verify failed)
+; $80 = address error, eg FWPAGE called on non page boundary
+FERROR		.BYTE 0
+
+; data in flash in case of a verify error
+FERRFD		.BYTE 0
+; user data in case of a verify error
+FERRUD		.BYTE 0
+
+; user data address
+DATAADR		.WORD 0
+
+FBANKTMP	.WORD 0		; temporary bank register
+FBANKNO		.WORD 0		; current bank number
+FBASEBNK	.WORD 0		; base bank number for signatures etc.
+
+?FBCOUNT	.BYTE 0		; byte counter
+?FPCOUNT	.BYTE 0		; page counter
+
+; flag ram mode: 0 = RAM, $FF = flash
+FRAMMOD .BYTE $FF
+
+; flash type ($FF means no flash)
+FTYPE	.BYTE 0
+
+; flash size in bytes (4th byte unused)
+FSIZE	.DC 4 0
+
+; number of flash blocks (0 means no blocks)
+FNUMBLK	.WORD 0
+
+; size of a flash block (4th byte unused)
+FBLKSIZ	.DC 4 0
+
+; mask to apply to an address to get the block starting address
+FBLKMSK	.DC 4 0
+
+; temp storage for WTBYTE
+?WTBYTE	.BYTE 0
+
+; flag standard data copy (0) or fixed-value ($80)
+?FVALFLG	.BYTE 0
+
+; fixed value for programming
+?FVALUE		.BYTE 0

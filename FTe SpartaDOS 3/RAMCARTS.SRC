@@ -1,0 +1,184 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Store RAMCART RAM to flash
+;
+
+;
+; Main
+;
+; The!Cart banks from $3fc0 - $3fff
+;
+        *= $3000
+ 
+        jsr PRINT
+        .byte "RSTORE ver42 for THE!RAMDISK by HJX",$9B,$FF
+ 
+ ; init flasher
+        jsr finit
+        jsr fenable
+        jsr fdetect
+        jsr fdisable
+ 
+        lda ftype
+        cmp #tnoflsh
+        bne startCopy
+ 
+        jsr PRINT
+        .byte "  Error - THE!CART not found",$9B,$FF
+        rts
+
+startCopy
+        jsr PRINT
+        .byte "  Start flashing",$9B,$FF
+; set buffer address        
+        lda #$00
+        sta dataadr
+        lda #$40
+        sta dataadr+1
+; set flash address $07.f8.00.00 for bank $3f.c0
+        lda #$00
+        sta flashadr
+        sta flashadr+1
+        lda #$f8
+        sta flashadr+2
+        lda #$07
+        sta flashadr+3        
+_loopCopy
+; print indicator
+        jsr printIndicator
+; get 8k RAM bank to buffer
+        jsr PRINT
+        .byte "    Read ",$ff
+        jsr storeTCreg  ; save TC state
+        jsr setTCRAM    ; set 8k at $A000
+        jsr copy8k_A24  ; copy 8k from A000 to 4000
+        jsr restoreTCreg ; restore TC state
+; flash
+        jsr flash
+        bcs _endFlash
+; increase flash address
+        clc
+        lda flashadr+1
+        adc #$20
+        sta flashadr+1
+        lda flashadr+2
+        adc #$00
+        sta flashadr+2
+        lda flashadr+3
+        adc #$00
+        sta flashadr+3        
+; check ram bank number
+        inc ramBank
+        lda #$40
+        cmp ramBank
+        bne _loopCopy
+; end flash
+_endFlash
+        jsr PRINT
+        .byte "  End flashing",$9B,$FF
+
+        rts
+
+printIndicator
+        lda ramBank
+        jsr convha
+        stx _ramNo
+        sty _ramNo+1
+
+        lda flashadr+3
+        jsr convha
+        stx _flashA
+        sty _flashA+1
+
+        lda flashadr+2
+        jsr convha
+        stx _flashA+2
+        sty _flashA+3
+
+        lda flashadr+1
+        jsr convha
+        stx _flashA+4
+        sty _flashA+5
+
+        lda flashadr
+        jsr convha
+        stx _flashA+6
+        sty _flashA+7
+
+        lda dataadr+1
+        jsr convha
+        stx _bufAdr
+        sty _bufAdr+1
+        lda dataadr
+        jsr convha
+        stx _bufAdr+2
+        sty _bufAdr+3
+
+        jsr PRINT
+        .byte "  RAM$"
+_ramNo  .byte "XX Flash$"
+_flashA .byte "xxxxxxxx Buffer$"
+_bufAdr .byte "XXXX",$9b,$ff
+         rts
+
+
+flash
+; erase
+        bit flashadr
+        bne _program
+        bit flashadr+1
+        bne _program
+        lda #$01
+        and flashadr+2
+        bne _program
+        jsr PRINT
+        .byte "Erase ",$ff
+        jsr fenable
+        ldx #$20
+        jsr fperas
+        php
+        jsr fdisable
+        plp
+        bmi flashError
+_program
+; program
+        jsr PRINT
+        .byte "Program ",$ff
+        jsr fenable
+        ldx #$20
+        jsr fwpage
+        php
+        jsr fdisable
+        plp
+        bmi flashError
+; verify
+        jsr PRINT
+        .byte "Verify",$9b,$ff
+        jsr fenable
+        ldx #$20
+        jsr fcpage
+        php
+        jsr fdisable
+        plp
+        bmi flashError
+; flash OK        
+        clc
+        rts        
+; flash error
+flashError
+        jsr PRINT
+        .byte "ERROR",$9b,$ff
+        sec
+        rts        
+;
+; Subroutines
+;
+        .include "TCCOPY.INC"
+
+;
+; Flasher Source Include
+;
+        THECART = 1 ; use The!Cart
+        .include "libflash16/libflash.inc"
+        .include "libflash16/libflash.src"
+        .include "libflash16/libflash-ramloc.src"
