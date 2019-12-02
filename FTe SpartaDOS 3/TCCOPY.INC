@@ -1,7 +1,6 @@
 ;
 ; OS EQUATES
 ;
-
 RTCLOK   = $0012
 CRITIC   = $42
 
@@ -114,10 +113,10 @@ TCCOLO = $d5af
 ;
 ; wait for sync            
 ;
-waitsync    lda rtclok+2
-_waitloop   cmp rtclok+2
-            beq _waitloop
-            rts
+;waitsync    lda rtclok+2
+;_waitloop   cmp rtclok+2
+;            beq _waitloop
+;            rts
 
 ;
 ; Set flash The!Cart register
@@ -245,6 +244,84 @@ _tcpbrh .byte $00
 _tcpben .byte $00
 _sdmctl .byte $00
 _nmien  .byte $00
+
+
+;
+; Global Store The!Cart register
+;
+globalStoreTCreg
+
+        lda TCMOSL
+        sta _gtcmosl
+
+        lda TCPBRL
+        sta _gtcpbrl
+
+        lda TCPBRH
+        sta _gtcpbrh
+
+        lda TCMOFR
+        sta _gtcmofr
+
+        lda TCPBEN
+        sta _gtcpben
+
+        lda NMIEN
+        sta _gnmien
+
+        lda SDMCTL          ; DMA control
+        sta _gsdmctl
+
+        lda #$00
+        sta SDMCTL
+        sta DMACTL
+        
+        rts
+
+;
+; Restore The!Cart register
+;
+globalRestoreTCreg
+
+        inc CRITIC
+        
+        sei                 ; disable interrupts
+        lda #$00
+        sta NMIEN
+        
+        lda _gtcmosl
+        sta TCMOSL
+
+        lda _gtcpbrl
+        sta TCPBRL
+
+        lda _gtcpbrh
+        sta TCPBRH
+
+        lda _gtcmofr
+        sta TCMOFR
+
+        lda _gtcpben
+        sta TCPBEN
+
+        lda _gnmien
+        sta NMIEN
+        cli
+
+        lda _gsdmctl         ; restore DMA control
+        sta SDMCTL
+        dec CRITIC
+        
+        rts
+
+_gtcmosl .byte $00
+_gtcmofr .byte $00
+_gtcpbrl .byte $00
+_gtcpbrh .byte $00
+_gtcpben .byte $00
+_gsdmctl .byte $00
+_gnmien  .byte $00
+
 
 ;
 ; copy 8k from $A000 to $8000

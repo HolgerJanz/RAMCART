@@ -161,6 +161,7 @@ TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
 ; bit 1: primary bank source (0=flash, 1=RAM)
 ; bit 2: secondary bank write enable (0=readOnly, 1=write)
 ; bit 3: secondary bank source (0=flash, 1=RAM)
+TCMOFR.FLASH = $00
 TCMOFR.PBRAM = $03    ; primary bank RAM
 TCMOFR.SBRAM = $0C    ; secondary bank RAM
 
@@ -238,7 +239,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK ver52 for THE!CART by HJX',$9B,$FF
+            .byte 'THE!RAMDISK ver53 for THE!CART by HJX',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -330,8 +331,18 @@ PARAMERR    jsr PRINT
             .byte '    w/o option driver and format',$9B,$FF
             rts
 
-STARTINST   jsr PRINT
-            .byte '  Install driver',$9B,$FF
+STARTINST   
+            lda DRVNUM
+            clc
+            adc #'0'
+            sta ramDx
+            sec
+            sbc #$01
+            sta flashDy
+            jsr PRINT
+            .byte '  Install driver: RAM D'
+ramDx       .byte 'x:, FLASH D'
+flashDy     .byte 'y:',$9B,$FF
 ; set jsr to original DOSINI
             lda DOSINI
             sta JSRDOSINI+1
@@ -685,8 +696,13 @@ REAH003     lda #>REAEND
 RAMDSIO     lda DDEVIC
             cmp #$31
             bne JMPSIO
-            lda DUNIT
-REAA004     cmp DRVNUM
+REAA004     lda DRVNUM  ; check drive number for RAM
+            cmp DUNIT
+            beq NEWSIOGO
+            tax         ; check drive number for Flash
+            dex
+            txa
+            cmp DUNIT
             beq NEWSIOGO
 JMPSIO      jmp $0000
 
@@ -771,15 +787,9 @@ REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
 ; buffer address and calc byte count
 PUTGETSEC   lda #$00
             sta BUFRLO
-
             lda DAUX1
-;            sec
-;            sbc #$01
             sta BUFRHI
-
             lda DAUX2
-;            sbc #$00
-;
             asl BUFRHI
             rol
             tax                 ; set X with memory bank number
@@ -824,7 +834,41 @@ WAITLOOP2   cmp RTCLOK+2
             pha
             lda #$00
             sta NMIEN
-            M_cart_set          ; set bank, number in X
+; set bank, number in X
+            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+            sta TCMOSL          
+
+REAA025     lda DRVNUM  ; check drive number for RAM
+            cmp DUNIT
+            beq setTCram
+
+setTCflash  lda #TCMOFR.FLASH       ; set to FLASH (start $3fc0)
+            sta TCMOFR
+            lda #$c0
+            sta TCPBRL
+            lda #$3f
+            sta TCPBRH
+            txa
+            asl
+            clc   
+            adc TCPBRL              ; get bank number from X
+            sta TCPBRL
+            lda TCPBRH
+            adc #$00                     
+            sta TCPBRH              ; set high to $00
+            clc
+            bcc setTcend
+
+setTCram    lda #TCMOFR.PBRAM       ; set to RAM
+            sta TCMOFR
+            txa
+            asl   
+            sta TCPBRL              ; get bank number from X
+            lda #$00                     
+            sta TCPBRH              ; set high to $00
+
+setTCend    lda #$01
+            sta TCPBEN              ; enable        
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; check for PUT
             ldy #$7F            ; 9 cycles
@@ -930,6 +974,7 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA022+1
             .word REAA023+1
             .word REAA024+1
+            .word REAA025+1
             .word $0000
  
 ; realloc address low byte           

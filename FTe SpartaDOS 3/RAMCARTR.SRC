@@ -12,6 +12,7 @@
  
         jsr PRINT
         .byte "RESTORE ver42 for THE!RAMDISK by HJX",$9B,$FF
+        jsr globalStoreTCreg
  
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -24,6 +25,7 @@
 errorNoCart
         jsr PRINT
         .byte "  Error - THE!CART not found",$9B,$FF
+        jsr globalRestoreTCreg
         rts
  
 startCopy
@@ -31,21 +33,21 @@ startCopy
         .byte "  Start restore",$9b,$ff
         
 _loopCopy
-;        lda ramBank
-;        jsr convha
-;        stx _bankNo
-;        sty _bankNo+1
-;        jsr PRINT
-;        .byte "  Bank $"
-;_bankNo .byte "XX Read ",$ff
+        lda ramBank
+        jsr convha
+        stx _bankNo
+        sty _bankNo+1
+        jsr PRINT
+        .byte "  $"
+_bankNo .byte "XX Read ",$ff
 
         jsr storeTCreg
         jsr setTCFLASH
         jsr copy8k_A24
         jsr restoreTCreg
 
-;        jsr PRINT
-;        .byte "Write",$9b,$ff
+        jsr PRINT
+        .byte "Write",$9b,$ff
 
         jsr storeTCreg
         jsr setTCRAM
@@ -60,7 +62,7 @@ _loopCopy
         
         jsr PRINT
         .byte "  Restore finished",$9B,$FF
-        
+        jsr globalRestoreTCreg        
         rts
         
 ;

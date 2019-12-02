@@ -11,7 +11,8 @@
         *= $3000
  
         jsr PRINT
-        .byte "RSTORE ver42 for THE!RAMDISK by HJX",$9B,$FF
+        .byte "STORE ver42 for THE!RAMDISK by HJX",$9B,$FF
+        jsr globalStoreTCreg
  
  ; init flasher
         jsr finit
@@ -25,6 +26,7 @@
  
         jsr PRINT
         .byte "  Error - THE!CART not found",$9B,$FF
+        jsr globalRestoreTCreg
         rts
 
 startCopy
@@ -44,11 +46,14 @@ startCopy
         lda #$07
         sta flashadr+3        
 _loopCopy
-; print indicator
-        jsr printIndicator
 ; get 8k RAM bank to buffer
+        lda ramBank
+        jsr convha
+        stx _ramNo
+        sty _ramNo+1
         jsr PRINT
-        .byte "    Read ",$ff
+        .byte "  $"
+_ramNo  .byte "XX Read ",$ff
         jsr storeTCreg  ; save TC state
         jsr setTCRAM    ; set 8k at $A000
         jsr copy8k_A24  ; copy 8k from A000 to 4000
@@ -76,55 +81,12 @@ _loopCopy
 _endFlash
         jsr PRINT
         .byte "  End flashing",$9B,$FF
-
+        jsr globalRestoreTCreg
         rts
-
-printIndicator
-        lda ramBank
-        jsr convha
-        stx _ramNo
-        sty _ramNo+1
-
-        lda flashadr+3
-        jsr convha
-        stx _flashA
-        sty _flashA+1
-
-        lda flashadr+2
-        jsr convha
-        stx _flashA+2
-        sty _flashA+3
-
-        lda flashadr+1
-        jsr convha
-        stx _flashA+4
-        sty _flashA+5
-
-        lda flashadr
-        jsr convha
-        stx _flashA+6
-        sty _flashA+7
-
-        lda dataadr+1
-        jsr convha
-        stx _bufAdr
-        sty _bufAdr+1
-        lda dataadr
-        jsr convha
-        stx _bufAdr+2
-        sty _bufAdr+3
-
-        jsr PRINT
-        .byte "  RAM$"
-_ramNo  .byte "XX Flash$"
-_flashA .byte "xxxxxxxx Buffer$"
-_bufAdr .byte "XXXX",$9b,$ff
-         rts
-
 
 flash
 ; erase
-        bit flashadr
+        bit flashadr    ; erase every 128k 
         bne _program
         bit flashadr+1
         bne _program
@@ -170,6 +132,7 @@ flashError
         .byte "ERROR",$9b,$ff
         sec
         rts        
+
 ;
 ; Subroutines
 ;
