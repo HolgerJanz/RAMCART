@@ -272,6 +272,8 @@ globalStoreTCreg
         lda SDMCTL          ; DMA control
         sta _gsdmctl
 
+        inc CRITIC
+        
         lda #$00
         sta SDMCTL
         sta DMACTL
@@ -283,8 +285,6 @@ globalStoreTCreg
 ;
 globalRestoreTCreg
 
-        inc CRITIC
-        
         sei                 ; disable interrupts
         lda #$00
         sta NMIEN

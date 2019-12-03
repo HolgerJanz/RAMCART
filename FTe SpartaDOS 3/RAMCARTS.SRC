@@ -11,7 +11,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver43 for The!Ramdisk by hjx",$9B,$FF
+        .byte "STORE ver44 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
  ; init flasher
         jsr finit
@@ -23,9 +23,9 @@
         cmp #tnoflsh
         bne startCopy
  ; no cart no flash
+        jsr globalRestoreTCreg
         jsr PRINT
         .byte "  Error - The!Cart not found",$9B,$FF
-        jsr globalRestoreTCreg
         rts
 
 startCopy
@@ -71,9 +71,9 @@ _loopCopy
         bne _loopCopy
 ; end flash
 _endFlash
+        jsr globalRestoreTCreg
         jsr PRINT
         .byte "  End flashing",$9B,$FF
-        jsr globalRestoreTCreg
         rts
 
 flash

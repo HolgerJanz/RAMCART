@@ -23,9 +23,9 @@
         bne startCopy
  
 errorNoCart
+        jsr globalRestoreTCreg
         jsr PRINT
         .byte "  Error - The!Cart not found",$9B,$FF
-        jsr globalRestoreTCreg
         rts
  
 startCopy
@@ -50,9 +50,9 @@ _loopCopy
         cmp ramBank
         bne _loopCopy
 ; finished        
+        jsr globalRestoreTCreg        
         jsr PRINT
         .byte "  End restore",$9B,$FF
-        jsr globalRestoreTCreg        
         rts
         
 ;
