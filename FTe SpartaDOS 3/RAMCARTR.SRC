@@ -11,7 +11,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE ver42 for THE!RAMDISK by HJX",$9B,$FF
+        .byte "RESTORE ver43 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
  
 ; check if we are running on THE!CART hardware
@@ -24,7 +24,7 @@
  
 errorNoCart
         jsr PRINT
-        .byte "  Error - THE!CART not found",$9B,$FF
+        .byte "  Error - The!Cart not found",$9B,$FF
         jsr globalRestoreTCreg
         rts
  
@@ -33,35 +33,25 @@ startCopy
         .byte "  Start restore",$9b,$ff
         
 _loopCopy
-        lda ramBank
-        jsr convha
-        stx _bankNo
-        sty _bankNo+1
-        jsr PRINT
-        .byte "  $"
-_bankNo .byte "XX Read ",$ff
-
+; read
         jsr storeTCreg
         jsr setTCFLASH
         jsr copy8k_A24
         jsr restoreTCreg
-
-        jsr PRINT
-        .byte "Write",$9b,$ff
-
+; write
         jsr storeTCreg
         jsr setTCRAM
         jsr copy8k_42A
         jsr restoreTCreg
-
+; increase
         inc flashBL
         inc ramBank
         lda #$40
         cmp ramBank
         bne _loopCopy
-        
+; finished        
         jsr PRINT
-        .byte "  Restore finished",$9B,$FF
+        .byte "  End restore",$9B,$FF
         jsr globalRestoreTCreg        
         rts
         

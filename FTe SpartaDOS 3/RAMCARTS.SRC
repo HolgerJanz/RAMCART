@@ -11,28 +11,27 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver42 for THE!RAMDISK by HJX",$9B,$FF
+        .byte "STORE ver43 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
- 
  ; init flasher
         jsr finit
         jsr fenable
         jsr fdetect
         jsr fdisable
- 
+ ; check and set flash type -> no flash = no The!Cart
         lda ftype
         cmp #tnoflsh
         bne startCopy
- 
+ ; no cart no flash
         jsr PRINT
-        .byte "  Error - THE!CART not found",$9B,$FF
+        .byte "  Error - The!Cart not found",$9B,$FF
         jsr globalRestoreTCreg
         rts
 
 startCopy
         jsr PRINT
         .byte "  Start flashing",$9B,$FF
-; set buffer address        
+; set buffer address 8k at $4000       
         lda #$00
         sta dataadr
         lda #$40
@@ -47,13 +46,6 @@ startCopy
         sta flashadr+3        
 _loopCopy
 ; get 8k RAM bank to buffer
-        lda ramBank
-        jsr convha
-        stx _ramNo
-        sty _ramNo+1
-        jsr PRINT
-        .byte "  $"
-_ramNo  .byte "XX Read ",$ff
         jsr storeTCreg  ; save TC state
         jsr setTCRAM    ; set 8k at $A000
         jsr copy8k_A24  ; copy 8k from A000 to 4000
@@ -93,8 +85,6 @@ flash
         lda #$01
         and flashadr+2
         bne _program
-        jsr PRINT
-        .byte "Erase ",$ff
         jsr fenable
         ldx #$20
         jsr fperas
@@ -104,8 +94,6 @@ flash
         bmi flashError
 _program
 ; program
-        jsr PRINT
-        .byte "Program ",$ff
         jsr fenable
         ldx #$20
         jsr fwpage
@@ -114,8 +102,6 @@ _program
         plp
         bmi flashError
 ; verify
-        jsr PRINT
-        .byte "Verify",$9b,$ff
         jsr fenable
         ldx #$20
         jsr fcpage
@@ -128,8 +114,13 @@ _program
         rts        
 ; flash error
 flashError
+        lda ramBank
+        jsr convha
+        stx _ramNo
+        sty _ramNo+1
         jsr PRINT
-        .byte "ERROR",$9b,$ff
+        .byte "  Error at bank $"
+_ramNo  .byte "XX",$ff
         sec
         rts        
 

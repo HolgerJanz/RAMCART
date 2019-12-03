@@ -239,7 +239,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'THE!RAMDISK ver53 for THE!CART by HJX',$9B,$FF
+            .byte 'The!Ramdisk ver54 for The!Cart by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -250,8 +250,8 @@ M_cart_set  .macro
 NORAMDISK
 ; no banks            
             jsr PRINT
-            .byte '  Error - 512k RAM THE!CART not found',$9B
-            .byte '  Use SHIFT+RETURN/ESC in start menu',$9B,$FF
+            .byte '  Error - The!Cart not found',$9B
+            .byte '  Use shift+return/esc in start menu',$9B,$FF
             rts
                         
 RAMDISKINI
@@ -341,7 +341,7 @@ STARTINST
             sta flashDy
             jsr PRINT
             .byte '  Install driver: RAM D'
-ramDx       .byte 'x:, FLASH D'
+ramDx       .byte 'x:, Flash D'
 flashDy     .byte 'y:',$9B,$FF
 ; set jsr to original DOSINI
             lda DOSINI
