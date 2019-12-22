@@ -11,7 +11,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE ver43 for The!Ramdisk by hjx",$9B,$FF
+        .byte "RESTORE ver45 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
  
 ; check if we are running on THE!CART hardware

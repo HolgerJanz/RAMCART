@@ -192,7 +192,7 @@ storeTCreg
 
 ;        jsr waitsync
 ;        
-;        inc CRITIC
+        inc CRITIC
 ;        lda SDMCTL          ; DMA control
 ;        sta _sdmctl
 ;        lda #$00
@@ -200,10 +200,10 @@ storeTCreg
 ;        sta DMACTL
         
         sei                 ; disable interrupts
-        lda NMIEN
-        sta _nmien
-        lda #$00
-        sta NMIEN
+;        lda NMIEN
+;        sta _nmien
+;        lda #$00
+;        sta NMIEN
         
         rts
 
@@ -227,13 +227,13 @@ restoreTCreg
         lda _tcpben
         sta TCPBEN
 
-        lda _nmien
-        sta NMIEN
+;        lda _nmien
+;        sta NMIEN
         cli
 
 ;        lda _sdmctl         ; restore DMA control
 ;        sta SDMCTL
-;        dec CRITIC
+        dec CRITIC
         
         rts
 
@@ -243,7 +243,7 @@ _tcpbrl .byte $00
 _tcpbrh .byte $00
 _tcpben .byte $00
 _sdmctl .byte $00
-_nmien  .byte $00
+;_nmien  .byte $00
 
 
 ;
@@ -266,8 +266,8 @@ globalStoreTCreg
         lda TCPBEN
         sta _gtcpben
 
-        lda NMIEN
-        sta _gnmien
+;        lda NMIEN
+;        sta _gnmien
 
         lda SDMCTL          ; DMA control
         sta _gsdmctl
@@ -286,8 +286,8 @@ globalStoreTCreg
 globalRestoreTCreg
 
         sei                 ; disable interrupts
-        lda #$00
-        sta NMIEN
+;        lda #$00
+;        sta NMIEN
         
         lda _gtcmosl
         sta TCMOSL
@@ -304,8 +304,8 @@ globalRestoreTCreg
         lda _gtcpben
         sta TCPBEN
 
-        lda _gnmien
-        sta NMIEN
+;        lda _gnmien
+;        sta NMIEN
         cli
 
         lda _gsdmctl         ; restore DMA control
@@ -320,7 +320,7 @@ _gtcpbrl .byte $00
 _gtcpbrh .byte $00
 _gtcpben .byte $00
 _gsdmctl .byte $00
-_gnmien  .byte $00
+;_gnmien  .byte $00
 
 
 ;
