@@ -240,7 +240,7 @@ mads 1.9.9
    239 				            
    240 				; info message
    241 FFFF> 3000-3609> 20 13 +             jsr PRINT
-   242 3003 54 68 65 21 52 61 +             .byte 'The!Ramdisk ver55 for The!Cart by hjx',$9B,$FF
+   242 3003 54 68 65 21 52 61 +             .byte 'The!Ramdisk ver56 for The!Cart by hjx',$9B,$FF
    243
    244 				; check for The!Cart
    245 302A AD A6 D5		             lda TCMOSL
@@ -941,7 +941,7 @@ Macro: M_CART_POP [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART
     10 35EB 8D A6 D5		            sta TCMOSL          
 Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
    906 35EE A9 E0		            lda #$e0            ; enable interrupts
-   907 35F0 8E 0E D4		            stx NMIEN
+   907 35F0 8D 0E D4		            sta NMIEN
    908 35F3 58			            cli
    909 35F4 C6 42		            dec CRITIC          ; 54 cycles
    910 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

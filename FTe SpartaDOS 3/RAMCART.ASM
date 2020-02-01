@@ -239,7 +239,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk ver55 for The!Cart by hjx',$9B,$FF
+            .byte 'The!Ramdisk ver56 for The!Cart by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -904,7 +904,7 @@ PUTADRLP    sta $FFFF,Y       ; 5 cycles
 ; restore register
             M_cart_pop          ; restore register
             lda #$e0            ; enable interrupts
-            stx NMIEN
+            sta NMIEN
             cli
             dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
