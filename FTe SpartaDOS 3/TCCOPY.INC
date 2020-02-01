@@ -190,20 +190,10 @@ storeTCreg
         lda TCPBEN
         sta _tcpben
 
-;        jsr waitsync
-;        
-        inc CRITIC
-;        lda SDMCTL          ; DMA control
-;        sta _sdmctl
-;        lda #$00
-;        sta SDMCTL
-;        sta DMACTL
-        
         sei                 ; disable interrupts
-;        lda NMIEN
-;        sta _nmien
-;        lda #$00
-;        sta NMIEN
+
+        lda #$00
+        sta NMIEN
         
         rts
 
@@ -227,13 +217,10 @@ restoreTCreg
         lda _tcpben
         sta TCPBEN
 
-;        lda _nmien
-;        sta NMIEN
-        cli
+        lda #$e0
+        sta NMIEN
 
-;        lda _sdmctl         ; restore DMA control
-;        sta SDMCTL
-        dec CRITIC
+        cli
         
         rts
 
@@ -243,8 +230,6 @@ _tcpbrl .byte $00
 _tcpbrh .byte $00
 _tcpben .byte $00
 _sdmctl .byte $00
-;_nmien  .byte $00
-
 
 ;
 ; Global Store The!Cart register
@@ -266,9 +251,6 @@ globalStoreTCreg
         lda TCPBEN
         sta _gtcpben
 
-;        lda NMIEN
-;        sta _gnmien
-
         lda SDMCTL          ; DMA control
         sta _gsdmctl
 
@@ -286,8 +268,6 @@ globalStoreTCreg
 globalRestoreTCreg
 
         sei                 ; disable interrupts
-;        lda #$00
-;        sta NMIEN
         
         lda _gtcmosl
         sta TCMOSL
@@ -304,12 +284,11 @@ globalRestoreTCreg
         lda _gtcpben
         sta TCPBEN
 
-;        lda _gnmien
-;        sta NMIEN
         cli
 
         lda _gsdmctl         ; restore DMA control
         sta SDMCTL
+
         dec CRITIC
         
         rts
@@ -320,7 +299,6 @@ _gtcpbrl .byte $00
 _gtcpbrh .byte $00
 _gtcpben .byte $00
 _gsdmctl .byte $00
-;_gnmien  .byte $00
 
 
 ;
@@ -332,137 +310,110 @@ copy8k_A24
 
 _loopCopyA24
         lda $a000,x
-        eor #$ff
         sta $4000,x
 
         lda $a100,x
-        eor #$ff
         sta $4100,x
 
         lda $a200,x
-        eor #$ff
         sta $4200,x
 
         lda $a300,x
-        eor #$ff
         sta $4300,x
 
         lda $a400,x
-        eor #$ff
         sta $4400,x
 
         lda $a500,x
-        eor #$ff
         sta $4500,x
 
         lda $a600,x
-        eor #$ff
         sta $4600,x
 
         lda $a700,x
-        eor #$ff
         sta $4700,x
 
         lda $a800,x
-        eor #$ff
         sta $4800,x
 
         lda $a900,x
-        eor #$ff
         sta $4900,x
 
         lda $aa00,x
-        eor #$ff
         sta $4a00,x
 
         lda $ab00,x
-        eor #$ff
         sta $4b00,x
 
         lda $ac00,x
-        eor #$ff
         sta $4c00,x
 
         lda $ad00,x
-        eor #$ff
         sta $4d00,x
 
         lda $ae00,x
-        eor #$ff
         sta $4e00,x
 
         lda $af00,x
-        eor #$ff
         sta $4f00,x
 
+        inx
+        bne _loopCopyA24
+
+        ldx #$00
+
+_loopCopyB25
         lda $b000,x
-        eor #$ff
         sta $5000,x
 
         lda $b100,x
-        eor #$ff
         sta $5100,x
 
         lda $b200,x
-        eor #$ff
         sta $5200,x
 
         lda $b300,x
-        eor #$ff
         sta $5300,x
 
         lda $b400,x
-        eor #$ff
         sta $5400,x
 
         lda $b500,x
-        eor #$ff
         sta $5500,x
 
         lda $b600,x
-        eor #$ff
         sta $5600,x
 
         lda $b700,x
-        eor #$ff
         sta $5700,x
 
         lda $b800,x
-        eor #$ff
         sta $5800,x
 
         lda $b900,x
-        eor #$ff
         sta $5900,x
 
         lda $ba00,x
-        eor #$ff
         sta $5a00,x
 
         lda $bb00,x
-        eor #$ff
         sta $5b00,x
 
         lda $bc00,x
-        eor #$ff
         sta $5c00,x
 
         lda $bd00,x
-        eor #$ff
         sta $5d00,x
 
         lda $be00,x
-        eor #$ff
         sta $5e00,x
 
         lda $bf00,x
-        eor #$ff
         sta $5f00,x
 
         inx
-        beq _endloopCopyA24
-        jmp _loopCopyA24
-_endloopCopyA24
+        bne _loopCopyB25
+
         rts
 
 ;
@@ -521,6 +472,12 @@ _loopCopy42A
         lda $4f00,x
         sta $af00,x
 
+        inx
+        bne _loopCopy42A
+
+        ldx #$00
+
+_loopCopy52B
         lda $5000,x
         sta $b000,x
 
@@ -570,9 +527,8 @@ _loopCopy42A
         sta $bf00,x
 
         inx
-        beq _endloopCopy42A
-        jmp _loopCopy42A
-_endloopCopy42A
+        bne _loopCopy52B
+
         rts
 
 ; print subroutine            

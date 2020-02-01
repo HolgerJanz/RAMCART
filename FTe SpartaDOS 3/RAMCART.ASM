@@ -56,7 +56,7 @@ PBCTL       = $D303
 ;
 DMACTL      = $D400 
 WSYNC       = $D40A
-;NMIEN       = $D40E
+NMIEN       = $D40E
 ; 
 ; ROM VECTORS
 ; 
@@ -239,7 +239,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk ver54 for The!Cart by hjx',$9B,$FF
+            .byte 'The!Ramdisk ver55 for The!Cart by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -610,8 +610,8 @@ cart_restore
             lda _tcpben
             sta TCPBEN
 
-;            lda _nmien          ; enable interrupts
-;            sta NMIEN
+            lda #$e0          ; enable interrupts
+            sta NMIEN
             cli
             dec CRITIC 
 
@@ -620,11 +620,9 @@ cart_restore
 cart_set
             inc CRITIC 
             jsr WAITSYNC        ; wait for vblank
-            sei
-;            lda NMIEN
-;            sta _nmien
-;            lda #$00
-;            sta NMIEN
+            sei                 ; disable interrupt
+            lda #$00
+            sta NMIEN
 
             lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
             sta TCMOSL          
@@ -646,8 +644,6 @@ _tcpbrl     .byte $00
 _tcpbrh     .byte $00
 _tcpben     .byte $00
 
-;_nmien      .byte $00
-            
 ; print subroutine            
 PRINT       pla
             sta PRINTITER+1
@@ -829,11 +825,9 @@ L3656       cpx #$20            ; check bank number
             lda RTCLOK+2
 WAITLOOP2   cmp RTCLOK+2
             beq WAITLOOP2
-            sei                 ; 40 cycles
-;            lda NMIEN
-;            pha
-;            lda #$00
-;            sta NMIEN
+            sei                 ; disable interrupts
+            lda #$00
+            sta NMIEN           ; 40 cycles
 ; set bank, number in X
             lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
             sta TCMOSL          
@@ -878,17 +872,15 @@ setTCend    lda #$01
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; GET: read data to buffer
 L367B
-;            lda (BUFRLO),Y      ; 6 cycles
-GETADRLP    lda $FFFF,Y
+GETADRLP    lda $FFFF,Y         ; 5 cycles +
 REAA006     sta BUFFERXX1,Y     ; 5 cycles +
             dey                 ; 2 cycles +
-            bpl L367B           ; 4 cycles + * 128 = 2176
+            bpl L367B           ; 4 cycles + * 128 = 2048
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; restore bank for write to user buffer
-;            pla
-;            tax
             M_cart_pop          ; restore register            
-;            stx NMIEN
+            lda #$e0            ; enable interrupts
+            sta NMIEN
             cli
             dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
@@ -905,20 +897,18 @@ REAA008     lda BUFFERXX1,Y
 ; PUT: buffer data to sector
 L369B
 REAA007     lda BUFFERXX1,Y   ; 5 cycles                
-;            sta (BUFRLO),Y    ; 6 cycles +              
-PUTADRLP    sta $FFFF,Y
+PUTADRLP    sta $FFFF,Y       ; 5 cycles
             dey               ; 2 cycles +              
-            bpl L369B         ; 4 cycles + * 128 = 2176 
+            bpl L369B         ; 4 cycles + * 128 = 2048 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; restore register
-;            pla
-;            tax
             M_cart_pop          ; restore register
-;            stx NMIEN
+            lda #$e0            ; enable interrupts
+            stx NMIEN
             cli
             dec CRITIC          ; 54 cycles
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; enable interrupts and set rc            
+; set rc            
 RDSIOEND    ldy #$01
             bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
 
