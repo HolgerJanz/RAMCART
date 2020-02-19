@@ -6,12 +6,13 @@
 ;
 ; Main
 ;
-; The!Cart banks from $3fc0 - $3fff
+; The!Cart 512k user space banks from $3fc0 - $3fff
+; The!Cart 640k user space banks from $3fb0 - $3fef
 ;
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE ver45 for The!Ramdisk by hjx",$9B,$FF
+        .byte "RESTORE ver57 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
  
 ; check if we are running on THE!CART hardware
@@ -31,7 +32,13 @@ errorNoCart
 startCopy
         jsr PRINT
         .byte "  Start restore",$9b,$ff
-        
+; set flash ram bank
+; 512k user space start bank $3fc0
+; 640k user space start bank $3fb0
+        lda #$b0
+        sta flashBL
+        lda #$3f
+        sta flashBH        
 _loopCopy
 ; read
         jsr storeTCreg

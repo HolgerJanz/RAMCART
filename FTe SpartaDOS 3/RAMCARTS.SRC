@@ -6,12 +6,13 @@
 ;
 ; Main
 ;
-; The!Cart banks from $3fc0 - $3fff
+; The!Cart 512k user space banks from $3fc0 - $3fff
+; The!Cart 640k user space banks from $3fb0 - $3fef
 ;
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver45 for The!Ramdisk by hjx",$9B,$FF
+        .byte "STORE ver57 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
  ; init flasher
         jsr finit
@@ -36,11 +37,12 @@ startCopy
         sta dataadr
         lda #$40
         sta dataadr+1
-; set flash address $07.f8.00.00 for bank $3f.c0
+; 512k set flash address $07.f8.00.00 for bank $3f.c0
+; 640k set flash address $07.f6.00.00 for bank $3f.b0
         lda #$00
         sta flashadr
         sta flashadr+1
-        lda #$f8
+        lda #$f6
         sta flashadr+2
         lda #$07
         sta flashadr+3        

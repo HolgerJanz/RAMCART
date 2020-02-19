@@ -239,7 +239,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk ver56 for The!Cart by hjx',$9B,$FF
+            .byte 'The!Ramdisk ver57 for The!Cart by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -836,9 +836,11 @@ REAA025     lda DRVNUM  ; check drive number for RAM
             cmp DUNIT
             beq setTCram
 
-setTCflash  lda #TCMOFR.FLASH       ; set to FLASH (start $3fc0)
+; 512k user space start bank $3fc0
+; 640k user space start bank $3fb0
+setTCflash  lda #TCMOFR.FLASH       ; set to FLASH
             sta TCMOFR
-            lda #$c0
+            lda #$b0
             sta TCPBRL
             lda #$3f
             sta TCPBRH
