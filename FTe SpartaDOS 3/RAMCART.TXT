@@ -1,19 +1,25 @@
 RAMCART - Ramdisk Driver for THE!CART
 and SpartaDOS 3
 
-RAMCART Dx: [/N|A|F]
+RAMCART Dn: [/DF]
 
 RAMCART is a ramdisk driver for
 THE!CART. Dx: specifies the drive
-number x that should be used for the
-ramdisk. With option /N the ramdisk
-will not be formatted. Without the
-option /N the ramdisk will be
-formatted with 4096 sectors of 128
-Bytes and SpartaDOS file system.
-Option /A formats only if needed
-and option /F only formats without
-installing driver.
+number n that should be used for the
+ramdisk. The drive n-1 is used for
+the Flash Disk. RAMCARTS (store)
+and RAMCARTR (restore) can be used
+to copy between this tow disks.
+With option /D only the
+ramdisk driver will be installed.
+With option /F the ramdisk
+will be formatted with 4096 sectors
+of 128 Bytes and SpartaDOS file
+system.
+Without options the ramdisk driver
+is installed and formatted
+on demand.
+
 XINIT can be used to format with
 a different size. The original
 ramdisk driver of SpartaDOS can be

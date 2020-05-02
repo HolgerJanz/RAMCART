@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver57 for The!Ramdisk by hjx",$9B,$FF
+        .byte "STORE ver60 for The!Ramdisk by hjx",$9B,$FF
         jsr globalStoreTCreg
  ; init flasher
         jsr finit

@@ -239,7 +239,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk ver57 for The!Cart by hjx',$9B,$FF
+            .byte 'The!Ramdisk for The!Cart ver60 by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -250,9 +250,8 @@ M_cart_set  .macro
 NORAMDISK
 ; no banks            
             jsr PRINT
-            .byte '  Error - The!Cart not found',$9B
-            .byte '  Use shift+return/esc in start menu',$9B,$FF
-            rts
+            .byte '  Error: The!Cart not found',$9B,$FF
+            jmp PRNHLP
                         
 RAMDISKINI
 ; check for parameter
@@ -265,12 +264,16 @@ RAMDISKINI
             cmp #$9B
             bne PRSPARM
 ; no parameter -> error
-            jmp PARAMERR
+            jsr PRINT
+            .byte '  Error: No parameter',$9B,$FF
+            jmp PRNHLP
 
 ; jump for jsr to crunch name
 CRNAME      jmp $FFFF
 
-CHKFRMT     .byte $FF
+CHKFRMT     .byte $00
+CHKDRVR     .byte $00
+CHKOPTN     .byte $00
 
 ; set crunch name address
 PRSPARM     lda DOSVEC
@@ -302,33 +305,53 @@ PRSPARLOOP  iny
             cmp #$9B         ; end of parameter
             beq PRSPAREND
             
-            cmp #'A'         ; try to preserve
-            bne PRSPARNXT1
-            jsr checkfrmt
-            bcc PRSPARLOOP
-            inc CHKFRMT
-            jmp PRSPARLOOP
-
-PRSPARNXT1  cmp #'F'         ; just format
+PRSPARNXT1  cmp #'F'         ; driver ?
             bne PRSPARNXT2
-            jmp FRMTRD
-
-PRSPARNXT2  cmp #'N'         ; format ?
-            bne PARAMERR
-; check format at startup to preserve existing RAM disk            
-            inc CHKFRMT
-
+            lda #$FF
+            sta CHKOPTN
+            sta CHKFRMT
             jmp PRSPARLOOP
 
-PRSPAREND   jmp STARTINST
+PRSPARNXT2  cmp #'D'         ; format ?
+            bne PARAMERR
+            lda #$FF
+            sta CHKOPTN
+            sta CHKDRVR
+            jmp PRSPARLOOP
+
+PRSPAREND
+; set format and ini by options
+            bit CHKOPTN
+            bmi STRTINIFMT ; no options set default /DF
+            lda #$FF
+            sta CHKDRVR
+            sta CHKFRMT
+STRTINIFMT
+; install driver requested
+            bit CHKDRVR
+            bpl NOINIDRV
+            jsr STARTINST
+NOINIDRV
+; format if requested
+            bit CHKOPTN
+            bmi NOPREFRMT
+            jsr CHECKFRMT
+NOPREFRMT
+            bit CHKFRMT
+            bpl NOFRMTRD
+            jsr FRMTRD
+NOFRMTRD
+            rts
 
 PARAMERR    jsr PRINT
-            .byte '  Error - Wrong parameter',$9B
-            .byte '  Use RAMCART Dn: [/N|A|F]',$9B
-            .byte '    N - driver no format',$9B
-            .byte '    A - driver auto format if needed',$9B
-            .byte '    F - format no driver',$9B
-            .byte '    w/o option driver and format',$9B,$FF
+            .byte '  Error: Wrong parameter',$9B,$FF
+PRNHLP
+            jsr PRINT
+            .byte '  Use RAMCART Dn: [/DF]',$9B
+            .byte '    n - drive number for ramdisk',$9B            
+            .byte '    D - install driver only',$9B
+            .byte '    F - format ramdisk only',$9B
+            .byte '  Use shift+return/esc in start menu',$9B,$FF
             rts
 
 STARTINST   
@@ -340,7 +363,7 @@ STARTINST
             sbc #$01
             sta flashDy
             jsr PRINT
-            .byte '  Install driver: RAM D'
+            .byte '  Driver installed RAM D'
 ramDx       .byte 'x:, Flash D'
 flashDy     .byte 'y:',$9B,$FF
 ; set jsr to original DOSINI
@@ -386,14 +409,11 @@ REAH002     lda #>RAMDSIO
             sta (BUFRLO),Y
 ; set MEMLO            
 REAA003     jsr SETMEMLO      ;realloc $33DB
-; format if requested            
-            bit CHKFRMT
-            bmi FRMTRD
             rts
 
 ; format ramdisk
 FRMTRD      jsr PRINT
-            .byte '  Formatted 512k',$9B,$FF
+            .byte '  Ramdisk formatted',$9B,$FF
 
             jsr cart_save
 
@@ -520,7 +540,6 @@ _loopmain   lda RDMAIN,x
             cpx #$17
             bne _loopmain
             jsr cart_restore
-
 ; finished
             rts
             
@@ -571,10 +590,14 @@ _nxtcharv   lda RDMAINNAME,x    ; check volume name
             bne _nxtcharv
             
             jsr cart_restore
+            lda #$00
+            sta CHKFRMT
             sec
             rts
             
 _nofrmt     jsr cart_restore
+            lda #$FF
+            sta CHKFRMT
             clc
             rts
 
