@@ -31,7 +31,7 @@ errorNoCart
  
 startCopy
         jsr PRINT
-        .byte "  Start restore",$9b,$ff
+        .byte "  Start restore. Copy Flash to RAM.",$9b,$ff
 ; set flash ram bank
 ; 512k user space start bank $3fc0
 ; 640k user space start bank $3fb0

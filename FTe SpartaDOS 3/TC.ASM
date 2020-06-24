@@ -182,7 +182,14 @@ TCCOLO = $d5af
 ; Main
 ;
 
-        org $2000
+        org $3000
+        
+; message
+        ldx #<startmsg.begin
+        ldy #>startmsg.begin
+        lda #startmsg.end-startmsg.begin
+        jsr print
+
 ; check for parameter
         ldy #SD_BUFOFF
         lda (DOSVEC),y
@@ -308,23 +315,26 @@ _end    pla             ; clear return adr from stack
 
 ; messages        
 
+startmsg.begin
+        .byte 'Menu ver46 for The!Cart by hjx',$9B
+startmsg.end
+
 errprs.begin
-        .byte 'Error - no parameter',$9b
+        .byte '  Error - no parameter',$9b
 errprs.end
 
 errfil.begin
-        .byte 'Error - THECART.SYS',$9b
+        .byte '  Error - THECART.SYS',$9b
         .byte '  Parsing line $'
 errfil.line
         .byte 'XX',$9B
 errfil.end
 
 errnfd.begin
-        .byte 'Error - not found',$9b
+        .byte '  Error - not found',$9b
 errnfd.end
 
 erruse.begin
-        .byte '  Menu ver45 for The!Cart by hjx',$9B
         .byte '  Use THECART name:',$9B
 erruse.end
 

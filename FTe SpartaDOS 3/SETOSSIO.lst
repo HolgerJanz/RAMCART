@@ -1,0 +1,155 @@
+mads 1.9.9
+     1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     2 				;
+     3 				; Set SpartaDOS 3.2g SIO to OS SIO ($E459)
+     4 				;
+     5
+     6 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     7 				;
+     8 				; Equates
+     9 				;
+    10
+    11 				; 
+    12 				; CIO
+    13 				; 
+    14 = E456			CIOV        = $E456
+    15 				; CIOCB addresses
+    16 = 0340			ICHID		= $0340
+    17 = 0341			ICDNO		= $0341
+    18 = 0342			ICCOM       = $0342
+    19 = 0343			ICSTA		= $0343
+    20 = 0344			ICBAL       = $0344
+    21 = 0345			ICBAH       = $0345
+    22 = 0346			ICPTL		= $0346
+    23 = 0347			ICPTH		= $0347
+    24 = 0348			ICBLL       = $0348
+    25 = 0349			ICBLH       = $0349
+    26 = 034A			ICAX1		= $034a
+    27 = 034B			ICAX2		= $034b
+    28
+    29 = 0032			BUFRLO      = $0032
+    30 = 0033			BUFRHI      = $0033
+    31
+    32
+    33 = 000A			DOSVEC      = $000A
+    34
+    35 = 000A			SD_LSIO        = $0A ; negative offset to SIO vector
+    36
+    37
+    38 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    39 				;
+    40 				; start            
+    41 				;
+    42 							org $3000
+    43 				start
+    44 FFFF> 3000-30CC> 20 80 + 			jsr print
+    45 3003 53 65 74 20 4F 53 + 			.byte 'Set OS SIO ',$ff
+    46 							
+    47 300F 38			            sec
+    48 3010 A5 0A		            lda DOSVEC
+    49 3012 E9 0A		            sbc #SD_LSIO
+    50 3014 85 32		            sta BUFRLO
+    51 3016 A5 0B		            lda DOSVEC+1
+    52 3018 E9 00		            sbc #$00
+    53 301A 85 33		            sta BUFRHI
+    54
+    55 301C A0 00		            ldy #$00
+    56 301E B1 32		            lda (BUFRLO),Y
+    57 3020 99 7C 30		            sta sio_old,Y
+    58 3023 B9 7E 30		            lda sio_new,Y
+    59 3026 91 32		            sta (BUFRLO),Y
+    60
+    61 3028 C8						iny
+    62 3029 B1 32		            lda (BUFRLO),Y
+    63 302B 99 7C 30		            sta sio_old,Y
+    64 302E B9 7E 30		            lda sio_new,Y
+    65 3031 91 32		            sta (BUFRLO),Y
+    66
+    67 3033 AD 7D 30					lda sio_old+1
+    68 3036 20 B6 30					jsr convh2a
+    69 3039 8E 6B 30					stx val_old
+    70 303C 8C 6C 30					sty val_old+1
+    71 303F AD 7C 30					lda sio_old
+    72 3042 20 B6 30					jsr convh2a
+    73 3045 8E 6D 30					stx val_old+2
+    74 3048 8C 6E 30					sty val_old+3
+    75
+    76 304B AD 7F 30					lda sio_new+1
+    77 304E 20 B6 30					jsr convh2a
+    78 3051 8E 75 30					stx val_new
+    79 3054 8C 76 30					sty val_new+1
+    80 3057 AD 7E 30					lda sio_new
+    81 305A 20 B6 30					jsr convh2a
+    82 305D 8E 77 30					stx val_new+2
+    83 3060 8C 78 30					sty val_new+3
+    84
+    85 3063 20 80 30					jsr print
+    86 3066 6F 6C 64 3D 24				.byte 'old=$'
+    87 306B 30 30 30 30 20 6E + val_old		.byte '0000 new=$'
+    88 3075 30 30 30 30 9B FF	val_new		.byte '0000',$9b,$ff
+    89
+    90 307B 60						rts
+    91
+    92 307C 00 00		sio_old		.word $0000
+    93 307E 59 E4		sio_new		.word $e459
+    94
+    95 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    96 				;
+    97 				; print subroutine            
+    98 				;
+    99 3080			print
+   100 3080 68						pla
+   101 3081 8D 91 30		            sta print_iter+1
+   102 3084 68			            pla
+   103 3085 8D 92 30		            sta print_iter+2
+   104 3088 EE 91 30		print_loop  inc print_iter+1
+   105 308B D0 03		            bne print_iter
+   106 308D EE 92 30		            inc print_iter+2
+   107 3090 AD FF FF		print_iter  lda $ffff
+   108 3093 C9 FF		            cmp #$ff
+   109 3095 F0 06		            beq print_end
+   110 3097 20 A6 30		            jsr cioputchr
+   111 309A 4C 88 30		            jmp print_loop
+   112 309D AD 92 30		print_end   lda print_iter+2
+   113 30A0 48			            pha
+   114 30A1 AD 91 30		            lda print_iter+1
+   115 30A4 48			            pha
+   116 30A5 60			            rts
+   117 				; call cio put char subroutine
+   118 30A6 A2 00		cioputchr   ldx #$00
+   119 30A8 8E 48 03		            stx ICBLL
+   120 30AB 8E 49 03		            stx ICBLH
+   121 30AE A0 0B		            ldy #$0B
+   122 30B0 8C 42 03		            sty ICCOM
+   123 30B3 4C 56 E4		            jmp CIOV
+   124 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   125 				;
+   126 				; convert hex to atascii
+   127 				;   hex A -> atascii X,Y            
+   128 				;
+   129 30B6 48			convh2a		pha
+   130 30B7 4A						lsr
+   131 30B8 4A						lsr
+   132 30B9 4A						lsr
+   133 30BA 4A						lsr
+   134 30BB F8						sed		
+   135 30BC 18						clc
+   136 30BD 69 90					adc #$90
+   137 30BF 69 40					adc #$40
+   138 30C1 AA						tax
+   139 30C2 68						pla
+   140 30C3 29 0F					and #$0f
+   141 30C5 18						clc
+   142 30C6 69 90					adc #$90
+   143 30C8 69 40					adc #$40
+   144 30CA A8						tay
+   145 30CB D8						cld			
+   146 30CC 60						rts
+   147
+   148 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   149 				;
+   150 				; start segment            
+   151 				;
+   152
+   153 02E0-02E1> 00 30		            run start
+   154 				            

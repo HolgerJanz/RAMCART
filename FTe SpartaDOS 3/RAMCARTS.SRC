@@ -31,7 +31,7 @@
 
 startCopy
         jsr PRINT
-        .byte "  Start flashing",$9B,$FF
+        .byte "  Start store. Copy from RAM to Flash.",$9B,$FF
 ; set buffer address 8k at $4000       
         lda #$00
         sta dataadr

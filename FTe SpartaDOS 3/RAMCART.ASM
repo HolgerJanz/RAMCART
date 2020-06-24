@@ -37,6 +37,7 @@ MEMLO       = $02E7
 DDEVIC      = $0300
 DUNIT       = $0301
 DCOMND      = $0302
+DSTATS		= $0303
 DBUFLO      = $0304
 DBUFHI      = $0305
 DBYTLO      = $0308
@@ -239,7 +240,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk for The!Cart ver60 by hjx',$9B,$FF
+            .byte 'The!Ramdisk for The!Cart ver64 by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -255,14 +256,8 @@ NORAMDISK
                         
 RAMDISKINI
 ; check for parameter
-            ldy #SD_BUFOFF
-            lda (DOSVEC),Y
-            clc
-            adc #SD_LBUF
-            tay
-            lda (DOSVEC),Y
-            cmp #$9B
-            bne PRSPARM
+			jsr PARAMCHECK
+            bcs PRSPARM
 ; no parameter -> error
             jsr PRINT
             .byte '  Error: No parameter',$9B,$FF
@@ -292,10 +287,22 @@ PRSPARM     lda DOSVEC
             lda (DOSVEC),Y
             and #$0F
             sta DRVNUM
-; check options /N
+
+			jsr PARAMCHECK
+            bcc PRSPAREND
+
+            jsr CRNAME
+            bne PARAMOPT
+            ldy #SD_COMFNAM+1
+            lda (DOSVEC),Y
+            and #$0F
+            sta FDRVNUM
+            
+; check options /xxx
             jsr CRNAME
             beq PRSPAREND
-            ldy #SD_COMFNAM+3
+
+PARAMOPT	ldy #SD_COMFNAM+3
             lda (DOSVEC),Y
             cmp #'/'
             bne PARAMERR
@@ -305,14 +312,14 @@ PRSPARLOOP  iny
             cmp #$9B         ; end of parameter
             beq PRSPAREND
             
-PRSPARNXT1  cmp #'F'         ; driver ?
+PRSPARNXT1  cmp #'F'         ; format only ?
             bne PRSPARNXT2
             lda #$FF
             sta CHKOPTN
             sta CHKFRMT
             jmp PRSPARLOOP
 
-PRSPARNXT2  cmp #'D'         ; format ?
+PRSPARNXT2  cmp #'D'         ; driver only ?
             bne PARAMERR
             lda #$FF
             sta CHKOPTN
@@ -347,25 +354,44 @@ PARAMERR    jsr PRINT
             .byte '  Error: Wrong parameter',$9B,$FF
 PRNHLP
             jsr PRINT
-            .byte '  Use RAMCART Dn: [/DF]',$9B
-            .byte '    n - drive number for ramdisk',$9B            
+            .byte '  Use RAMCART Dx: [Dy:] [/DF]',$9B
+            .byte '    x - drive number for ramdisk',$9B
+            .byte '    y - drive number for flashdisk',$9B
             .byte '    D - install driver only',$9B
             .byte '    F - format ramdisk only',$9B
-            .byte '  Use shift+return/esc in start menu',$9B,$FF
+            .byte '  Use shift+return/esc in start menu.',$9B
+            .byte '  If Dx: equals Dy: then Dy: precedes.',$9B,$FF
             rts
 
 STARTINST   
+            jsr PRINT
+            .byte '  Driver installed ',$ff
+
             lda DRVNUM
+            bmi PRTFLASHDRV
+			cmp FDRVNUM
+			beq PRTFLASHDRV
             clc
             adc #'0'
             sta ramDx
-            sec
-            sbc #$01
+			jsr PRINT
+            .byte 'RAM=D'
+ramDx       .byte 'x: ',$ff
+
+PRTFLASHDRV
+            lda FDRVNUM
+            bmi PRTDRVEND
+            clc
+            adc #'0'
             sta flashDy
-            jsr PRINT
-            .byte '  Driver installed RAM D'
-ramDx       .byte 'x:, Flash D'
-flashDy     .byte 'y:',$9B,$FF
+			jsr PRINT
+			.byte 'Flash=D'
+flashDy     .byte 'y:',$ff
+
+PRTDRVEND
+			jsr PRINT
+			.byte $9B,$FF
+
 ; set jsr to original DOSINI
             lda DOSINI
             sta JSRDOSINI+1
@@ -417,7 +443,7 @@ FRMTRD      jsr PRINT
 
             jsr cart_save
 
-; clear sector 0-3
+; clear sector 1-4
 _loop03     ldx #$00
             jsr cart_set
             lda #$00
@@ -442,11 +468,11 @@ _loopcnt03  lda #$04
             jsr cart_set
             ldy #$2b
 _loopheader lda RDHEAD,Y
-            sta $8080,Y
+            sta $8000,Y		; sector 1
             dey
             bpl _loopheader
             lda #$60    ; write RTS to second boot sector
-            sta $8100   ; see header jmp $3080
+            sta $8080   ; see header jmp $3080, sector 2
             jsr cart_restore
 
 
@@ -456,7 +482,7 @@ _loop47     ldx #$00
             jsr cart_set
             lda #$ff
             ldy #$7f
-FRMTCLP47   sta $8200,Y
+FRMTCLP47   sta $8180,Y
             dey
             bpl FRMTCLP47
             jsr cart_restore
@@ -476,7 +502,7 @@ _loop89     ldx #$00
             jsr cart_set
             lda #$00
             ldy #$7f
-FRMTCLP89   sta $8400,Y
+FRMTCLP89   sta $8380,Y
             dey
             bpl FRMTCLP89
             jsr cart_restore
@@ -493,49 +519,25 @@ _loopcnt89  lda #$02
 
             ldx #$00
             jsr cart_set
-; write magic for Ebiguy
-            lda MAGIC
-            sta $8000
-            
-            lda MAGIC+1
-            sta $8000+1
-            
-            lda MAGIC+2
-            sta $8000+2
-            
-            lda MAGIC+3
-            sta $8000+3
-            
-            lda MAGIC+4
-            sta $8000+4
-            
-            lda MAGIC+5
-            sta $8000+5
-            
-            lda MAGIC+6
-            sta $8000+6
-            
-            lda MAGIC+7
-            sta $8000+7
 ; mark used sectors
             lda #$00
-            sta $8200   ; sector 0-7
+            sta $8180   ; sector 1-8
             lda #$3f
-            sta $8201   ; sector 8-9
+            sta $8181   ; sector 9
 ;            lda #$fe
 ;            sta $83ff   ; sector 4096 does not exit
 ; set sector map for MAIN
             lda #$00    ; two words $0000 (first and last)
-            sta $8400
-            sta $8401
-            sta $8402
-            sta $8403
+            sta $8380
+            sta $8381
+            sta $8382
+            sta $8383
             lda #$09    ;  and third $0009 start of main
-            sta $8404
+            sta $8384
 ; set MAIN directory            
             ldx #$00
 _loopmain   lda RDMAIN,x
-            sta $8480,x
+            sta $8400,x
             inx
             cpx #$17
             bne _loopmain
@@ -543,7 +545,26 @@ _loopmain   lda RDMAIN,x
 ; finished
             rts
             
-MAGIC       .byte $34,$23,$32,$21,$2D,$24,$33,$2B
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; parameter subroutines            
+;
+
+;
+; check for next parameter
+;   sets carry if next parameter is available
+;
+PARAMCHECK	ldy #SD_BUFOFF
+            lda (DOSVEC),Y
+            clc
+            adc #SD_LBUF
+            tay
+            lda (DOSVEC),Y
+            cmp #$9b
+            clc
+            beq PARAMCHECKE
+			sec
+PARAMCHECKE	rts
             
 ; load boot sector to $3000 start $3080 and RTS ($60)
 RDHEAD      .byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
@@ -583,7 +604,7 @@ checkfrmt
             jsr cart_set
 
 _nxtcharv   lda RDMAINNAME,x    ; check volume name
-            cmp $8486,x
+            cmp $8406,x			; sector $09
             bne _nofrmt
             inx
             cpx #$0b
@@ -718,9 +739,7 @@ RAMDSIO     lda DDEVIC
 REAA004     lda DRVNUM  ; check drive number for RAM
             cmp DUNIT
             beq NEWSIOGO
-            tax         ; check drive number for Flash
-            dex
-            txa
+REAA026		lda FDRVNUM  ; check drive number for Flash
             cmp DUNIT
             beq NEWSIOGO
 JMPSIO      jmp $0000
@@ -807,8 +826,11 @@ REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
 PUTGETSEC   lda #$00
             sta BUFRLO
             lda DAUX1
+            sec
+            sbc #$01
             sta BUFRHI
             lda DAUX2
+            sbc #$00
             asl BUFRHI
             rol
             tax                 ; set X with memory bank number
@@ -852,12 +874,12 @@ WAITLOOP2   cmp RTCLOK+2
             lda #$00
             sta NMIEN           ; 40 cycles
 ; set bank, number in X
-            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+            lda #TCMOSL.16K     ; set 2x8k mode at $8000-$BFFF
             sta TCMOSL          
 
-REAA025     lda DRVNUM  ; check drive number for RAM
+REAA025     lda FDRVNUM  ; check drive number for flash
             cmp DUNIT
-            beq setTCram
+            bne setTCram
 
 ; 512k user space start bank $3fc0
 ; 640k user space start bank $3fb0
@@ -937,6 +959,7 @@ PUTADRLP    sta $FFFF,Y       ; 5 cycles
 RDSIOEND    ldy #$01
             bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
 
+			sty DSTATS
             tya                 ; set RC
             rts
             
@@ -947,7 +970,8 @@ L36BB       .byte $00
 CONFSECSIZ  .byte $80                   ; $80 -> 128Byte, $00 -> 256Byte
             .byte $FF,$00,$00,$00
 
-DRVNUM      .byte $01
+DRVNUM      .byte $ff
+FDRVNUM     .byte $ff
 ; $80 for 128Bytes ($100 for 256Bytes)
 BUFFERXX1
 ;            org $37E6
@@ -990,6 +1014,7 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA023+1
             .word REAA024+1
             .word REAA025+1
+            .word REAA026+1
             .word $0000
  
 ; realloc address low byte           
