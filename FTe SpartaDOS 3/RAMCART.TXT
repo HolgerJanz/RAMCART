@@ -1,24 +1,41 @@
-RAMCART - Ramdisk Driver for THE!CART
+RAMCART - Disk Driver for THE!CART
 and SpartaDOS 3
 
-RAMCART Dn: [/DF]
+RAMCART Dx: [Dy:] [/DF]
 
-RAMCART is a ramdisk driver for
-THE!CART. Dx: specifies the drive
+RAMCART is a ram (Dx:) and
+optional flash (Dy:) disk
+driver for THE!CART.
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+YOU HAVE TO SPECIFY 640kB USER
+SPACE IN THE WORKBOOK OPTIONS
+IN THE CART STUDIO TO
+USE THE FLASH DISK! 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Dx: specifies the drive
 number n that should be used for the
-ramdisk. The drive n-1 is used for
+ram disk. The drive n-1 is used for
 the Flash Disk. RAMCARTS (store)
 and RAMCARTR (restore) can be used
 to copy between this tow disks.
 With option /D only the
-ramdisk driver will be installed.
-With option /F the ramdisk
+ram disk driver will be installed.
+With option /F the ram disk
 will be formatted with 4096 sectors
 of 128 Bytes and SpartaDOS file
 system.
-Without options the ramdisk driver
+Without options the ram disk driver
 is installed and formatted
 on demand.
+
+Dy: specifies the drive number for
+the flash disk. Use RAMCARTS to
+copy the ram disk to the flash
+disk (store). Use RAMCARTR to
+copy the flash disk to the ram
+disk (restore).
 
 XINIT can be used to format with
 a different size. The original
@@ -32,6 +49,20 @@ display synchronization. XINIT can
 only be used with 128 Bytes sectors
 formats (single density).
 
+SECOPY is a special sector copy
+program for any disk of single
+density. It is useful to copy
+whole disk to and from ram or
+flash disk.
+
+TC is a program to switch between
+different The Cart entries without
+cold start and reboot. The file
+TC.CFG is use to specify the names
+and banks of an entry.
+
+SETOSSIO resets the SparatDOS SIO
+vector to the OS routine.
 PS: Do not forget to use SHIFT with
 RETURN or ESC in the start menu of
 THE!CART to enable the access to the

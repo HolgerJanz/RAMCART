@@ -5,7 +5,7 @@ TC [name]
 Switches ROMs (banks) of The!Cart.
 
 Description is stored in
-D1:TC.SYS. Every line describes
+D1:TC.CFG. Every line describes
 one possible entry to switch to:
 
 NAME(8) MODE(2) BANK(4)
