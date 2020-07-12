@@ -1,0 +1,335 @@
+mads 2.0.9
+Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/POKE.ASM
+     1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     2 				;
+     3 				; Poke for SpartaDOS 3 by hjx
+     4
+     5 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     6 				;
+     7 				; Equates
+     8 				;
+     9
+    10 				; 
+    11 				; CIO
+    12 				; 
+    13 = E456			CIOV        = $E456
+    14 				; CIOCB addresses
+    15 = 0340			ICHID		= $0340
+    16 = 0341			ICDNO		= $0341
+    17 = 0342			ICCOM       = $0342
+    18 = 0343			ICSTA		= $0343
+    19 = 0344			ICBAL       = $0344
+    20 = 0345			ICBAH       = $0345
+    21 = 0346			ICPTL		= $0346
+    22 = 0347			ICPTH		= $0347
+    23 = 0348			ICBLL       = $0348
+    24 = 0349			ICBLH       = $0349
+    25 = 034A			ICAX1		= $034a
+    26 = 034B			ICAX2		= $034b
+    27
+    28 				; 
+    29 				; SIO
+    30 				; 
+    31 = E459			SIOV        = $E459
+    32 				; SIOCB addresses
+    33 = 0300			DDEVIC		= $0300
+    34 = 0301			DUNIT		= $0301
+    35 = 0302			DCOMND		= $0302
+    36 = 0303			DSTATS		= $0303
+    37 = 0304			DBUFLO		= $0304
+    38 = 0305			DBUFHI		= $0305
+    39 = 0306			DTIMLO		= $0306
+    40 = 0307			DTIMHI		= $0307
+    41 = 0308			DBYTLO		= $0308
+    42 = 0309			DBYTHI		= $0309
+    43 = 030A			DAUX1		= $030a
+    44 = 030B			DAUX2		= $030b
+    45
+    46 				; cursor
+    47 = 02F0			CRSINH		= $02F0
+    48
+    49 				;
+    50 				; SpartaDOS 
+    51 				;
+    52 = 000A			DOSVEC		= $000A
+    53 				;
+    54 = 000A			SD_BUFOFF   = $0A ; offset in line buffer
+    55 = 003F			SD_LBUF     = $3F ; offset to line buffer
+    56 = 0003			SD_ZCRNAME  = $03 ; offset for jmp to crunch name
+    57 = 0021			SD_COMFNAM  = $21 ; offset to buffer for crunch name 
+    58 = 000A			SD_LSIO     = $0A ; negative offset to SIO vector
+    59
+    60 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    61 				;
+    62 				; Start of code
+    63 				;
+    64 				            org $3000
+    65 				start
+    66 				;            jsr print
+    67 				;            .byte 'Poke vers42 by hjx',$9B,$FF
+    68
+    69 FFFF> 3000-31B2> 20 1B + 			jsr pcheck			; check for parameter 1
+    70 3003 90 03					bcc error_msg
+    71 3005 4C 2D 30					jmp start_adr
+    72 3008 20 80 31		error_msg   jsr PRINT
+    73 300B 20 20 45 72 72 6F +             .byte '  Error - use: POKE aaaa vv[vv]',$9B
+    74 302B FF			            .byte $ff
+    75 302C 60						rts
+    76 							
+    77 302D 20 2D 31		start_adr	jsr pget
+    78 3030 F0 D6					beq error_msg
+    79
+    80 3032 A2 00		            ldx #$00			; get address
+    81 3034 A0 24		            ldy #SD_COMFNAM+3
+    82 3036 B1 0A		loop_r4     lda (DOSVEC),Y
+    83 3038 C9 9B					cmp #$9b
+    84 303A F0 CC					beq error_msg
+    85 303C 9D 17 31					sta char1,x
+    86 303F C8						iny
+    87 3040 E8						inx
+    88 3041 E0 04					cpx #$04
+    89 3043 D0 F1					bne loop_r4
+    90 3045 B1 0A					lda (DOSVEC),Y
+    91 3047 C9 9B					cmp #$9b
+    92 3049 D0 BD		error_msg2	bne error_msg
+    93
+    94 304B AE 17 31					ldx char1			; convert address
+    95 304E AC 18 31					ldy char2
+    96 3051 20 4A 31					jsr conva2h
+    97 3054 8D 02 31					sta adr1_h
+    98
+    99 3057 AE 19 31					ldx char3
+   100 305A AC 1A 31					ldy char4
+   101 305D 20 4A 31					jsr conva2h
+   102 3060 8D 01 31					sta adr1_l
+   103 							
+   104 3063 20 1B 31					jsr pcheck			; check for parameter 2
+   105 3066 90 A0					bcc error_msg
+   106 3068 20 2D 31					jsr pget
+   107 306B F0 9B					beq error_msg
+   108
+   109 306D A2 00		            ldx #$00
+   110 306F A0 24		            ldy #SD_COMFNAM+3	; get value
+   111 3071 B1 0A		loop_r2     lda (DOSVEC),Y
+   112 3073 C9 9B					cmp #$9b
+   113 3075 F0 91					beq error_msg
+   114 3077 9D 17 31					sta char1,x
+   115 307A C8						iny
+   116 307B E8						inx
+   117 307C E0 02		vchar_cnt	cpx #$02
+   118 307E D0 F1					bne loop_r2
+   119 3080 B1 0A					lda (DOSVEC),Y
+   120 3082 C9 9B					cmp #$9b
+   121 3084 F0 12					beq poke
+   122
+   123 3086 2C 16 31					bit flag_word		; chek for word
+   124 3089 D0 BE					bne error_msg2
+   125
+   126 308B A9 FF					lda #$ff
+   127 308D 8D 16 31					sta flag_word
+   128 3090 A9 04					lda #$04
+   129 3092 8D 7D 30					sta vchar_cnt+1
+   130 3095 4C 71 30					jmp loop_r2
+   131 							
+   132 3098 AE 17 31		poke		ldx char1			; convert value
+   133 309B AC 18 31					ldy char2
+   134 309E 20 4A 31					jsr conva2h
+   135 30A1 8D FF 30					sta val1
+   136
+   137 30A4 AD 02 31					lda adr1_h			; convert address for output
+   138 30A7 20 69 31					jsr convh2a
+   139 30AA 8E 07 31					stx msg_a
+   140 30AD 8C 08 31					sty msg_a+1
+   141
+   142 30B0 AD 01 31					lda adr1_l
+   143 30B3 20 69 31					jsr convh2a
+   144 30B6 8E 09 31					stx msg_a+2
+   145 30B9 8C 0A 31					sty msg_a+3
+   146
+   147 30BC AD FF 30					lda val1			; convert value for output
+   148 30BF 20 69 31					jsr convh2a
+   149 30C2 8E 0F 31					stx msg_v
+   150 30C5 8C 10 31					sty msg_v+1
+   151
+   152
+   153 30C8 2C 16 31					bit flag_word		; check for word
+   154 30CB F0 31					beq poke_byte
+   155
+   156 30CD 18						clc					; calc adr for high byte
+   157 30CE AD 01 31					lda adr1_l
+   158 30D1 69 01					adc #$01
+   159 30D3 8D FC 30					sta adr2_l
+   160 30D6 AD 02 31					lda adr1_h
+   161 30D9 69 00					adc #$00
+   162 30DB 8D FD 30					sta adr2_h
+   163
+   164 30DE AD FF 30					lda val1			; set value for high byte
+   165 30E1 8D FA 30					sta val2
+   166
+   167 30E4 AE 19 31					ldx char3			; convert value 2 (low)
+   168 30E7 AC 1A 31					ldy char4
+   169 30EA 20 4A 31					jsr conva2h
+   170 30ED 8D FF 30					sta val1
+   171 30F0 20 69 31					jsr convh2a			; convert value 2 for output
+   172 30F3 8E 11 31					stx msg_v+2
+   173 30F6 8C 12 31					sty msg_v+3
+   174
+   175 							
+   176 30F9 A9 00		c_val2		lda #$00
+   177 30FB 8D FF FF		c_adr2		sta $ffff
+   178 							
+   179 							
+   180 30FE			poke_byte			
+   181 30FE A9 00		c_val1		lda #$00
+   182 3100 8D FF FF		c_adr1		sta $ffff
+   183
+   184 3103 20 80 31					jsr print
+   185 3106 24			            .byte '$'
+   186 3107 61 61 61 61 20 3C + msg_a       .byte 'aaaa < $'
+   187 310F 76 76 20 20 9B	msg_v       .byte 'vv  ',$9B
+   188 3114 FF						.byte $FF
+   189
+   190 3115 60			            rts
+   191
+   192 3116 00			flag_word	.byte $00
+   193 3117 00			char1		.byte $00
+   194 3118 00			char2		.byte $00
+   195 3119 00			char3		.byte $00
+   196 311A 00			char4		.byte $00
+   197
+   198 = 3101			adr1_l		= c_adr1+1
+   199 = 3102			adr1_h		= adr1_l+1
+   200
+   201 = 30FC			adr2_l		= c_adr2+1
+   202 = 30FD			adr2_h		= adr2_l+1
+   203
+   204 = 30FF			val1		= c_val1+1
+   205 = 30FA			val2		= c_val2+1
+   206
+   207 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   208 				;
+   209 				; check for next parameter
+   210 				;   sets carry if next parameter is available
+   211 				;
+   212 311B A0 0A		pcheck		ldy #SD_BUFOFF
+   213 311D B1 0A		            lda (DOSVEC),Y
+   214 311F 18			            clc
+   215 3120 69 3F		            adc #SD_LBUF
+   216 3122 A8			            tay
+   217 3123 B1 0A		            lda (DOSVEC),Y
+   218 3125 C9 9B		            cmp #$9b
+   219 3127 18			            clc
+   220 3128 F0 01		            beq pcheck_end
+   221 312A 38						sec
+   222 312B 60			pcheck_end	rts
+   223
+   224 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   225 				;
+   226 				; get next parameter
+   227 				;   calls crunch name 
+   228 				;
+   229 				; jump for jsr to crunch name
+   230 312C FF			pget_set	.byte $ff
+   231 312D			pget		; set crunch name address, if necessary
+   232 312D 2C 2C 31					bit pget_set
+   233 3130 10 14					bpl pget_call
+   234 							
+   235 3132 A5 0A					lda DOSVEC
+   236 3134 18			            clc
+   237 3135 69 03		            adc #SD_ZCRNAME
+   238 3137 8D 47 31		            sta pget_call+1
+   239 				            
+   240 313A A5 0B		            lda DOSVEC+1
+   241 313C 69 00		            adc #$00
+   242 313E 8D 48 31		            sta pget_call+2
+   243 				            
+   244 3141 A9 00					lda #$00
+   245 3143 8D 2C 31					sta pget_set
+   246 							
+   247 3146 20 FF FF		pget_call	jsr $ffff
+   248 3149 60						rts
+   249
+   250 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   251 				;
+   252 				; convert atascii to hex
+   253 				;   atascii X,Y -> hex A            
+   254 				;
+   255 314A 8A			conva2h		txa
+   256 314B 20 5C 31					jsr conva2h_h
+   257 314E 0A						asl
+   258 314F 0A						asl
+   259 3150 0A						asl
+   260 3151 0A						asl
+   261 3152 8D 5A 31					sta conva2h_o+1
+   262 3155 98						tya
+   263 3156 20 5C 31					jsr conva2h_h
+   264 3159 09 00		conva2h_o	ora #$00
+   265 315B 60						rts
+   266 							
+   267 315C 38			conva2h_h   sec
+   268 315D E9 30		            sbc #'0'
+   269 315F C9 0A		            cmp #$0A
+   270 3161 90 03		            bcc conva2h_hl
+   271 3163 18			            clc
+   272 3164 69 09		            adc #$09
+   273 3166 29 0F		conva2h_hl  and #$0F
+   274 3168 60			            rts
+   275
+   276 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   277 				;
+   278 				; convert hex to atascii
+   279 				;   hex A -> atascii X,Y            
+   280 				;
+   281 3169 48			convh2a		pha
+   282 316A 4A						lsr
+   283 316B 4A						lsr
+   284 316C 4A						lsr
+   285 316D 4A						lsr
+   286 316E F8						sed		
+   287 316F 18						clc
+   288 3170 69 90					adc #$90
+   289 3172 69 40					adc #$40
+   290 3174 AA						tax
+   291 3175 68						pla
+   292 3176 29 0F					and #$0f
+   293 3178 18						clc
+   294 3179 69 90					adc #$90
+   295 317B 69 40					adc #$40
+   296 317D A8						tay
+   297 317E D8						cld			
+   298 317F 60						rts
+   299
+   300 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   301 				;
+   302 				; print subroutine            
+   303 				;
+   304 3180 68			print		pla
+   305 3181 8D 91 31		            sta print_iter+1
+   306 3184 68			            pla
+   307 3185 8D 92 31		            sta print_iter+2
+   308 3188 EE 91 31		print_loop  inc print_iter+1
+   309 318B D0 03		            bne print_iter
+   310 318D EE 92 31		            inc print_iter+2
+   311 3190 AD FF FF		print_iter  lda $ffff
+   312 3193 C9 FF		            cmp #$ff
+   313 3195 F0 13		            beq print_end
+   314 				            
+   315 3197 A2 00		            ldx #$00			; put char
+   316 3199 8E 48 03		            stx ICBLL
+   317 319C 8E 49 03		            stx ICBLH
+   318 319F A0 0B		            ldy #$0B
+   319 31A1 8C 42 03		            sty ICCOM
+   320 31A4 20 56 E4		            jsr CIOV
+   321 				            
+   322 31A7 4C 88 31		            jmp print_loop
+   323 31AA AD 92 31		print_end   lda print_iter+2
+   324 31AD 48			            pha
+   325 31AE AD 91 31		            lda print_iter+1
+   326 31B1 48			            pha
+   327 31B2 60			            rts
+   328
+   329 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   330 				;
+   331 				; run address            
+   332 				;
+   333 02E0-02E1> 00 30		            run start

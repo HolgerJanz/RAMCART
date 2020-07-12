@@ -74,7 +74,7 @@ BUFRHI      = $0033
 			org $3000
 start
 			lda #$ff
-			sta CRSINH
+			sta CRSINH	; cursor off
 			
             jsr PRINT
             .byte 'Sector Copy vers43 by hjx',$9B,$FF
