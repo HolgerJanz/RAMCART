@@ -1,16 +1,16 @@
-TC - The!Cart Rom Switcher
+TCAR - The!Cart Rom Switcher
 
-TC [name]
+TCAR [name]
 
 Switches ROMs (banks) of The!Cart.
 
 Description is stored in
-D1:TC.CFG. Every line describes
+D1:TCAR.CFG. Every line describes
 one possible entry to switch to:
 
 NAME(8) MODE(2) BANK(4)
 
-Names must always be 8 characters.
+NAME must always be 8 characters.
 If Name should be shorter it must
 be blank padded. One can use
 spaces for grouping. If only the
@@ -18,8 +18,8 @@ first part of name of a group is
 specify then the first matching
 entry is used.
 
-Mode describes
-The!Cart mode in hex and Bank
+MODE describes
+The!Cart mode in hex and BANK
 describes the start bank in hex.
 These value must be updated after
 every flash of the The!Cart because

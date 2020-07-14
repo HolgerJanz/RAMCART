@@ -346,7 +346,7 @@ mode    .byte $00
 bankl   .byte $00
 bankh   .byte $00
         
-fname   .byte 'D1:>TC.CFG',$9b
+fname   .byte 'D1:>TCAR.CFG',$9b
 lbuffer .byte '    '
 pbuffer .byte '________________',$9b,$FF
 

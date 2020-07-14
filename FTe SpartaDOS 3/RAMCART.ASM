@@ -365,7 +365,7 @@ PRNHLP
 
 STARTINST   
             jsr PRINT
-            .byte '  Driver installed ',$ff
+            .byte 'Driver installed ',$ff
 
             lda DRVNUM
             bmi PRTFLASHDRV
@@ -439,7 +439,7 @@ REAA003     jsr SETMEMLO      ;realloc $33DB
 
 ; format ramdisk
 FRMTRD      jsr PRINT
-            .byte '  Ramdisk formatted',$9B,$FF
+            .byte 'Ramdisk formatted',$9B,$FF
 
             jsr cart_save
 

@@ -5,6 +5,7 @@ RTCLOK   = $0012
 CRITIC   = $42
 
 SDMCTL   = $022F
+CH       = $02FC
 
 DMACTL   = $D400
 NMIEN    = $D40E
@@ -110,6 +111,8 @@ TCCOLO = $d5af
 ; Writing to this register disables "The!Cart" registers
 ; at $d5aX.
 
+
+
 ;
 ; wait for sync            
 ;
@@ -117,6 +120,20 @@ TCCOLO = $d5af
 ;_waitloop   cmp rtclok+2
 ;            beq _waitloop
 ;            rts
+
+
+;
+; get key
+;
+getKey
+		lda #$FF		; check for key
+		tax
+		cmp CH
+		beq getKey
+		lda CH
+		stx CH
+		rts
+
 
 ;
 ; Set flash The!Cart register

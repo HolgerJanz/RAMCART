@@ -12,8 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver60 for The!Ramdisk by hjx",$9B,$FF
-        jsr globalStoreTCreg
+        .byte "STORE ver61 for The!Ramdisk by hjx",$9B,$FF
  ; init flasher
         jsr finit
         jsr fenable
@@ -31,7 +30,21 @@
 
 startCopy
         jsr PRINT
-        .byte "  Start store. Copy from RAM to Flash.",$9B,$FF
+        .byte "Copy RAM disk to Flash disk.",$9b
+        .byte "Flash disk will be deleted!",$9b
+        .byte "Screen goes black for ca. 20 seconds.",$9b
+        .byte "Start store (flashing) RAM disk? (Y)",$ff
+        
+        jsr getKey
+        cmp #$2B
+        beq startCopy2
+
+        jsr PRINT
+        .byte $9b,"Abort.",$9b,$ff
+        rts
+
+startCopy2        
+        jsr globalStoreTCreg
 ; set buffer address 8k at $4000       
         lda #$00
         sta dataadr
@@ -75,7 +88,7 @@ _loopCopy
 _endFlash
         jsr globalRestoreTCreg
         jsr PRINT
-        .byte "  End flashing",$9B,$FF
+        .byte $9b,"Store (flashing) done.",$9B,$FF
         rts
 
 flash

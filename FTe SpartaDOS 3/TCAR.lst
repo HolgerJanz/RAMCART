@@ -1,5 +1,5 @@
 mads 2.0.9
-Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC.ASM
+Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TCAR.ASM
      1 				; The!Cart Bank Switch
      2
      3
@@ -187,10 +187,10 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    185 				        org $3000
    186 				        
    187 				; message
-   188 FFFF> 3000-32B5> A2 E0	        ldx #<startmsg.begin
+   188 FFFF> 3000-32B7> A2 E0	        ldx #<startmsg.begin
    189 3002 A0 30		        ldy #>startmsg.begin
    190 3004 A9 1F		        lda #startmsg.end-startmsg.begin
-   191 3006 20 54 32		        jsr print
+   191 3006 20 56 32		        jsr print
    192
    193 				; check for parameter
    194 3009 A0 0A		        ldy #SD_BUFOFF
@@ -206,32 +206,32 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    204 3018 8C 68 31		        sty paridy      ;set index to parameter
    205
    206 				; read sys file        
-   207 301B 20 6D 32		        jsr open
+   207 301B 20 6F 32		        jsr open
    208 301E 30 1E		        bmi prserr
    209 				                
-   210 3020 20 8C 32		rdnext  jsr input       ; read line
+   210 3020 20 8E 32		rdnext  jsr input       ; read line
    211 3023 30 29		        bmi filerr
    212 				                
    213 3025 A9 20		        lda #' '
-   214 3027 CD 83 31		        cmp pbuffer+8   ; check for spaces at 9 and 12
+   214 3027 CD 85 31		        cmp pbuffer+8   ; check for spaces at 9 and 12
    215 302A D0 22		        bne filerr
    216 302C A9 20		        lda #' '
-   217 302E CD 86 31		        cmp pbuffer+11
+   217 302E CD 88 31		        cmp pbuffer+11
    218 3031 D0 1B		        bne filerr
    219 				        
-   220 3033 20 FD 31		        jsr check
+   220 3033 20 FF 31		        jsr check
    221 3036 B0 46		        bcs found
    222 				        
    223 3038 EE 67 31		        inc lcnt
    224 303B 4C 20 30		        jmp rdnext
    225
    226 				; exit with parse error                  
-   227 303E 20 AB 32		prserr  jsr close
+   227 303E 20 AD 32		prserr  jsr close
    228 3041 A2 FF		        ldx #<errprs.begin
    229 3043 A0 30		        ldy #>errprs.begin
    230 3045 A9 17		        lda #errprs.end-errprs.begin
-   231 3047 20 54 32		        jsr print
-   232 304A 20 8D 31		        jsr list
+   231 3047 20 56 32		        jsr print
+   232 304A 20 8F 31		        jsr list
    233 304D 60			        rts
    234
    235 				; exit with file error                  
@@ -239,28 +239,28 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    237 3050 CD 53 03		        cmp IOCB1.STAT
    238 3053 F0 19		        beq filend
    239 3055 AD 67 31		        lda lcnt
-   240 3058 20 3D 32		        jsr convha
+   240 3058 20 3F 32		        jsr convha
    241 305B 8E 3C 31		        stx errfil.line
    242 305E 8C 3D 31		        sty errfil.line+1
    243 3061 A2 16		        ldx #<errfil.begin
    244 3063 A0 31		        ldy #>errfil.begin
    245 3065 A9 29		        lda #errfil.end-errfil.begin
-   246 3067 20 54 32		        jsr print
-   247 306A 20 AB 32		        jsr close
+   246 3067 20 56 32		        jsr print
+   247 306A 20 AD 32		        jsr close
    248 306D 60			        rts
    249 				        
    250 306E A2 3F		filend  ldx #<errnfd.begin
    251 3070 A0 31		        ldy #>errnfd.begin
    252 3072 A9 14		        lda #errnfd.end-errnfd.begin
-   253 3074 20 54 32		        jsr print
-   254 3077 20 AB 32		        jsr close
-   255 307A 20 8D 31		        jsr list
+   253 3074 20 56 32		        jsr print
+   254 3077 20 AD 32		        jsr close
+   255 307A 20 8F 31		        jsr list
    256 307D 60			        rts
    257
    258 				; read mode and bank
-   259 307E 20 AB 32		found   jsr close
+   259 307E 20 AD 32		found   jsr close
    260
-   261 3081 20 D8 31		        jsr rpara
+   261 3081 20 DA 31		        jsr rpara
    262 				        
    263 				; switch The!Cart
    264 3084 A9 00		        lda #$00        ; switch off DMA
@@ -348,77 +348,77 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    346 316A 00			bankl   .byte $00
    347 316B 00			bankh   .byte $00
    348 				        
-   349 316C 44 31 3A 3E 54 43 + fname   .byte 'D1:>TC.CFG',$9b
-   350 3177 20 20 20 20		lbuffer .byte '    '
-   351 317B 5F 5F 5F 5F 5F 5F + pbuffer .byte '________________',$9b,$FF
+   349 316C 44 31 3A 3E 54 43 + fname   .byte 'D1:>TCAR.CFG',$9b
+   350 3179 20 20 20 20		lbuffer .byte '    '
+   351 317D 5F 5F 5F 5F 5F 5F + pbuffer .byte '________________',$9b,$FF
    352
    353
    354 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    355 				; 
    356 				; List 
    357 				;
-   358 318D A2 53		list    ldx #<erruse.begin
-   359 318F A0 31		        ldy #>erruse.begin
-   360 3191 A9 14		        lda #erruse.end-erruse.begin
-   361 3193 20 54 32		        jsr print
+   358 318F A2 53		list    ldx #<erruse.begin
+   359 3191 A0 31		        ldy #>erruse.begin
+   360 3193 A9 14		        lda #erruse.end-erruse.begin
+   361 3195 20 56 32		        jsr print
    362 				        
-   363 3196 20 6D 32		        jsr open
-   364 3199 20 8C 32		_list   jsr input       ; read line
-   365 319C 30 36		        bmi _endlst
+   363 3198 20 6F 32		        jsr open
+   364 319B 20 8E 32		_list   jsr input       ; read line
+   365 319E 30 36		        bmi _endlst
    366
-   367 319E A9 20		        lda #' '        ; reset current mark
-   368 31A0 8D 7A 31		        sta lbuffer+3
+   367 31A0 A9 20		        lda #' '        ; reset current mark
+   368 31A2 8D 7C 31		        sta lbuffer+3
    369 				        
-   370 31A3 20 D8 31		        jsr rpara
+   370 31A5 20 DA 31		        jsr rpara
    371 				        
-   372 31A6 AD A6 D5		        lda TCMOSL      ; cmp current with para
-   373 31A9 CD 69 31		        cmp mode
-   374 31AC D0 15		        bne _print
+   372 31A8 AD A6 D5		        lda TCMOSL      ; cmp current with para
+   373 31AB CD 69 31		        cmp mode
+   374 31AE D0 15		        bne _print
    375
-   376 31AE AD A1 D5		        lda TCPBRH
-   377 31B1 CD 6B 31		        cmp bankh
-   378 31B4 D0 0D		        bne _print
+   376 31B0 AD A1 D5		        lda TCPBRH
+   377 31B3 CD 6B 31		        cmp bankh
+   378 31B6 D0 0D		        bne _print
    379
-   380 31B6 AD A0 D5		        lda TCPBRL
-   381 31B9 CD 6A 31		        cmp bankl
-   382 31BC D0 05		        bne _print
+   380 31B8 AD A0 D5		        lda TCPBRL
+   381 31BB CD 6A 31		        cmp bankl
+   382 31BE D0 05		        bne _print
    383
-   384 31BE A9 3E		        lda #'>'        ; set current mark
-   385 31C0 8D 7A 31		        sta lbuffer+3
+   384 31C0 A9 3E		        lda #'>'        ; set current mark
+   385 31C2 8D 7C 31		        sta lbuffer+3
    386
-   387 31C3 A9 9B		_print  lda #$9b        ; set return after name
-   388 31C5 8D 83 31		        sta pbuffer+8
+   387 31C5 A9 9B		_print  lda #$9b        ; set return after name
+   388 31C7 8D 85 31		        sta pbuffer+8
    389
-   390 31C8 A2 77		        ldx #<lbuffer
-   391 31CA A0 31		        ldy #>lbuffer
-   392 31CC A9 0D		        lda #$0d
-   393 31CE 20 54 32		        jsr print
+   390 31CA A2 79		        ldx #<lbuffer
+   391 31CC A0 31		        ldy #>lbuffer
+   392 31CE A9 0D		        lda #$0d
+   393 31D0 20 56 32		        jsr print
    394 				        
-   395 31D1 4C 99 31		        jmp _list 
+   395 31D3 4C 9B 31		        jmp _list 
    396
-   397 31D4 20 AB 32		_endlst jsr close
-   398 31D7 60			        rts
+   397 31D6 20 AD 32		_endlst jsr close
+   398 31D9 60			        rts
    399
    400 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    401 				;
    402 				; Read parameter (mode, bank low and bank high)
    403 				;
-   404 31D8 AE 84 31		rpara   ldx pbuffer+9   ; read mode
-   405 31DB AC 85 31		        ldy pbuffer+10
-   406 31DE 20 1D 32		        jsr convah
-   407 31E1 8D 69 31		        sta mode
+   404 31DA AE 86 31		rpara   ldx pbuffer+9   ; read mode
+   405 31DD AC 87 31		        ldy pbuffer+10
+   406 31E0 20 1F 32		        jsr convah
+   407 31E3 8D 69 31		        sta mode
    408
-   409 31E4 AE 87 31		        ldx pbuffer+12  ; read bank low
-   410 31E7 AC 88 31		        ldy pbuffer+13
-   411 31EA 20 1D 32		        jsr convah
-   412 31ED 8D 6B 31		        sta bankh
+   409 31E6 AE 89 31		        ldx pbuffer+12  ; read bank low
+   410 31E9 AC 8A 31		        ldy pbuffer+13
+   411 31EC 20 1F 32		        jsr convah
+   412 31EF 8D 6B 31		        sta bankh
    413
-   414 31F0 AE 89 31		        ldx pbuffer+14  ; read bank high
-   415 31F3 AC 8A 31		        ldy pbuffer+15
-   416 31F6 20 1D 32		        jsr convah
-   417 31F9 8D 6A 31		        sta bankl
+   414 31F2 AE 8B 31		        ldx pbuffer+14  ; read bank high
+   415 31F5 AC 8C 31		        ldy pbuffer+15
+   416 31F8 20 1F 32		        jsr convah
+   417 31FB 8D 6A 31		        sta bankl
    418 				        
-   419 31FC 60			        rts
+   419 31FE 60			        rts
    420
    421 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    422 				; 
@@ -427,27 +427,27 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    425 				; IN    pbuffer   address to file buffer
    426 				;       paridy    index to parameter in DOSVEC
    427
-   428 31FD			check ; check command line and file buffer  
-   429 31FD A2 00		        ldx #$00
-   430 31FF AC 68 31		        ldy paridy 
-   431 3202 B1 0A		checkn  lda (DOSVEC),y
-   432 3204 DD 7B 31		        cmp pbuffer,x
-   433 3207 D0 05		        bne checkc
-   434 3209 E8			        inx
-   435 320A C8			        iny
-   436 320B 4C 02 32		        jmp checkn
+   428 31FF			check ; check command line and file buffer  
+   429 31FF A2 00		        ldx #$00
+   430 3201 AC 68 31		        ldy paridy 
+   431 3204 B1 0A		checkn  lda (DOSVEC),y
+   432 3206 DD 7D 31		        cmp pbuffer,x
+   433 3209 D0 05		        bne checkc
+   434 320B E8			        inx
+   435 320C C8			        iny
+   436 320D 4C 04 32		        jmp checkn
    437 				        
-   438 320E C9 9B		checkc  cmp #$9b
-   439 3210 D0 09		        bne notfnd
-   440 3212 A9 20		        lda #' '
-   441 3214 DD 7B 31		        cmp pbuffer,x
-   442 3217 D0 02		        bne notfnd
+   438 3210 C9 9B		checkc  cmp #$9b
+   439 3212 D0 09		        bne notfnd
+   440 3214 A9 20		        lda #' '
+   441 3216 DD 7D 31		        cmp pbuffer,x
+   442 3219 D0 02		        bne notfnd
    443 				        
-   444 3219 38			        sec
-   445 321A 60			        rts
+   444 321B 38			        sec
+   445 321C 60			        rts
    446
-   447 321B 18			notfnd  clc
-   448 321C 60			        rts
+   447 321D 18			notfnd  clc
+   448 321E 60			        rts
    449
    450 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    451 				; 
@@ -456,26 +456,26 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    454 				; IN    X,Y   high, low ASCII digit 
    455 				;        A    hex value
    456
-   457 321D 8A			convah  txa
-   458 321E 38			        sec
-   459 321F E9 30		        sbc #'0'
-   460 3221 C9 0A		        cmp #10
-   461 3223 90 02		        bcc hnum0_9
-   462 3225 E9 07		        sbc #'A'-'9'-1
-   463 3227 0A			hnum0_9 asl
-   464 3228 0A			        asl
-   465 3229 0A			        asl
-   466 322A 0A			        asl
-   467 322B 8D 3B 32		        sta hbits+1
-   468 322E 98			        tya
-   469 322F 38			        sec
-   470 3230 E9 30		        sbc #'0'
-   471 3232 C9 0A		        cmp #10
-   472 3234 90 02		        bcc lnum0_9
-   473 3236 E9 07		        sbc #'A'-'9'-1
-   474 3238 29 0F		lnum0_9 and #$0F
-   475 323A 09 00		hbits   ora #$00
-   476 323C 60			        rts
+   457 321F 8A			convah  txa
+   458 3220 38			        sec
+   459 3221 E9 30		        sbc #'0'
+   460 3223 C9 0A		        cmp #10
+   461 3225 90 02		        bcc hnum0_9
+   462 3227 E9 07		        sbc #'A'-'9'-1
+   463 3229 0A			hnum0_9 asl
+   464 322A 0A			        asl
+   465 322B 0A			        asl
+   466 322C 0A			        asl
+   467 322D 8D 3D 32		        sta hbits+1
+   468 3230 98			        tya
+   469 3231 38			        sec
+   470 3232 E9 30		        sbc #'0'
+   471 3234 C9 0A		        cmp #10
+   472 3236 90 02		        bcc lnum0_9
+   473 3238 E9 07		        sbc #'A'-'9'-1
+   474 323A 29 0F		lnum0_9 and #$0F
+   475 323C 09 00		hbits   ora #$00
+   476 323E 60			        rts
    477
    478 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    479 				; 
@@ -485,25 +485,25 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    483 				; OUT X,Y    two ATASCII codes of hex representation
    484 				;
    485
-   486 323D			convha ; conv hex to atascii
-   487 323D 48			        pha                    
-   488 323E 4A			        lsr
-   489 323F 4A			        lsr
-   490 3240 4A			        lsr
-   491 3241 4A			        lsr
-   492 3242 F8			        sed        
-   493 3243 18			        clc
-   494 3244 69 90		        adc #$90
-   495 3246 69 40		        adc #$40
-   496 3248 AA			        tax
-   497 3249 68			        pla
-   498 324A 29 0F		        and #$0f
-   499 324C 18			        clc
-   500 324D 69 90		        adc #$90
-   501 324F 69 40		        adc #$40
-   502 3251 A8			        tay
-   503 3252 D8			        cld            
-   504 3253 60			        rts
+   486 323F			convha ; conv hex to atascii
+   487 323F 48			        pha                    
+   488 3240 4A			        lsr
+   489 3241 4A			        lsr
+   490 3242 4A			        lsr
+   491 3243 4A			        lsr
+   492 3244 F8			        sed        
+   493 3245 18			        clc
+   494 3246 69 90		        adc #$90
+   495 3248 69 40		        adc #$40
+   496 324A AA			        tax
+   497 324B 68			        pla
+   498 324C 29 0F		        and #$0f
+   499 324E 18			        clc
+   500 324F 69 90		        adc #$90
+   501 3251 69 40		        adc #$40
+   502 3253 A8			        tay
+   503 3254 D8			        cld            
+   504 3255 60			        rts
    505
    506 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    507 				; 
@@ -512,17 +512,17 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    510 				; IN    X,Y    low, high byte of address to message
    511 				;        A    length of message
    512
-   513 3254			print ; print message
-   514 3254 8D 48 03		        sta IOCB0.BUFLEN
-   515 3257 A9 00		        lda #$00
-   516 3259 8D 49 03		        sta IOCB0.BUFLEN+1
-   517 325C 8E 44 03		        stx IOCB0.BUF
-   518 325F 8C 45 03		        sty IOCB0.BUF+1
-   519 3262 A9 0B		        lda #XIO.PUT
-   520 3264 8D 42 03		        sta IOCB0.CMD
-   521 3267 A2 00		        ldx #$00
-   522 3269 20 56 E4		        jsr CIOV
-   523 326C 60			        rts
+   513 3256			print ; print message
+   514 3256 8D 48 03		        sta IOCB0.BUFLEN
+   515 3259 A9 00		        lda #$00
+   516 325B 8D 49 03		        sta IOCB0.BUFLEN+1
+   517 325E 8E 44 03		        stx IOCB0.BUF
+   518 3261 8C 45 03		        sty IOCB0.BUF+1
+   519 3264 A9 0B		        lda #XIO.PUT
+   520 3266 8D 42 03		        sta IOCB0.CMD
+   521 3269 A2 00		        ldx #$00
+   522 326B 20 56 E4		        jsr CIOV
+   523 326E 60			        rts
    524
    525 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    526 				; 
@@ -531,20 +531,20 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    529 				; IN    X,Y    low, high byte of address to file name
    530 				;
    531
-   532 326D			open ; open file
-   533 326D A9 6C		        lda #<fname
-   534 326F 8D 54 03		        sta IOCB1.BUF
-   535 3272 A9 31		        lda #>fname
-   536 3274 8D 55 03		        sta IOCB1.BUF+1
-   537 3277 A9 04		        lda #XIO.READ
-   538 3279 8D 5A 03		        sta IOCB1.AUX1
-   539 327C A9 00		        lda #$00
-   540 327E 8D 5B 03		        sta IOCB1.AUX2
-   541 3281 A9 03		        lda #XIO.OPEN
-   542 3283 8D 52 03		        sta IOCB1.CMD
-   543 3286 A2 10		        ldx #$10
-   544 3288 20 56 E4		        jsr CIOV
-   545 328B 60			        rts
+   532 326F			open ; open file
+   533 326F A9 6C		        lda #<fname
+   534 3271 8D 54 03		        sta IOCB1.BUF
+   535 3274 A9 31		        lda #>fname
+   536 3276 8D 55 03		        sta IOCB1.BUF+1
+   537 3279 A9 04		        lda #XIO.READ
+   538 327B 8D 5A 03		        sta IOCB1.AUX1
+   539 327E A9 00		        lda #$00
+   540 3280 8D 5B 03		        sta IOCB1.AUX2
+   541 3283 A9 03		        lda #XIO.OPEN
+   542 3285 8D 52 03		        sta IOCB1.CMD
+   543 3288 A2 10		        ldx #$10
+   544 328A 20 56 E4		        jsr CIOV
+   545 328D 60			        rts
    546
    547 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    548 				; 
@@ -553,28 +553,28 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/TC
    551 				; IN    X,Y    low, high byte of address to buffer
    552 				;       A      length of buffer
    553
-   554 328C			input ; input file
-   555 328C A9 7B		        lda #<pbuffer
-   556 328E 8D 54 03		        sta IOCB1.BUF
-   557 3291 A9 31		        lda #>pbuffer
-   558 3293 8D 55 03		        sta IOCB1.BUF+1
-   559 3296 A9 11		        lda #$11
-   560 3298 8D 58 03		        sta IOCB1.BUFLEN
-   561 329B A9 00		        lda #$00
-   562 329D 8D 59 03		        sta IOCB1.BUFLEN+1        
-   563 32A0 A9 05		        lda #XIO.INPUT
-   564 32A2 8D 52 03		        sta IOCB1.CMD
-   565 32A5 A2 10		        ldx #$10
-   566 32A7 20 56 E4		        jsr CIOV
-   567 32AA 60			        rts
+   554 328E			input ; input file
+   555 328E A9 7D		        lda #<pbuffer
+   556 3290 8D 54 03		        sta IOCB1.BUF
+   557 3293 A9 31		        lda #>pbuffer
+   558 3295 8D 55 03		        sta IOCB1.BUF+1
+   559 3298 A9 11		        lda #$11
+   560 329A 8D 58 03		        sta IOCB1.BUFLEN
+   561 329D A9 00		        lda #$00
+   562 329F 8D 59 03		        sta IOCB1.BUFLEN+1        
+   563 32A2 A9 05		        lda #XIO.INPUT
+   564 32A4 8D 52 03		        sta IOCB1.CMD
+   565 32A7 A2 10		        ldx #$10
+   566 32A9 20 56 E4		        jsr CIOV
+   567 32AC 60			        rts
    568 				        
    569 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    570 				; 
    571 				; Close File
    572 				;
-   573 32AB A9 0C		close   lda #XIO.CLOSE
-   574 32AD 8D 52 03		        sta IOCB1.CMD
-   575 32B0 A2 10		        ldx #$10
-   576 32B2 20 56 E4		        jsr CIOV
-   577 32B5 60			        rts
+   573 32AD A9 0C		close   lda #XIO.CLOSE
+   574 32AF 8D 52 03		        sta IOCB1.CMD
+   575 32B2 A2 10		        ldx #$10
+   576 32B4 20 56 E4		        jsr CIOV
+   577 32B7 60			        rts
    578 				        

@@ -12,8 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE ver60 for The!Ramdisk by hjx",$9B,$FF
-        jsr globalStoreTCreg
+        .byte "RESTORE ver61 for The!Ramdisk by hjx",$9B,$FF
  
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -31,7 +30,22 @@ errorNoCart
  
 startCopy
         jsr PRINT
-        .byte "  Start restore. Copy Flash to RAM.",$9b,$ff
+        .byte "Copy Flash disk to RAM disk.",$9b
+        .byte "RAM disk will be deleted!",$9b
+        .byte "Screen goes black for ca. 5 seconds.",$9b
+        .byte "Start restore RAM disk? (Y)",$ff
+        
+        jsr getKey
+        cmp #$2B
+        beq startCopy2
+
+        jsr PRINT
+        .byte $9b,"Abort.",$9b,$ff
+        rts
+
+startCopy2
+        jsr globalStoreTCreg
+
 ; set flash ram bank
 ; 512k user space start bank $3fc0
 ; 640k user space start bank $3fb0
@@ -59,7 +73,7 @@ _loopCopy
 ; finished        
         jsr globalRestoreTCreg        
         jsr PRINT
-        .byte "  End restore",$9B,$FF
+        .byte $9b,"Restore done.",$9B,$FF
         rts
         
 ;
