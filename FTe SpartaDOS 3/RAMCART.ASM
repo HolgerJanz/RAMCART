@@ -192,6 +192,8 @@ TCCOLO = $d5af
 
 ; saves register: pushes bank register on stack
 M_cart_push .macro
+            lda TCPBEN
+            pha
             lda TCMOSL
             pha
             lda TCMOFR
@@ -200,14 +202,10 @@ M_cart_push .macro
             pha
             lda TCPBRH
             pha
-            lda TCPBEN
-            pha
             .endm
 
 ; restores register from stack: pops from stack
 M_cart_pop  .macro
-            pla                 
-            sta TCPBEN          
             pla                 
             sta TCPBRH          
             pla                 
@@ -216,6 +214,8 @@ M_cart_pop  .macro
             sta TCMOFR          
             pla                 
             sta TCMOSL          
+            pla                 
+            sta TCPBEN          
             .endm
  
 ; set bank: number of bank in X, uses A
@@ -240,7 +240,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk for The!Cart ver64 by hjx',$9B,$FF
+            .byte 'The!Ramdisk for The!Cart ver65 by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL

@@ -12,18 +12,18 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver61 for The!Ramdisk by hjx",$9B,$FF
- ; init flasher
-        jsr finit
-        jsr fenable
-        jsr fdetect
-        jsr fdisable
- ; check and set flash type -> no flash = no The!Cart
-        lda ftype
-        cmp #tnoflsh
+        .byte "STORE ver62 for The!Ramdisk by hjx",$9B,$FF
+
+; check if we are running on THE!CART hardware
+        lda TCMOSL
+        cmp #TCMOSLXLLOCK
+        beq errorNoCart
+        cmp #TCMOSLXELOCK
+        beq errorNoCart
         bne startCopy
+ 
+errorNoCart
  ; no cart no flash
-        jsr globalRestoreTCreg
         jsr PRINT
         .byte "  Error - The!Cart not found",$9B,$FF
         rts
@@ -43,8 +43,17 @@ startCopy
         .byte $9b,"Abort.",$9b,$ff
         rts
 
-startCopy2        
+startCopy2
         jsr globalStoreTCreg
+; init flasher
+        jsr finit
+        jsr fenable
+        jsr fdetect
+        jsr fdisable
+; check and set flash type -> no flash = no The!Cart
+;        lda ftype
+;        cmp #tnoflsh
+;        bne startCopy
 ; set buffer address 8k at $4000       
         lda #$00
         sta dataadr

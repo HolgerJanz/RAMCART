@@ -194,30 +194,30 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    192
    193 				; saves register: pushes bank register on stack
    194 				M_cart_push .macro
-   195 				            lda TCMOSL
+   195 				            lda TCPBEN
    196 				            pha
-   197 				            lda TCMOFR
+   197 				            lda TCMOSL
    198 				            pha
-   199 				            lda TCPBRL
+   199 				            lda TCMOFR
    200 				            pha
-   201 				            lda TCPBRH
+   201 				            lda TCPBRL
    202 				            pha
-   203 				            lda TCPBEN
+   203 				            lda TCPBRH
    204 				            pha
    205 				            .endm
    206
    207 				; restores register from stack: pops from stack
    208 				M_cart_pop  .macro
    209 				            pla                 
-   210 				            sta TCPBEN          
+   210 				            sta TCPBRH          
    211 				            pla                 
-   212 				            sta TCPBRH          
+   212 				            sta TCPBRL          
    213 				            pla                 
-   214 				            sta TCPBRL          
+   214 				            sta TCMOFR          
    215 				            pla                 
-   216 				            sta TCMOFR          
+   216 				            sta TCMOSL          
    217 				            pla                 
-   218 				            sta TCMOSL          
+   218 				            sta TCPBEN          
    219 				            .endm
    220 				 
    221 				; set bank: number of bank in X, uses A
@@ -242,7 +242,7 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    240 				            
    241 				; info message
    242 FFFF> 3000-3681> 20 82 +             jsr PRINT
-   243 3003 54 68 65 21 52 61 +             .byte 'The!Ramdisk for The!Cart ver64 by hjx',$9B,$FF
+   243 3003 54 68 65 21 52 61 +             .byte 'The!Ramdisk for The!Cart ver65 by hjx',$9B,$FF
    244
    245 				; check for The!Cart
    246 302A AD A6 D5		             lda TCMOSL
@@ -869,15 +869,15 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    867 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    868 35A5			            M_cart_push         ; save register
 Macro: M_CART_PUSH [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
-     1 35A5 AD A6 D5		            lda TCMOSL
+     1 35A5 AD A2 D5		            lda TCPBEN
      2 35A8 48			            pha
-     3 35A9 AD A7 D5		            lda TCMOFR
+     3 35A9 AD A6 D5		            lda TCMOSL
      4 35AC 48			            pha
-     5 35AD AD A0 D5		            lda TCPBRL
+     5 35AD AD A7 D5		            lda TCMOFR
      6 35B0 48			            pha
-     7 35B1 AD A1 D5		            lda TCPBRH
+     7 35B1 AD A0 D5		            lda TCPBRL
      8 35B4 48			            pha
-     9 35B5 AD A2 D5		            lda TCPBEN
+     9 35B5 AD A1 D5		            lda TCPBRH
     10 35B8 48			            pha
 Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
    869 35B9 E6 42		            inc CRITIC
@@ -942,15 +942,15 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    928 361D			            M_cart_pop          ; restore register            
 Macro: M_CART_POP [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
      1 361D 68			            pla                 
-     2 361E 8D A2 D5		            sta TCPBEN          
+     2 361E 8D A1 D5		            sta TCPBRH          
      3 3621 68			            pla                 
-     4 3622 8D A1 D5		            sta TCPBRH          
+     4 3622 8D A0 D5		            sta TCPBRL          
      5 3625 68			            pla                 
-     6 3626 8D A0 D5		            sta TCPBRL          
+     6 3626 8D A7 D5		            sta TCMOFR          
      7 3629 68			            pla                 
-     8 362A 8D A7 D5		            sta TCMOFR          
+     8 362A 8D A6 D5		            sta TCMOSL          
      9 362D 68			            pla                 
-    10 362E 8D A6 D5		            sta TCMOSL          
+    10 362E 8D A2 D5		            sta TCPBEN          
 Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
    929 3631 A9 E0		            lda #$e0            ; enable interrupts
    930 3633 8D 0E D4		            sta NMIEN
@@ -978,15 +978,15 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    952 364E			            M_cart_pop          ; restore register
 Macro: M_CART_POP [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
      1 364E 68			            pla                 
-     2 364F 8D A2 D5		            sta TCPBEN          
+     2 364F 8D A1 D5		            sta TCPBRH          
      3 3652 68			            pla                 
-     4 3653 8D A1 D5		            sta TCPBRH          
+     4 3653 8D A0 D5		            sta TCPBRL          
      5 3656 68			            pla                 
-     6 3657 8D A0 D5		            sta TCPBRL          
+     6 3657 8D A7 D5		            sta TCMOFR          
      7 365A 68			            pla                 
-     8 365B 8D A7 D5		            sta TCMOFR          
+     8 365B 8D A6 D5		            sta TCMOSL          
      9 365E 68			            pla                 
-    10 365F 8D A6 D5		            sta TCMOSL          
+    10 365F 8D A2 D5		            sta TCPBEN          
 Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
    953 3662 A9 E0		            lda #$e0            ; enable interrupts
    954 3664 8D 0E D4		            sta NMIEN
