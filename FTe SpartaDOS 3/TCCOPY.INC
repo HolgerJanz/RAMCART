@@ -276,6 +276,10 @@ globalStoreTCreg
         lda #$00
         sta SDMCTL
         sta DMACTL
+
+        sei                 ; disable interrupts
+        lda #$00
+        sta NMIEN
         
         rts
 
@@ -284,8 +288,6 @@ globalStoreTCreg
 ;
 globalRestoreTCreg
 
-        sei                 ; disable interrupts
-        
         lda _gtcmosl
         sta TCMOSL
 
@@ -301,6 +303,8 @@ globalRestoreTCreg
         lda _gtcpben
         sta TCPBEN
 
+        lda #$E0			; enable interrupts
+        sta NMIEN
         cli
 
         lda _gsdmctl         ; restore DMA control

@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE ver62 for The!Ramdisk by hjx",$9B,$FF
+        .byte "RESTORE ver63 for The!Ramdisk by hjx",$9B,$FF
  
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -31,6 +31,7 @@ startCopy
         jsr PRINT
         .byte "Copy Flash disk to RAM disk.",$9b
         .byte "RAM disk will be deleted!",$9b
+        .byte "Banks $3FB0-$3FEF copied to RAM disk.",$9b
         .byte "Screen goes black for ca. 5 seconds.",$9b
         .byte "Start restore RAM disk? (Y)",$ff
         

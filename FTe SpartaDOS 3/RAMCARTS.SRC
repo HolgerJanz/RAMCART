@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver62 for The!Ramdisk by hjx",$9B,$FF
+        .byte "STORE ver63 for The!Ramdisk by hjx",$9B,$FF
 
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -32,6 +32,7 @@ startCopy
         jsr PRINT
         .byte "Copy RAM disk to Flash disk.",$9b
         .byte "Flash disk will be deleted!",$9b
+        .byte "Banks $3FB0-$3FEF will be flashed.",$9b
         .byte "Screen goes black for ca. 20 seconds.",$9b
         .byte "Start store (flashing) RAM disk? (Y)",$ff
         
