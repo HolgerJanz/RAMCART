@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE ver63 for The!Ramdisk by hjx",$9B,$FF
+        .byte "RESTORE ver64 for The!Ramdisk by hjx",$9B,$FF
  
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -20,18 +20,41 @@
         beq errorNoCart
         cmp #TCMOSLXELOCK
         beq errorNoCart
-        bne startCopy
+        bne startCheckParam
  
 errorNoCart
         jsr PRINT
         .byte "  Error - The!Cart not found",$9B,$FF
         rts
- 
+
+startCheckParam
+		jsr get_drv_idx
+		bcs startCopy
+		rts 
+
 startCopy
+		txa		; for bank tab multiply by 2
+		asl
+		tax
+
+; set flash ram bank
+        lda flash_tab_bank,X
+        sta flashBL
+        lda flash_tab_bank+1,X
+        sta flashBH        
+
+		inx		; conver to flash drive number		
+		inx
+		txa
+		lsr
+		ora #$30
+		sta flash_drv_anr
+
         jsr PRINT
-        .byte "Copy Flash disk to RAM disk.",$9b
+        .byte "Copy Flash disk F"
+flash_drv_anr
+        .byte "x: to RAM disk.",$9b
         .byte "RAM disk will be deleted!",$9b
-        .byte "Banks $3FB0-$3FEF copied to RAM disk.",$9b
         .byte "Screen goes black for ca. 5 seconds.",$9b
         .byte "Start restore RAM disk? (Y)",$ff
         
@@ -46,13 +69,6 @@ startCopy
 startCopy2
         jsr globalStoreTCreg
 
-; set flash ram bank
-; 512k user space start bank $3fc0
-; 640k user space start bank $3fb0
-        lda #$b0
-        sta flashBL
-        lda #$3f
-        sta flashBH        
 _loopCopy
 ; read
         jsr storeTCreg

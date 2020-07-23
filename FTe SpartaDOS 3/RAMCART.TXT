@@ -1,17 +1,22 @@
 RAMCART - Disk Driver for THE!CART
 and SpartaDOS 3
 
-RAMCART Dx: [Dy:] [/DF]
+RAMCART Dx: [Da:-Dd:] [/DF]
 
 RAMCART is a ram (Dx:) and
 optional flash (Dy:) disk
 driver for THE!CART.
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-YOU HAVE TO SPECIFY 640kB USER
-SPACE IN THE WORKBOOK OPTIONS
+YOU HAVE TO SPECIFY USER SPACE
+IN THE WORKBOOK OPTIONS
 IN THE CART STUDIO TO
 USE THE FLASH DISK! 
+
+F1     640k
+F1,F2    1152k
+F1,F2,F3    1664k
+F1,F2,F3,F4    2176k
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Dx: specifies the drive
@@ -30,8 +35,8 @@ Without options the ram disk driver
 is installed and formatted
 on demand.
 
-Dy: specifies the drive number for
-the flash disk. Use RAMCARTS to
+Da:to Dd: specifies the drive number
+for the flash disks. Use RAMCARTS to
 copy the ram disk to the flash
 disk (store). Use RAMCARTR to
 copy the flash disk to the ram
@@ -55,7 +60,7 @@ density. It is useful to copy
 whole disk to and from ram or
 flash disk.
 
-TC is a program to switch between
+TCAR is a program to switch between
 different The Cart entries without
 cold start and reboot. The file
 TC.CFG is use to specify the names

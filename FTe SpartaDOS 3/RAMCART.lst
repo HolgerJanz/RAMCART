@@ -241,8 +241,8 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    239 				            org $3000
    240 				            
    241 				; info message
-   242 FFFF> 3000-3681> 20 82 +             jsr PRINT
-   243 3003 54 68 65 21 52 61 +             .byte 'The!Ramdisk for The!Cart ver65 by hjx',$9B,$FF
+   242 FFFF> 3000-3823> 20 06 +             jsr PRINT
+   243 3003 54 68 65 21 52 61 +             .byte 'The!Ramdisk for The!Cart ver66 by hjx',$9B,$FF
    244
    245 				; check for The!Cart
    246 302A AD A6 D5		             lda TCMOSL
@@ -252,18 +252,18 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    250 3033 D0 23		             bne RAMDISKINI
    251 3035			NORAMDISK
    252 				; no banks            
-   253 3035 20 82 34		            jsr PRINT
+   253 3035 20 06 36		            jsr PRINT
    254 3038 20 20 45 72 72 6F +             .byte '  Error: The!Cart not found',$9B,$FF
-   255 3055 4C 25 31		            jmp PRNHLP
+   255 3055 4C 4E 31		            jmp PRNHLP
    256 				                        
    257 3058			RAMDISKINI
    258 				; check for parameter
-   259 3058 20 8E 33					jsr PARAMCHECK
+   259 3058 20 7E 35					jsr PARAMCHECK
    260 305B B0 23		            bcs PRSPARM
    261 				; no parameter -> error
-   262 305D 20 82 34		            jsr PRINT
+   262 305D 20 06 36		            jsr PRINT
    263 3060 20 20 45 72 72 6F +             .byte '  Error: No parameter',$9B,$FF
-   264 3077 4C 25 31		            jmp PRNHLP
+   264 3077 4C 4E 31		            jmp PRNHLP
    265
    266 				; jump for jsr to crunch name
    267 307A 4C FF FF		CRNAME      jmp $FFFF
@@ -284,897 +284,1013 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RA
    282 				; parameter parsing            
    283 				; get drive number SD_COMFNAM starts alway with Dx:
    284 308F 20 7A 30		            jsr CRNAME
-   285 3092 D0 74		            bne PARAMERR
-   286 3094 A0 22		            ldy #SD_COMFNAM+1
+   285 3092 D0 4B		            bne PARAMERR1
+   286 3094 A0 21		            ldy #SD_COMFNAM
    287 3096 B1 0A		            lda (DOSVEC),Y
-   288 3098 29 0F		            and #$0F
-   289 309A 8D 80 36		            sta DRVNUM
-   290
-   291 309D 20 8E 33					jsr PARAMCHECK
-   292 30A0 90 40		            bcc PRSPAREND
-   293
-   294 30A2 20 7A 30		            jsr CRNAME
-   295 30A5 D0 0E		            bne PARAMOPT
-   296 30A7 A0 22		            ldy #SD_COMFNAM+1
-   297 30A9 B1 0A		            lda (DOSVEC),Y
-   298 30AB 29 0F		            and #$0F
-   299 30AD 8D 81 36		            sta FDRVNUM
-   300 				            
-   301 				; check options /xxx
-   302 30B0 20 7A 30		            jsr CRNAME
-   303 30B3 F0 2D		            beq PRSPAREND
-   304
-   305 30B5 A0 24		PARAMOPT	ldy #SD_COMFNAM+3
-   306 30B7 B1 0A		            lda (DOSVEC),Y
-   307 30B9 C9 2F		            cmp #'/'
-   308 30BB D0 4B		            bne PARAMERR
-   309 30BD C8			PRSPARLOOP  iny
-   310 30BE B1 0A		            lda (DOSVEC),Y
-   311
-   312 30C0 C9 9B		            cmp #$9B         ; end of parameter
-   313 30C2 F0 1E		            beq PRSPAREND
-   314 				            
-   315 30C4 C9 46		PRSPARNXT1  cmp #'F'         ; format only ?
-   316 30C6 D0 0B		            bne PRSPARNXT2
-   317 30C8 A9 FF		            lda #$FF
-   318 30CA 8D 7F 30		            sta CHKOPTN
-   319 30CD 8D 7D 30		            sta CHKFRMT
-   320 30D0 4C BD 30		            jmp PRSPARLOOP
+   288 3098 C9 44					cmp #'D'
+   289 309A D0 43					bne PARAMERR1         
+   290 309C C8			            iny
+   291 309D B1 0A		            lda (DOSVEC),Y
+   292 309F 29 0F		            and #$0F
+   293 30A1 8D 1F 38		            sta DRVNUM
+   294
+   295 				; check for list auf drives for flash drives
+   296 30A4 A2 00					ldx #$00
+   297 30A6 8E CA 30					stx FPARSLOOPX+1
+   298 30A9 20 7E 35		FPARSLOOP	jsr PARAMCHECK
+   299 30AC 90 58		            bcc PRSPAREND
+   300 30AE 20 7A 30					jsr CRNAME
+   301 30B1 D0 26		            bne PARAMOPT
+   302 30B3 A0 21		            ldy #SD_COMFNAM
+   303 30B5 B1 0A		            lda (DOSVEC),Y
+   304 30B7 C9 44					cmp #'D'
+   305 30B9 D0 76					bne PARAMERR            
+   306 30BB C8			            iny
+   307 30BC B1 0A		            lda (DOSVEC),Y
+   308 30BE 29 0F		            and #$0F
+   309 30C0 AE CA 30					ldx FPARSLOOPX+1
+   310 30C3 9D 20 38		            sta FDRVNUM,X
+   311 30C6 EE CA 30		            inc FPARSLOOPX+1
+   312 30C9 A2 04		FPARSLOOPX	ldx #$04
+   313 30CB E0 04		            cpx #$04
+   314 30CD D0 DA		            bne FPARSLOOP
+   315 				            
+   316 				; check options /xxx
+   317 30CF 20 7E 35					jsr PARAMCHECK
+   318 30D2 90 32		            bcc PRSPAREND
+   319 30D4 20 7A 30		            jsr CRNAME
+   320 30D7 F0 58		            beq PARAMERR
    321
-   322 30D3 C9 44		PRSPARNXT2  cmp #'D'         ; driver only ?
-   323 30D5 D0 31		            bne PARAMERR
-   324 30D7 A9 FF		            lda #$FF
-   325 30D9 8D 7F 30		            sta CHKOPTN
-   326 30DC 8D 7E 30		            sta CHKDRVR
-   327 30DF 4C BD 30		            jmp PRSPARLOOP
+   322 30D9 A0 24		PARAMOPT	ldy #SD_COMFNAM+3
+   323 30DB B1 0A		            lda (DOSVEC),Y
+   324 30DD C9 2F		            cmp #'/'
+   325 30DF D0 50		PARAMERR1   bne PARAMERR
+   326 30E1 C8			PRSPARLOOP  iny
+   327 30E2 B1 0A		            lda (DOSVEC),Y
    328
-   329 30E2			PRSPAREND
-   330 				; set format and ini by options
-   331 30E2 2C 7F 30		            bit CHKOPTN
-   332 30E5 30 08		            bmi STRTINIFMT ; no options set default /DF
-   333 30E7 A9 FF		            lda #$FF
-   334 30E9 8D 7E 30		            sta CHKDRVR
-   335 30EC 8D 7D 30		            sta CHKFRMT
-   336 30EF			STRTINIFMT
-   337 				; install driver requested
-   338 30EF 2C 7E 30		            bit CHKDRVR
-   339 30F2 10 03		            bpl NOINIDRV
-   340 30F4 20 11 32		            jsr STARTINST
-   341 30F7			NOINIDRV
-   342 				; format if requested
-   343 30F7 2C 7F 30		            bit CHKOPTN
-   344 30FA 30 03		            bmi NOPREFRMT
-   345 30FC 20 E2 33		            jsr CHECKFRMT
-   346 30FF			NOPREFRMT
-   347 30FF 2C 7D 30		            bit CHKFRMT
-   348 3102 10 03		            bpl NOFRMTRD
-   349 3104 20 AC 32		            jsr FRMTRD
-   350 3107			NOFRMTRD
-   351 3107 60			            rts
-   352
-   353 3108 20 82 34		PARAMERR    jsr PRINT
-   354 310B 20 20 45 72 72 6F +             .byte '  Error: Wrong parameter',$9B,$FF
-   355 3125			PRNHLP
-   356 3125 20 82 34		            jsr PRINT
-   357 3128 20 20 55 73 65 20 +             .byte '  Use RAMCART Dx: [Dy:] [/DF]',$9B
-   358 3146 20 20 20 20 78 20 +             .byte '    x - drive number for ramdisk',$9B
-   359 3167 20 20 20 20 79 20 +             .byte '    y - drive number for flashdisk',$9B
-   360 318A 20 20 20 20 44 20 +             .byte '    D - install driver only',$9B
-   361 31A6 20 20 20 20 46 20 +             .byte '    F - format ramdisk only',$9B
-   362 31C2 20 20 55 73 65 20 +             .byte '  Use shift+return/esc in start menu.',$9B
-   363 31E8 20 20 49 66 20 44 +             .byte '  If Dx: equals Dy: then Dy: precedes.',$9B,$FF
-   364 3210 60			            rts
-   365
-   366 3211			STARTINST   
-   367 3211 20 82 34		            jsr PRINT
-   368 3214 44 72 69 76 65 72 +             .byte 'Driver installed ',$ff
-   369
-   370 3226 AD 80 36		            lda DRVNUM
-   371 3229 30 17		            bmi PRTFLASHDRV
-   372 322B CD 81 36					cmp FDRVNUM
-   373 322E F0 12					beq PRTFLASHDRV
-   374 3230 18			            clc
-   375 3231 69 30		            adc #'0'
-   376 3233 8D 3E 32		            sta ramDx
-   377 3236 20 82 34					jsr PRINT
-   378 3239 52 41 4D 3D 44	            .byte 'RAM=D'
-   379 323E 78 3A 20 FF		ramDx       .byte 'x: ',$ff
-   380
-   381 3242			PRTFLASHDRV
-   382 3242 AD 81 36		            lda FDRVNUM
-   383 3245 30 13		            bmi PRTDRVEND
-   384 3247 18			            clc
-   385 3248 69 30		            adc #'0'
-   386 324A 8D 57 32		            sta flashDy
-   387 324D 20 82 34					jsr PRINT
-   388 3250 46 6C 61 73 68 3D + 			.byte 'Flash=D'
-   389 3257 79 3A FF		flashDy     .byte 'y:',$ff
+   329 30E4 C9 9B		            cmp #$9B         ; end of parameter
+   330 30E6 F0 1E		            beq PRSPAREND
+   331 				            
+   332 30E8 C9 46		PRSPARNXT1  cmp #'F'         ; format only ?
+   333 30EA D0 0B		            bne PRSPARNXT2
+   334 30EC A9 FF		            lda #$FF
+   335 30EE 8D 7F 30		            sta CHKOPTN
+   336 30F1 8D 7D 30		            sta CHKFRMT
+   337 30F4 4C E1 30		            jmp PRSPARLOOP
+   338
+   339 30F7 C9 44		PRSPARNXT2  cmp #'D'         ; driver only ?
+   340 30F9 D0 36		            bne PARAMERR
+   341 30FB A9 FF		            lda #$FF
+   342 30FD 8D 7F 30		            sta CHKOPTN
+   343 3100 8D 7E 30		            sta CHKDRVR
+   344 3103 4C E1 30		            jmp PRSPARLOOP
+   345
+   346 3106			PRSPAREND
+   347 3106 20 7E 35					jsr PARAMCHECK	; too many parameter
+   348 3109 B0 26		            bcs PARAMERR
+   349
+   350 				; set format and ini by options
+   351 310B 2C 7F 30		            bit CHKOPTN
+   352 310E 30 08		            bmi STRTINIFMT ; no options set default /DF
+   353 3110 A9 FF		            lda #$FF
+   354 3112 8D 7E 30		            sta CHKDRVR
+   355 3115 8D 7D 30		            sta CHKFRMT
+   356 3118			STRTINIFMT
+   357 				; install driver requested
+   358 3118 2C 7E 30		            bit CHKDRVR
+   359 311B 10 03		            bpl NOINIDRV
+   360 311D 20 39 32		            jsr STARTINST
+   361 3120			NOINIDRV
+   362 				; format if requested
+   363 3120 2C 7F 30		            bit CHKOPTN
+   364 3123 30 03		            bmi NOPREFRMT
+   365 3125 20 BE 33		            jsr CHECKFRMT
+   366 3128			NOPREFRMT
+   367 3128 2C 7D 30		            bit CHKFRMT
+   368 312B 10 03		            bpl NOFRMTRD
+   369 312D 20 E5 32		            jsr FRMTRD
+   370 3130			NOFRMTRD
+   371 3130 60			            rts
+   372
+   373 3131 20 06 36		PARAMERR    jsr PRINT
+   374 3134 20 20 45 72 72 6F +             .byte '  Error: Wrong parameter',$9B,$FF
+   375 314E			PRNHLP
+   376 314E 20 06 36		            jsr PRINT
+   377 3151 20 20 50 61 72 61 +             .byte '  Parameter: Dx: [Da:]..[Dd:] [/DF]',$9B
+   378 3175 20 20 20 20 78 20 +             .byte '    x - number for ramdisk',$9B
+   379 3190 20 20 20 20 61 2D +             .byte '    a-d - number for flash disk 1-4',$9B
+   380 31B4 20 20 20 20 44 20 +             .byte '    D - install driver only',$9B
+   381 31D0 20 20 20 20 46 20 +             .byte '    F - format ramdisk only',$9B
+   382 31EC 20 20 55 73 65 20 +             .byte '  Use shift+return/esc in start menu.',$9B
+   383 3212 20 20 49 66 20 44 +             .byte '  If Dx: equals Da-d:, Dx: precedes.',$9B,$FF
+   384 3238 60			            rts
+   385
+   386
+   387 3239			STARTINST   
+   388 3239 20 06 36		            jsr PRINT
+   389 323C 44 72 69 76 65 72 +             .byte 'Driver installed',$9b,$ff
    390
-   391 325A			PRTDRVEND
-   392 325A 20 82 34					jsr PRINT
-   393 325D 9B FF					.byte $9B,$FF
-   394
-   395 				; set jsr to original DOSINI
-   396 325F A5 0C		            lda DOSINI
-   397 3261 8D B9 34		            sta JSRDOSINI+1
-   398 3264 A5 0D		            lda DOSINI+1
-   399 3266 8D BA 34		            sta JSRDOSINI+2
-   400
-   401 				; set MEMLO oldaddress, realloc
-   402 3269 AD E7 02		            lda MEMLO
-   403 326C 8D 2D 38		            sta READSTADR
-   404 326F 8D 33 38		            sta CPYTOADR
-   405 3272 AD E8 02		            lda MEMLO+1
-   406 3275 8D 2E 38		            sta READSTADR+1
-   407 3278 8D 34 38		            sta CPYTOADR+1
-   408 				;
-   409 				; start realloc
-   410 				;
-   411 327B 20 65 37		            jsr REASTART
-   412
-   413 				; set new DOSINI            
-   414 327E A9 B8		REAL001     lda #<JSRDOSINI
-   415 3280 85 0C		            sta DOSINI
-   416 3282 A9 34		REAH001     lda #>JSRDOSINI
-   417 3284 85 0D		            sta DOSINI+1
-   418 				; get SIO and patch for RAMDISK
-   419 3286 38			            sec
-   420 3287 A5 0A		            lda DOSVEC
-   421 3289 E9 0A		            sbc #SD_LSIO
-   422 328B 85 32		            sta BUFRLO
-   423 328D A5 0B		            lda DOSVEC+1
-   424 328F E9 00		            sbc #$00
-   425 3291 85 33		            sta BUFRHI
-   426 3293 A0 00		            ldy #$00
-   427 3295 B1 32		            lda (BUFRLO),Y
-   428 3297 8D DE 34		REAA001     sta JMPSIO+1      ;realloc $33CA
-   429 329A A9 C6		REAL002     lda #<RAMDSIO
-   430 329C 91 32		            sta (BUFRLO),Y
-   431 329E C8			            iny
-   432 329F B1 32		            lda (BUFRLO),Y
-   433 32A1 8D DF 34		REAA002     sta JMPSIO+2      ;realloc $33D4
-   434 32A4 A9 34		REAH002     lda #>RAMDSIO
-   435 32A6 91 32		            sta (BUFRLO),Y
-   436 				; set MEMLO            
-   437 32A8 20 BB 34		REAA003     jsr SETMEMLO      ;realloc $33DB
-   438 32AB 60			            rts
-   439
-   440 				; format ramdisk
-   441 32AC 20 82 34		FRMTRD      jsr PRINT
-   442 32AF 52 61 6D 64 69 73 +             .byte 'Ramdisk formatted',$9B,$FF
-   443
-   444 32C2 20 12 34		            jsr cart_save
-   445
-   446 				; clear sector 1-4
-   447 32C5 A2 00		_loop03     ldx #$00
-   448 32C7 20 58 34		            jsr cart_set
-   449 32CA A9 00		            lda #$00
-   450 32CC A0 7F		            ldy #$7f
-   451 32CE 99 00 80		FRMTCLP03   sta $8000,Y
-   452 32D1 88			            dey
-   453 32D2 10 FA		            bpl FRMTCLP03
-   454 32D4 20 31 34		            jsr cart_restore
-   455 32D7 AD CF 32		            lda FRMTCLP03+1
-   456 32DA 18			            clc
-   457 32DB 69 80		            adc #$80
-   458 32DD 8D CF 32		            sta FRMTCLP03+1
-   459 32E0 AD D0 32		            lda FRMTCLP03+2
-   460 32E3 69 00		            adc #$00
-   461 32E5 8D D0 32		            sta FRMTCLP03+2
-   462 32E8 A9 04		_loopcnt03  lda #$04
-   463 32EA CE E9 32		            dec _loopcnt03+1
-   464 32ED D0 D6		            bne _loop03
-   465
-   466 				; header loop            
-   467 32EF A2 00		            ldx #$00
-   468 32F1 20 58 34		            jsr cart_set
-   469 32F4 A0 2B		            ldy #$2b
-   470 32F6 B9 9F 33		_loopheader lda RDHEAD,Y
-   471 32F9 99 00 80		            sta $8000,Y		; sector 1
-   472 32FC 88			            dey
-   473 32FD 10 F7		            bpl _loopheader
-   474 32FF A9 60		            lda #$60    ; write RTS to second boot sector
-   475 3301 8D 80 80		            sta $8080   ; see header jmp $3080, sector 2
-   476 3304 20 31 34		            jsr cart_restore
-   477
-   478
-   479 				; set sector 4-7 to $ff VTOV 512k = 4096 sectors
-   480 				; = 4 VTOC sectors
-   481 3307 A2 00		_loop47     ldx #$00
-   482 3309 20 58 34		            jsr cart_set
-   483 330C A9 FF		            lda #$ff
-   484 330E A0 7F		            ldy #$7f
-   485 3310 99 80 81		FRMTCLP47   sta $8180,Y
-   486 3313 88			            dey
-   487 3314 10 FA		            bpl FRMTCLP47
-   488 3316 20 31 34		            jsr cart_restore
-   489 3319 AD 11 33		            lda FRMTCLP47+1
-   490 331C 18			            clc
-   491 331D 69 80		            adc #$80
-   492 331F 8D 11 33		            sta FRMTCLP47+1
-   493 3322 AD 12 33		            lda FRMTCLP47+2
-   494 3325 69 00		            adc #$00
-   495 3327 8D 12 33		            sta FRMTCLP47+2
-   496 332A A9 04		_loopcnt47  lda #$04
-   497 332C CE 2B 33		            dec _loopcnt47+1
-   498 332F D0 D6		            bne _loop47
-   499
-   500 				; clear sector 8-9 
-   501 3331 A2 00		_loop89     ldx #$00
-   502 3333 20 58 34		            jsr cart_set
-   503 3336 A9 00		            lda #$00
-   504 3338 A0 7F		            ldy #$7f
-   505 333A 99 80 83		FRMTCLP89   sta $8380,Y
-   506 333D 88			            dey
-   507 333E 10 FA		            bpl FRMTCLP89
-   508 3340 20 31 34		            jsr cart_restore
-   509 3343 AD 3B 33		            lda FRMTCLP89+1
-   510 3346 18			            clc
-   511 3347 69 80		            adc #$80
-   512 3349 8D 3B 33		            sta FRMTCLP89+1
-   513 334C AD 3C 33		            lda FRMTCLP89+2
-   514 334F 69 00		            adc #$00
-   515 3351 8D 3C 33		            sta FRMTCLP89+2
-   516 3354 A9 02		_loopcnt89  lda #$02
-   517 3356 CE 55 33		            dec _loopcnt89+1
-   518 3359 D0 D6		            bne _loop89
-   519
-   520 335B A2 00		            ldx #$00
-   521 335D 20 58 34		            jsr cart_set
-   522 				; mark used sectors
-   523 3360 A9 00		            lda #$00
-   524 3362 8D 80 81		            sta $8180   ; sector 1-8
-   525 3365 A9 3F		            lda #$3f
-   526 3367 8D 81 81		            sta $8181   ; sector 9
-   527 				;            lda #$fe
-   528 				;            sta $83ff   ; sector 4096 does not exit
-   529 				; set sector map for MAIN
-   530 336A A9 00		            lda #$00    ; two words $0000 (first and last)
-   531 336C 8D 80 83		            sta $8380
-   532 336F 8D 81 83		            sta $8381
-   533 3372 8D 82 83		            sta $8382
-   534 3375 8D 83 83		            sta $8383
-   535 3378 A9 09		            lda #$09    ;  and third $0009 start of main
-   536 337A 8D 84 83		            sta $8384
-   537 				; set MAIN directory            
-   538 337D A2 00		            ldx #$00
-   539 337F BD CB 33		_loopmain   lda RDMAIN,x
-   540 3382 9D 00 84		            sta $8400,x
-   541 3385 E8			            inx
-   542 3386 E0 17		            cpx #$17
-   543 3388 D0 F5		            bne _loopmain
-   544 338A 20 31 34		            jsr cart_restore
-   545 				; finished
-   546 338D 60			            rts
-   547 				            
-   548 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   549 				;
-   550 				; parameter subroutines            
-   551 				;
-   552
-   553 				;
-   554 				; check for next parameter
-   555 				;   sets carry if next parameter is available
-   556 				;
-   557 338E A0 0A		PARAMCHECK	ldy #SD_BUFOFF
-   558 3390 B1 0A		            lda (DOSVEC),Y
-   559 3392 18			            clc
-   560 3393 69 3F		            adc #SD_LBUF
-   561 3395 A8			            tay
-   562 3396 B1 0A		            lda (DOSVEC),Y
-   563 3398 C9 9B		            cmp #$9b
-   564 339A 18			            clc
-   565 339B F0 01		            beq PARAMCHECKE
-   566 339D 38						sec
-   567 339E 60			PARAMCHECKE	rts
-   568 				            
-   569 				; load boot sector to $3000 start $3080 and RTS ($60)
-   570 339F 00			RDHEAD      .byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
-   571 33A0 03			            .byte $03 ; Number of sectors to boot.
-   572 33A1 00 30		            .byte $00,$30 ; Address where the boot sectors are loaded to
-   573 33A3 E0 07		            .byte $E0,$07 ; This address is copied to DOSINI
-   574 33A5 4C 80 30		            .byte $4c,$80,$30 ; After boot jump here: jmp $3080 (just RTS)
-   575 33A8 08 00		            .byte $08,$00 ; Sector number of the first sector map of the MAIN directory
-   576 33AA 00 10		            .word $1000 ; total sector count
-   577 33AC F6 0F		            .word $0ff6 ; free sector count
-   578 33AE 04			            .byte $04 ; Number of bit map sectors on the disk
-   579 33AF 04 00		            .byte $04,$00 ; Sector number of the first bit map sector
-   580 33B1 28 00		            .byte $28,$00 ; Sector number to begin the file data sector allocation search
-   581 33B3 0A 00		            .byte $0A,$00 ; Sector number to begin the directory data sector allocation search
-   582 33B5 43 41 52 54 35 31 +             .byte 'CART512K' ; Volume name, 8 chars
-   583 33BD 01			            .byte $01 ; Tracks on disk (1 for ramdisks and HDs)
-   584 33BE 80			            .byte $80 ; Sector size ($80=128,$00=256,$01=512)
-   585 33BF 20			            .byte $20 ; File system version ($20=SD1.1-4.2 version 2.0, $21=Sd4.4> version 2.1) 
-   586 33C0 00 00 00 00 00	            .byte $00,$00,$00,$00,$00 ; reserved - no known use
-   587 33C5 00			            .byte $00 ; Volume sequence number
-   588 33C6 00			            .byte $00 ; Volume random number
-   589 33C7 00 00		            .byte $00,$00 ; Sector number of the first sector map of the file to be loaded when the disk is booted
-   590 33C9 00			            .byte $00 ; Lock flag ($ff=locked, $00=unlocked)
-   591 33CA 00			            .byte $00
-   592
-   593 33CB 28			RDMAIN      .byte $28 ; Bits 7-0: OpenWrite,-,SubDir,Del,Used,Arc,Hid,Prot
-   594 33CC 00 00		            .word $0000 ; First sector map of parent directory (MAIN=0)
-   595 33CE 17 00 00		            .byte $17,$00,$00 ; length of directory in bytes (always times 23 bytes)
-   596 33D1 4D 41 49 4E 20 20 + RDMAINNAME  .byte 'MAIN       ' ; Name 11 chars
-   597 33DC 0B 07 47		            .byte $0b,$07,$47 ; Date DD/MM/YY
-   598 33DF 0B 0B 0B		            .byte $0b,$0b,$0b ; Time HH:MM:SS
-   599
-   600 				; check preformat
-   601 33E2			checkfrmt
-   602 33E2 20 12 34		            jsr cart_save
-   603 33E5 A2 00		            ldx #$00
-   604 33E7 20 58 34		            jsr cart_set
-   605
-   606 33EA BD D1 33		_nxtcharv   lda RDMAINNAME,x    ; check volume name
-   607 33ED DD 06 84		            cmp $8406,x			; sector $09
-   608 33F0 D0 0F		            bne _nofrmt
-   609 33F2 E8			            inx
-   610 33F3 E0 0B		            cpx #$0b
-   611 33F5 D0 F3		            bne _nxtcharv
-   612 				            
-   613 33F7 20 31 34		            jsr cart_restore
-   614 33FA A9 00		            lda #$00
-   615 33FC 8D 7D 30		            sta CHKFRMT
-   616 33FF 38			            sec
-   617 3400 60			            rts
-   618 				            
-   619 3401 20 31 34		_nofrmt     jsr cart_restore
-   620 3404 A9 FF		            lda #$FF
-   621 3406 8D 7D 30		            sta CHKFRMT
-   622 3409 18			            clc
-   623 340A 60			            rts
-   624
-   625 				; wait for sync            
-   626 340B A5 14		WAITSYNC    lda RTCLOK+2
-   627 340D C5 14		WAITLOOP    cmp RTCLOK+2
-   628 340F F0 FC		            beq WAITLOOP
-   629 3411 60			            rts
-   630
-   631 3412			cart_save
-   632 3412 AD A6 D5		            lda TCMOSL
-   633 3415 8D 7D 34		            sta _tcmosl
-   634 3418 AD A7 D5		            lda TCMOFR
-   635 341B 8D 7E 34		            sta _tcmofr
-   636 341E AD A0 D5		            lda TCPBRL
-   637 3421 8D 7F 34		            sta _tcpbrl
-   638 3424 AD A1 D5		            lda TCPBRH
-   639 3427 8D 80 34		            sta _tcpbrh
-   640 342A AD A2 D5		            lda TCPBEN
-   641 342D 8D 81 34		            sta _tcpben
-   642
-   643 3430 60			            rts
-   644
-   645 3431			cart_restore
-   646 3431 AD 7D 34		            lda _tcmosl
-   647 3434 8D A6 D5		            sta TCMOSL
-   648 3437 AD 7E 34		            lda _tcmofr
-   649 343A 8D A7 D5		            sta TCMOFR
-   650 343D AD 7F 34		            lda _tcpbrl
-   651 3440 8D A0 D5		            sta TCPBRL
-   652 3443 AD 80 34		            lda _tcpbrh
-   653 3446 8D A1 D5		            sta TCPBRH
-   654 3449 AD 81 34		            lda _tcpben
-   655 344C 8D A2 D5		            sta TCPBEN
-   656
-   657 344F A9 E0		            lda #$e0          ; enable interrupts
-   658 3451 8D 0E D4		            sta NMIEN
-   659 3454 58			            cli
-   660 3455 C6 42		            dec CRITIC 
-   661
-   662 3457 60			            rts
-   663
-   664 3458			cart_set
-   665 3458 E6 42		            inc CRITIC 
-   666 345A 20 0B 34		            jsr WAITSYNC        ; wait for vblank
-   667 345D 78			            sei                 ; disable interrupt
-   668 345E A9 00		            lda #$00
-   669 3460 8D 0E D4		            sta NMIEN
+   391 324E AD 1F 38		            lda DRVNUM
+   392 3251 F0 14		            beq PRTFLASHDRV
+   393 3253 18			            clc
+   394 3254 69 30		            adc #'0'
+   395 3256 8D 63 32		            sta ramDx
+   396 3259 20 06 36					jsr PRINT
+   397 325C 20 20 52 41 4D 3D +             .byte '  RAM=D'
+   398 3263 78 3A 9B FF		ramDx       .byte 'x:',$9b,$ff
+   399
+   400 3267			PRTFLASHDRV
+   401 3267 A2 00					ldx #$00
+   402 3269 8E 93 32					stx PRNDRVLPX+1
+   403 326C AE 93 32		PRNDRVLP	ldx PRNDRVLPX+1
+   404 326F BD 20 38		            lda FDRVNUM,X
+   405 3272 F0 1B		            beq PRTDRVNXT
+   406 3274 18			            clc
+   407 3275 69 30		            adc #'0'
+   408 3277 8D 8B 32		            sta flashDy
+   409 327A 8A			            txa
+   410 327B 18			            clc
+   411 327C 69 31		            adc #'1'
+   412 327E 8D 87 32		            sta flashDx
+   413 3281 20 06 36					jsr PRINT
+   414 3284 20 20 46					.byte '  F'
+   415 3287 78 3A 3D 44		flashDx		.byte 'x:=D'
+   416 328B 79 3A 9B FF		flashDy     .byte 'y:',$9b,$ff
+   417 328F EE 93 32		PRTDRVNXT	inc PRNDRVLPX+1
+   418 3292 A2 04		PRNDRVLPX	ldx #$04
+   419 3294 E0 04					cpx #$04
+   420 3296 D0 D4					bne PRNDRVLP
+   421
+   422 3298			PRTDRVEND
+   423 				; set jsr to original DOSINI
+   424 3298 A5 0C		            lda DOSINI
+   425 329A 8D 3D 36		            sta JSRDOSINI+1
+   426 329D A5 0D		            lda DOSINI+1
+   427 329F 8D 3E 36		            sta JSRDOSINI+2
+   428
+   429 				; set MEMLO oldaddress, realloc
+   430 32A2 AD E7 02		            lda MEMLO
+   431 32A5 8D D7 39		            sta READSTADR
+   432 32A8 8D DD 39		            sta CPYTOADR
+   433 32AB AD E8 02		            lda MEMLO+1
+   434 32AE 8D D8 39		            sta READSTADR+1
+   435 32B1 8D DE 39		            sta CPYTOADR+1
+   436 				;
+   437 				; start realloc
+   438 				;
+   439 32B4 20 0F 39		            jsr REASTART
+   440
+   441 				; set new DOSINI            
+   442 32B7 A9 3C		REAL001     lda #<JSRDOSINI
+   443 32B9 85 0C		            sta DOSINI
+   444 32BB A9 36		REAH001     lda #>JSRDOSINI
+   445 32BD 85 0D		            sta DOSINI+1
+   446 				; get SIO and patch for RAMDISK
+   447 32BF 38			            sec
+   448 32C0 A5 0A		            lda DOSVEC
+   449 32C2 E9 0A		            sbc #SD_LSIO
+   450 32C4 85 32		            sta BUFRLO
+   451 32C6 A5 0B		            lda DOSVEC+1
+   452 32C8 E9 00		            sbc #$00
+   453 32CA 85 33		            sta BUFRHI
+   454 32CC A0 00		            ldy #$00
+   455 32CE B1 32		            lda (BUFRLO),Y
+   456 32D0 8D 69 36		REAA001     sta JMPSIO+1      ;realloc $33CA
+   457 32D3 A9 4A		REAL002     lda #<RAMDSIO
+   458 32D5 91 32		            sta (BUFRLO),Y
+   459 32D7 C8			            iny
+   460 32D8 B1 32		            lda (BUFRLO),Y
+   461 32DA 8D 6A 36		REAA002     sta JMPSIO+2      ;realloc $33D4
+   462 32DD A9 36		REAH002     lda #>RAMDSIO
+   463 32DF 91 32		            sta (BUFRLO),Y
+   464 				; set MEMLO            
+   465 32E1 20 3F 36		REAA003     jsr SETMEMLO      ;realloc $33DB
+   466 32E4 60			            rts
+   467
+   468 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   469 				;
+   470 				; format ramdisk
+   471 				;
+   472 32E5 20 06 36		FRMTRD      jsr PRINT
+   473 32E8 52 61 6D 64 69 73 +             .byte 'Ramdisk formatted',$9B,$FF
+   474
+   475 32FB 20 96 35		            jsr cart_save
+   476
+   477 				; header loop            
+   478 32FE A2 00		            ldx #$00
+   479 3300 20 DC 35		            jsr cart_set
+   480 3303 A0 7F		            ldy #$7f
+   481 3305 B9 E7 33		_loophead1  lda RDSEC1,Y
+   482 3308 99 00 80		            sta $8000,Y		; sector 1
+   483 330B 88			            dey
+   484 330C 10 F7		            bpl _loophead1
+   485 330E 20 B5 35		            jsr cart_restore
+   486
+   487 3311 A2 00		            ldx #$00
+   488 3313 20 DC 35		            jsr cart_set
+   489 3316 A0 7F		            ldy #$7f
+   490 3318 B9 67 34		_loophead2  lda RDSEC2,Y
+   491 331B 99 80 80		            sta $8080,Y		; sector 2
+   492 331E 88			            dey
+   493 331F 10 F7		            bpl _loophead2
+   494 3321 20 B5 35		            jsr cart_restore
+   495
+   496 3324 A2 00		            ldx #$00
+   497 3326 20 DC 35		            jsr cart_set
+   498 3329 A0 7F		            ldy #$7f
+   499 332B B9 E7 34		_loophead3  lda RDSEC3,Y
+   500 332E 99 00 81		            sta $8100,Y		; sector 3
+   501 3331 88			            dey
+   502 3332 10 F7		            bpl _loophead3
+   503 3334 20 B5 35		            jsr cart_restore
+   504
+   505 				; set sector 4-7 to $ff VTOV 512k = 4096 sectors
+   506 				; = 4 VTOC sectors
+   507 3337 A2 00		_loop47     ldx #$00
+   508 3339 20 DC 35		            jsr cart_set
+   509 333C A9 FF		            lda #$ff
+   510 333E A0 7F		            ldy #$7f
+   511 3340 99 80 81		FRMTCLP47   sta $8180,Y
+   512 3343 88			            dey
+   513 3344 10 FA		            bpl FRMTCLP47
+   514 3346 20 B5 35		            jsr cart_restore
+   515 3349 AD 41 33		            lda FRMTCLP47+1
+   516 334C 18			            clc
+   517 334D 69 80		            adc #$80
+   518 334F 8D 41 33		            sta FRMTCLP47+1
+   519 3352 AD 42 33		            lda FRMTCLP47+2
+   520 3355 69 00		            adc #$00
+   521 3357 8D 42 33		            sta FRMTCLP47+2
+   522 335A A9 04		_loopcnt47  lda #$04
+   523 335C CE 5B 33		            dec _loopcnt47+1
+   524 335F D0 D6		            bne _loop47
+   525
+   526 				; clear sector 8-11 
+   527 3361 A2 00		_loop89     ldx #$00
+   528 3363 20 DC 35		            jsr cart_set
+   529 3366 A9 00		            lda #$00
+   530 3368 A0 7F		            ldy #$7f
+   531 336A 99 80 83		FRMTCLP89   sta $8380,Y
+   532 336D 88			            dey
+   533 336E 10 FA		            bpl FRMTCLP89
+   534 3370 20 B5 35		            jsr cart_restore
+   535 3373 AD 6B 33		            lda FRMTCLP89+1
+   536 3376 18			            clc
+   537 3377 69 80		            adc #$80
+   538 3379 8D 6B 33		            sta FRMTCLP89+1
+   539 337C AD 6C 33		            lda FRMTCLP89+2
+   540 337F 69 00		            adc #$00
+   541 3381 8D 6C 33		            sta FRMTCLP89+2
+   542 3384 A9 04		_loopcnt89  lda #$04
+   543 3386 CE 85 33		            dec _loopcnt89+1
+   544 3389 D0 D6		            bne _loop89
+   545
+   546 338B A2 00		            ldx #$00
+   547 338D 20 DC 35		            jsr cart_set
+   548 				; mark used sectors
+   549 3390 A9 00		            lda #$00
+   550 3392 8D 80 81		            sta $8180   ; sector 1-8
+   551 3395 A9 1F		            lda #$1f
+   552 3397 8D 81 81		            sta $8181   ; sector 9-11
+   553 				; set sector map for MAIN
+   554 339A A9 00		            lda #$00    ; two words $0000 (first and last)
+   555 339C 8D 00 84		            sta $8400
+   556 339F 8D 01 84		            sta $8401
+   557 33A2 8D 02 84		            sta $8402
+   558 33A5 8D 03 84		            sta $8403
+   559 33A8 A9 0A		            lda #$0a    ;  and third $0009 start of main
+   560 33AA 8D 04 84		            sta $8404
+   561 				; set MAIN directory            
+   562 33AD A2 00		            ldx #$00
+   563 33AF BD 67 35		_loopmain   lda RDMAIN,x
+   564 33B2 9D 80 84		            sta $8480,x
+   565 33B5 E8			            inx
+   566 33B6 E0 17		            cpx #$17
+   567 33B8 D0 F5		            bne _loopmain
+   568 33BA 20 B5 35		            jsr cart_restore
+   569 				; finished
+   570 33BD 60			            rts
+   571
+   572 				; check preformat
+   573 33BE			checkfrmt
+   574 33BE 20 96 35		            jsr cart_save
+   575 33C1 A2 00		            ldx #$00
+   576 33C3 20 DC 35		            jsr cart_set
+   577
+   578 33C6 BD 6D 35		_nxtcharv   lda RDMAINNAME,x    ; check volume name
+   579 33C9 DD 86 84		            cmp $8486,x			; sector $09
+   580 33CC D0 0F		            bne _nofrmt
+   581 33CE E8			            inx
+   582 33CF E0 0B		            cpx #$0b
+   583 33D1 D0 F3		            bne _nxtcharv
+   584 				            
+   585 33D3 20 B5 35		            jsr cart_restore
+   586 33D6 A9 00		            lda #$00
+   587 33D8 8D 7D 30		            sta CHKFRMT
+   588 33DB 38			            sec
+   589 33DC 60			            rts
+   590 				            
+   591 33DD 20 B5 35		_nofrmt     jsr cart_restore
+   592 33E0 A9 FF		            lda #$FF
+   593 33E2 8D 7D 30		            sta CHKFRMT
+   594 33E5 18			            clc
+   595 33E6 60			            rts
+   596
+   597 				; load boot sector to $3000 start $3080 and RTS ($60)
+   598 33E7			RDSEC1
+   599 33E7 00						.byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
+   600 33E8 03			            .byte $03 ; Number of sectors to boot.
+   601 33E9 00 30		            .byte $00,$30 ; Address where the boot sectors are loaded to
+   602 33EB E0 07		            .byte $E0,$07 ; This address is copied to DOSINI
+   603 33ED 4C 80 30		            .byte $4c,$80,$30 ; After boot jump here: jmp $3080 (just RTS)
+   604 33F0 09 00		            .byte $09,$00 ; Sector number of the first sector map of the MAIN directory
+   605 33F2 00 10		            .word $1000 ; total sector count
+   606 33F4 F5 0F		            .word $0ff5 ; free sector count
+   607 33F6 05			            .byte $05 ; Number of bit map sectors on the disk
+   608 33F7 04 00		            .byte $04,$00 ; Sector number of the first bit map sector
+   609 33F9 51 00		            .byte $51,$00 ; Sector number to begin the file data sector allocation search
+   610 33FB 0B 00		            .byte $0B,$00 ; Sector number to begin the directory data sector allocation search
+   611 33FD 43 41 52 54 35 31 +             .byte 'CART512K' ; Volume name, 8 chars
+   612 3405 01			            .byte $01 ; Tracks on disk (1 for ramdisks and HDs)
+   613 3406 80			            .byte $80 ; Sector size ($80=128,$00=256,$01=512)
+   614 				;            .byte $20 ; File system version ($20=SD1.1-4.2 version 2.0, $21=Sd4.4> version 2.1) 
+   615 				;            .byte $00,$00,$00,$00,$00 ; reserved - no known use
+   616 				;            .byte $00 ; Volume sequence number
+   617 				;            .byte $00 ; Volume random number
+   618 				;            .byte $00,$00 ; Sector number of the first sector map of the file to be loaded when the disk is booted
+   619 				;            .byte $00 ; Lock flag ($ff=locked, $00=unlocked)
+   620 				;            .byte $00
+   621 3407 20 06 01 FF FF 00 + 			.byte $20,$06,$01,$FF,$FF,$00,$00,$E4
+   622 340F 00 00 00 00 00 00 + 			.byte $00,$00,$00,$00,$00,$00,$00,$00
+   623 3417 45 72 72 6F 72 3A + 			.byte $45,$72,$72,$6F,$72,$3A,$20,$4E
+   624 341F 6F 20 44 4F 53 9B + 			.byte $6F,$20,$44,$4F,$53,$9B,$AD,$28
+   625 3427 30 8D 0A 03 AD 29 + 			.byte $30,$8D,$0A,$03,$AD,$29,$30,$8D
+   626 342F 0B 03 A9 00 A2 2F + 			.byte $0B,$03,$A9,$00,$A2,$2F,$20,$F1
+   627 3437 30 AD 00 2F 8D 28 + 			.byte $30,$AD,$00,$2F,$8D,$28,$30,$AD
+   628 343F 01 2F 8D 29 30 A0 + 			.byte $01,$2F,$8D,$29,$30,$A0,$04,$84
+   629 3447 91 A4 91 CC 1F 30 + 			.byte $91,$A4,$91,$CC,$1F,$30,$F0,$D6
+   630 344F B9 00 2F 8D 0A 03 + 			.byte $B9,$00,$2F,$8D,$0A,$03,$B9,$01
+   631 3457 2F 8D 0B 03 C8 C8 + 			.byte $2F,$8D,$0B,$03,$C8,$C8,$84,$91
+   632 345F 60 6C E2 02 00 00 + 			.byte $60,$6C,$E2,$02,$00,$00,$00,$00
+   633
+   634 3467			RDSEC2
+   635 3467 A2 00 AD 1F 30 85 + 			.byte $A2,$00,$AD,$1F,$30,$85,$91,$85
+   636 346F 90 8D 08 03 D0 01 + 			.byte $90,$8D,$08,$03,$D0,$01,$E8,$8E
+   637 3477 09 03 20 0A 31 85 + 			.byte $09,$03,$20,$0A,$31,$85,$96,$20
+   638 347F 0A 31 25 96 C9 FF + 			.byte $0A,$31,$25,$96,$C9,$FF,$D0,$37
+   639 3487 A9 78 8D E2 02 A9 + 			.byte $A9,$78,$8D,$E2,$02,$A9,$30,$8D
+   640 348F E3 02 20 0A 31 85 + 			.byte $E3,$02,$20,$0A,$31,$85,$92,$20
+   641 3497 0A 31 85 93 05 92 + 			.byte $0A,$31,$85,$93,$05,$92,$F0,$1C
+   642 349F 20 0A 31 38 E5 92 + 			.byte $20,$0A,$31,$38,$E5,$92,$48,$08
+   643 34A7 20 0A 31 28 E5 93 + 			.byte $20,$0A,$31,$28,$E5,$93,$85,$95
+   644 34AF 68 85 94 20 6B 31 + 			.byte $68,$85,$94,$20,$6B,$31,$20,$79
+   645 34B7 30 4C A0 30 6C E0 + 			.byte $30,$4C,$A0,$30,$6C,$E0,$02,$A9
+   646 34BF 30 A2 30 8D 44 03 + 			.byte $30,$A2,$30,$8D,$44,$03,$8E,$45
+   647 34C7 03 8E 48 03 A9 09 + 			.byte $03,$8E,$48,$03,$A9,$09,$8D,$42
+   648 34CF 03 A2 00 20 56 E4 + 			.byte $03,$A2,$00,$20,$56,$E4,$4C,$EE
+   649 34D7 30 A0 40 8C 03 03 + 			.byte $30,$A0,$40,$8C,$03,$03,$8D,$04
+   650 34DF 03 8E 05 03 AD 0A + 			.byte $03,$8E,$05,$03,$AD,$0A,$03,$0D
+   651
+   652 34E7			RDSEC3
+   653 34E7 0B 03 F0 D3 20 59 + 			.byte $0B,$03,$F0,$D3,$20,$59,$E4,$30
+   654 34EF CE 60 A9 00 85 95 + 			.byte $CE,$60,$A9,$00,$85,$95,$85,$94
+   655 34F7 A6 90 EC 1F 30 F0 + 			.byte $A6,$90,$EC,$1F,$30,$F0,$06,$BD
+   656 34FF 00 2E E6 90 60 20 + 			.byte $00,$2E,$E6,$90,$60,$20,$61,$30
+   657 3507 A5 95 D0 17 AD 1F + 			.byte $A5,$95,$D0,$17,$AD,$1F,$30,$F0
+   658 350F 04 A5 94 30 0E A9 + 			.byte $04,$A5,$94,$30,$0E,$A9,$00,$A2
+   659 3517 2E 20 F1 30 38 26 + 			.byte $2E,$20,$F1,$30,$38,$26,$90,$AD
+   660 351F 00 2E 60 A5 92 A6 + 			.byte $00,$2E,$60,$A5,$92,$A6,$93,$20
+   661 3527 F1 30 A5 92 18 6D + 			.byte $F1,$30,$A5,$92,$18,$6D,$08,$03
+   662 352F 85 92 A5 93 6D 09 + 			.byte $85,$92,$A5,$93,$6D,$09,$03,$85
+   663 3537 93 38 A5 94 ED 08 + 			.byte $93,$38,$A5,$94,$ED,$08,$03,$85
+   664 353F 94 A5 95 ED 09 03 + 			.byte $94,$A5,$95,$ED,$09,$03,$85,$95
+   665 3547 4C 1D 31 A5 94 D0 + 			.byte $4C,$1D,$31,$A5,$94,$D0,$02,$C6
+   666 354F 95 C6 94 20 10 31 + 			.byte $95,$C6,$94,$20,$10,$31,$A0,$00
+   667 3557 91 92 E6 92 D0 02 + 			.byte $91,$92,$E6,$92,$D0,$02,$E6,$93
+   668 355F A5 94 05 95 D0 E5 + 			.byte $A5,$94,$05,$95,$D0,$E5,$60,$00
+   669
    670
-   671 3463 A9 21		            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
-   672 3465 8D A6 D5		            sta TCMOSL          
-   673 3468 A9 03		            lda #TCMOFR.PBRAM       ; set to RAM
-   674 346A 8D A7 D5		            sta TCMOFR
-   675 346D 8A			            txa
-   676 346E 0A			            asl   
-   677 346F 8D A0 D5		            sta TCPBRL              ; get bank number from X
-   678 3472 A9 00		            lda #$00                     
-   679 3474 8D A1 D5		            sta TCPBRH              ; set high to $00
-   680 3477 A9 01		            lda #$01
-   681 3479 8D A2 D5		            sta TCPBEN              ; enable        
-   682
-   683 347C 60			            rts            
-   684
-   685 347D 00			_tcmosl     .byte $00
-   686 347E 00			_tcmofr     .byte $00
-   687 347F 00			_tcpbrl     .byte $00
-   688 3480 00			_tcpbrh     .byte $00
-   689 3481 00			_tcpben     .byte $00
-   690
-   691 				; print subroutine            
-   692 3482 68			PRINT       pla
-   693 3483 8D 93 34		            sta PRINTITER+1
-   694 3486 68			            pla
-   695 3487 8D 94 34		            sta PRINTITER+2
-   696 348A EE 93 34		PRINTLOOP   inc PRINTITER+1
-   697 348D D0 03		            bne PRINTITER
-   698 348F EE 94 34		            inc PRINTITER+2
-   699 3492 AD FF FF		PRINTITER   lda $FFFF
-   700 3495 C9 FF		            cmp #$FF
-   701 3497 F0 06		            beq PRINTEND
-   702 3499 20 A8 34		            jsr CIOPUTCHR
-   703 349C 4C 8A 34		            jmp PRINTLOOP
-   704 349F AD 94 34		PRINTEND    lda PRINTITER+2
-   705 34A2 48			            pha
-   706 34A3 AD 93 34		            lda PRINTITER+1
-   707 34A6 48			            pha
-   708 34A7 60			            rts
-   709 				; call cio put char subroutine
-   710 34A8 A2 00		CIOPUTCHR   ldx #$00
-   711 34AA 8E 48 03		            stx IOCB0+ICBLL
-   712 34AD 8E 49 03		            stx IOCB0+ICBLH
-   713 34B0 A0 0B		            ldy #$0B
-   714 34B2 8C 42 03		            sty IOCB0+ICCOM
-   715 34B5 4C 56 E4		            jmp CIOV
-   716
-   717
-   718
-   719 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   720 				;;; BEGIN OF REALLOC BLOCK
-   721 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   671
+   672 3567 28			RDMAIN      .byte $28 ; Bits 7-0: OpenWrite,-,SubDir,Del,Used,Arc,Hid,Prot
+   673 3568 00 00		            .word $0000 ; First sector map of parent directory (MAIN=0)
+   674 356A 17 00 00		            .byte $17,$00,$00 ; length of directory in bytes (always times 23 bytes)
+   675 356D 4D 41 49 4E 20 20 + RDMAINNAME  .byte 'MAIN       ' ; Name 11 chars
+   676 3578 0B 07 47		            .byte $0b,$07,$47 ; Date DD/MM/YY
+   677 357B 0B 0B 0B		            .byte $0b,$0b,$0b ; Time HH:MM:SS
+   678 				            
+   679 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   680 				;
+   681 				; parameter subroutines            
+   682 				;
+   683
+   684 				;
+   685 				; check for next parameter
+   686 				;   sets carry if next parameter is available
+   687 				;
+   688 357E A0 0A		PARAMCHECK	ldy #SD_BUFOFF
+   689 3580 B1 0A		            lda (DOSVEC),Y
+   690 3582 18			            clc
+   691 3583 69 3F		            adc #SD_LBUF
+   692 3585 A8			            tay
+   693 3586 B1 0A		            lda (DOSVEC),Y
+   694 3588 C9 9B		            cmp #$9b
+   695 358A 18			            clc
+   696 358B F0 01		            beq PARAMCHECKE
+   697 358D 38						sec
+   698 358E 60			PARAMCHECKE	rts
+   699 				            
+   700 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   701 				;
+   702 				; subroutines for The Cart
+   703 				;
+   704
+   705 				; wait for sync            
+   706 358F A5 14		WAITSYNC    lda RTCLOK+2
+   707 3591 C5 14		WAITLOOP    cmp RTCLOK+2
+   708 3593 F0 FC		            beq WAITLOOP
+   709 3595 60			            rts
+   710
+   711 3596			cart_save
+   712 3596 AD A6 D5		            lda TCMOSL
+   713 3599 8D 01 36		            sta _tcmosl
+   714 359C AD A7 D5		            lda TCMOFR
+   715 359F 8D 02 36		            sta _tcmofr
+   716 35A2 AD A0 D5		            lda TCPBRL
+   717 35A5 8D 03 36		            sta _tcpbrl
+   718 35A8 AD A1 D5		            lda TCPBRH
+   719 35AB 8D 04 36		            sta _tcpbrh
+   720 35AE AD A2 D5		            lda TCPBEN
+   721 35B1 8D 05 36		            sta _tcpben
    722
-   723 				; to realloc routines
-   724 				; DOSINI set MEMLO at reset
-   725 34B8			REABEGIN
-   726
-   727 34B8 20 00 00		JSRDOSINI   jsr $0000
-   728 34BB			SETMEMLO    
-   729 34BB A9 02		REAL003     lda #<REAEND
-   730 34BD 8D E7 02		            sta MEMLO
-   731 34C0 A9 37		REAH003     lda #>REAEND
-   732 34C2 8D E8 02		            sta MEMLO+1
-   733 34C5 60			            rts
-   734
-   735 				; new DOSVEC for RAMDISK device
-   736 34C6 AD 00 03		RAMDSIO     lda DDEVIC
-   737 34C9 C9 31		            cmp #$31
-   738 34CB D0 10		            bne JMPSIO
-   739 34CD AD 80 36		REAA004     lda DRVNUM  ; check drive number for RAM
-   740 34D0 CD 01 03		            cmp DUNIT
-   741 34D3 F0 0B		            beq NEWSIOGO
-   742 34D5 AD 81 36		REAA026		lda FDRVNUM  ; check drive number for Flash
-   743 34D8 CD 01 03		            cmp DUNIT
-   744 34DB F0 03		            beq NEWSIOGO
-   745 34DD 4C 00 00		JMPSIO      jmp $0000
-   746
-   747 				; set buffer address
-   748 34E0 AD 04 03		NEWSIOGO    lda DBUFLO
-   749 34E3 85 34		            sta BFENLO
-   750 34E5 AD 05 03		            lda DBUFHI
-   751 34E8 85 35		            sta BFENHI
-   752 				; load commad byte            
-   753 34EA AD 02 03		            lda DCOMND
-   754 				; command STATUS REQUEST
-   755 34ED C9 53		            cmp #$53 
-   756 34EF D0 1B		            bne NEXT1
-   757 34F1 AD 7B 36		REAA009     lda CONFSECSIZ
-   758 34F4 4A			            lsr
-   759 34F5 4A			            lsr
-   760 34F6 49 30		            eor #$30
-   761 34F8 AC 77 36		REAA010     ldy L36BB
-   762 34FB C0 1A		            cpy #$1A
-   763 34FD D0 02		            bne L35B4
-   764 34FF 09 80		            ora #$80
-   765 3501 A0 00		L35B4       ldy #$00
-   766 3503 91 34		            sta (BFENLO),Y
-   767 3505 C8			            iny
-   768 3506 A9 FF		            lda #$FF
-   769 3508 91 34		            sta (BFENLO),Y
-   770 350A 30 24		            bmi JMPSIOEND
-   771 				            
-   772 				; command RETURN CONFIGURATION            
-   773 350C C9 4E		NEXT1       cmp #$4E
-   774 350E D0 0C		            bne NEXT2
-   775 3510 A0 0B		            ldy #$0B            ; 12 bytes
-   776 3512			RETCNFLOOP
-   777 3512 B9 74 36		REAA011     lda CONFBUF,Y
-   778 3515 91 34		            sta (BFENLO),Y
-   779 3517 88			            dey
-   780 3518 10 F8		            bpl RETCNFLOOP
-   781 351A 30 14		            bmi JMPSIOEND
-   782
-   783 				; command SET CONFIGURATION
-   784 351C C9 4F		NEXT2       cmp #$4F
-   785 351E D0 13		            bne NEXT3
-   786 3520 A0 07		            ldy #$07
-   787 3522 B1 34		            lda (BFENLO),Y
-   788 3524 F0 38		            beq REAA020         ; error if sec size <> $80 ( $00 -> $100)            
-   789 3526 8D 7B 36		REAA012     sta CONFSECSIZ
-   790 3529 A0 03		            ldy #$03
-   791 352B B1 34		            lda (BFENLO),Y
-   792 352D 8D 77 36		REAA013     sta L36BB
-   793
-   794 3530			JMPSIOEND
-   795 3530 4C 6A 36		REAA014     jmp RDSIOEND
-   796
-   797 				; command FORMAT DISK
-   798 3533 C9 21		NEXT3       cmp #$21
-   799 3535 D0 0B		            bne NEXT4
-   800 3537 A0 00		SIOFRMT     ldy #$00
-   801 3539 A9 FF		            lda #$FF
-   802 353B 91 34		            sta (BFENLO),Y
-   803 353D C8			            iny
-   804 353E 91 34		            sta (BFENLO),Y
-   805 3540 D0 EE		            bne JMPSIOEND
+   723 35B4 60			            rts
+   724
+   725 35B5			cart_restore
+   726 35B5 AD 01 36		            lda _tcmosl
+   727 35B8 8D A6 D5		            sta TCMOSL
+   728 35BB AD 02 36		            lda _tcmofr
+   729 35BE 8D A7 D5		            sta TCMOFR
+   730 35C1 AD 03 36		            lda _tcpbrl
+   731 35C4 8D A0 D5		            sta TCPBRL
+   732 35C7 AD 04 36		            lda _tcpbrh
+   733 35CA 8D A1 D5		            sta TCPBRH
+   734 35CD AD 05 36		            lda _tcpben
+   735 35D0 8D A2 D5		            sta TCPBEN
+   736
+   737 35D3 A9 E0		            lda #$e0          ; enable interrupts
+   738 35D5 8D 0E D4		            sta NMIEN
+   739 35D8 58			            cli
+   740 35D9 C6 42		            dec CRITIC 
+   741
+   742 35DB 60			            rts
+   743
+   744 35DC			cart_set
+   745 35DC E6 42		            inc CRITIC 
+   746 35DE 20 8F 35		            jsr WAITSYNC        ; wait for vblank
+   747 35E1 78			            sei                 ; disable interrupt
+   748 35E2 A9 00		            lda #$00
+   749 35E4 8D 0E D4		            sta NMIEN
+   750
+   751 35E7 A9 21		            lda #TCMOSL.16K         ; set 2x8k mode at $8000-$BFFF
+   752 35E9 8D A6 D5		            sta TCMOSL          
+   753 35EC A9 03		            lda #TCMOFR.PBRAM       ; set to RAM
+   754 35EE 8D A7 D5		            sta TCMOFR
+   755 35F1 8A			            txa
+   756 35F2 0A			            asl   
+   757 35F3 8D A0 D5		            sta TCPBRL              ; get bank number from X
+   758 35F6 A9 00		            lda #$00                     
+   759 35F8 8D A1 D5		            sta TCPBRH              ; set high to $00
+   760 35FB A9 01		            lda #$01
+   761 35FD 8D A2 D5		            sta TCPBEN              ; enable        
+   762
+   763 3600 60			            rts            
+   764
+   765 3601 00			_tcmosl     .byte $00
+   766 3602 00			_tcmofr     .byte $00
+   767 3603 00			_tcpbrl     .byte $00
+   768 3604 00			_tcpbrh     .byte $00
+   769 3605 00			_tcpben     .byte $00
+   770
+   771 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   772 				;
+   773 				; print subroutine            
+   774 				;
+   775
+   776 3606 68			PRINT       pla
+   777 3607 8D 17 36		            sta PRINTITER+1
+   778 360A 68			            pla
+   779 360B 8D 18 36		            sta PRINTITER+2
+   780 360E EE 17 36		PRINTLOOP   inc PRINTITER+1
+   781 3611 D0 03		            bne PRINTITER
+   782 3613 EE 18 36		            inc PRINTITER+2
+   783 3616 AD FF FF		PRINTITER   lda $FFFF
+   784 3619 C9 FF		            cmp #$FF
+   785 361B F0 06		            beq PRINTEND
+   786 361D 20 2C 36		            jsr CIOPUTCHR
+   787 3620 4C 0E 36		            jmp PRINTLOOP
+   788 3623 AD 18 36		PRINTEND    lda PRINTITER+2
+   789 3626 48			            pha
+   790 3627 AD 17 36		            lda PRINTITER+1
+   791 362A 48			            pha
+   792 362B 60			            rts
+   793 				; call cio put char subroutine
+   794 362C A2 00		CIOPUTCHR   ldx #$00
+   795 362E 8E 48 03		            stx IOCB0+ICBLL
+   796 3631 8E 49 03		            stx IOCB0+ICBLH
+   797 3634 A0 0B		            ldy #$0B
+   798 3636 8C 42 03		            sty IOCB0+ICCOM
+   799 3639 4C 56 E4		            jmp CIOV
+   800
+   801
+   802
+   803 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   804 				;;; BEGIN OF REALLOC BLOCK
+   805 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
    806
-   807 				; command FORMAT DISK ENHANCED
-   808 3542 C9 22		NEXT4       cmp #$22
-   809 3544 D0 0C		            bne NEXT5
-   810 3546 A9 1A		            lda #$1A
-   811 3548 8D 77 36		REAA015     sta L36BB
-   812 354B A9 80		            lda #$80
-   813 354D 8D 7B 36		REAA016     sta CONFSECSIZ
-   814 3550 D0 E5		            bne SIOFRMT
-   815 				            
-   816 				; command PUT/GET SECTOR 
-   817 3552 C9 52		NEXT5       cmp #$52            ; command GET SECTOR
-   818 3554 F0 0B		            beq PUTGETSEC
-   819 3556 C9 57		            cmp #$57            ; command PUT SECTOR WITH VERIFY
-   820 3558 F0 07		            beq PUTGETSEC
-   821 355A C9 50		            cmp #$50            ; command PUT SECTOR
-   822 355C F0 03		            beq PUTGETSEC
-   823 355E 4C 6D 36		REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
-   824 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   825 				; buffer address and calc byte count
-   826 3561 A9 00		PUTGETSEC   lda #$00
-   827 3563 85 32		            sta BUFRLO
-   828 3565 AD 0A 03		            lda DAUX1
-   829 3568 38			            sec
-   830 3569 E9 01		            sbc #$01
-   831 356B 85 33		            sta BUFRHI
-   832 356D AD 0B 03		            lda DAUX2
-   833 3570 E9 00		            sbc #$00
-   834 3572 06 33		            asl BUFRHI
-   835 3574 2A			            rol
-   836 3575 AA			            tax                 ; set X with memory bank number
-   837 3576 A5 33		            lda BUFRHI
-   838 3578 4A			            lsr
-   839 3579 4A			            lsr
-   840 357A 66 32		            ror BUFRLO
-   841 357C 09 80		            ora #$80
-   842 357E 85 33		            sta BUFRHI
-   843 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   844 				; set buffer address in copy loops
-   845 3580 A5 32		            lda BUFRLO
-   846 3582 8D 15 36		REAA021     sta GETADRLP+1
-   847 3585 8D 49 36		REAA022     sta PUTADRLP+1
-   848 3588 A5 33		            lda BUFRHI
-   849 358A 8D 16 36		REAA023     sta GETADRLP+2
-   850 358D 8D 4A 36		REAA024     sta PUTADRLP+2            
-   851 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   852 				; check for GET
-   853 3590 AD 02 03		            lda DCOMND
-   854 3593 C9 52		            cmp #$52
-   855 3595 F0 0A		            beq L3656           ; is GET
-   856 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   857 				; PUT: put user data to buffer            
-   858 3597 A0 7F		            ldy #$7F
-   859 3599 B1 34		L364B       lda (BFENLO),Y
-   860 359B 99 82 36		REAA005     sta BUFFERXX1,Y
-   861 359E 88			            dey
-   862 359F 10 F8		            bpl L364B
-   863 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   864 				; check if bank number is in range            
-   865 35A1 E0 20		L3656       cpx #$20            ; check bank number
-   866 35A3 B0 B9		            bcs REAA020         ; intermediate jmp to NAK
-   867 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   868 35A5			            M_cart_push         ; save register
-Macro: M_CART_PUSH [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
-     1 35A5 AD A2 D5		            lda TCPBEN
-     2 35A8 48			            pha
-     3 35A9 AD A6 D5		            lda TCMOSL
-     4 35AC 48			            pha
-     5 35AD AD A7 D5		            lda TCMOFR
-     6 35B0 48			            pha
-     7 35B1 AD A0 D5		            lda TCPBRL
-     8 35B4 48			            pha
-     9 35B5 AD A1 D5		            lda TCPBRH
-    10 35B8 48			            pha
-Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
-   869 35B9 E6 42		            inc CRITIC
-   870 35BB A5 14		            lda RTCLOK+2
-   871 35BD C5 14		WAITLOOP2   cmp RTCLOK+2
-   872 35BF F0 FC		            beq WAITLOOP2
-   873 35C1 78			            sei                 ; disable interrupts
-   874 35C2 A9 00		            lda #$00
-   875 35C4 8D 0E D4		            sta NMIEN           ; 40 cycles
-   876 				; set bank, number in X
-   877 35C7 A9 21		            lda #TCMOSL.16K     ; set 2x8k mode at $8000-$BFFF
-   878 35C9 8D A6 D5		            sta TCMOSL          
-   879
-   880 35CC AD 81 36		REAA025     lda FDRVNUM  ; check drive number for flash
-   881 35CF CD 01 03		            cmp DUNIT
-   882 35D2 D0 23		            bne setTCram
-   883
-   884 				; 512k user space start bank $3fc0
-   885 				; 640k user space start bank $3fb0
-   886 35D4 A9 00		setTCflash  lda #TCMOFR.FLASH       ; set to FLASH
-   887 35D6 8D A7 D5		            sta TCMOFR
-   888 35D9 A9 B0		            lda #$b0
-   889 35DB 8D A0 D5		            sta TCPBRL
-   890 35DE A9 3F		            lda #$3f
-   891 35E0 8D A1 D5		            sta TCPBRH
-   892 35E3 8A			            txa
-   893 35E4 0A			            asl
-   894 35E5 18			            clc   
-   895 35E6 6D A0 D5		            adc TCPBRL              ; get bank number from X
-   896 35E9 8D A0 D5		            sta TCPBRL
-   897 35EC AD A1 D5		            lda TCPBRH
-   898 35EF 69 00		            adc #$00                     
-   899 35F1 8D A1 D5		            sta TCPBRH              ; set high to $00
-   900 35F4 18			            clc
-   901 35F5 90 0F		            bcc setTcend
+   807 				; to realloc routines
+   808 				; DOSINI set MEMLO at reset
+   809 363C			REABEGIN
+   810
+   811 363C 20 00 00		JSRDOSINI   jsr $0000
+   812 363F			SETMEMLO    
+   813 363F A9 A4		REAL003     lda #<REAEND
+   814 3641 8D E7 02		            sta MEMLO
+   815 3644 A9 38		REAH003     lda #>REAEND
+   816 3646 8D E8 02		            sta MEMLO+1
+   817 3649 60			            rts
+   818
+   819 				; new DOSVEC for RAMDISK device
+   820 364A AD 00 03		RAMDSIO     lda DDEVIC
+   821 364D C9 31		            cmp #$31
+   822 364F D0 17		            bne JMPSIO
+   823 3651 AD 1F 38		REAA004     lda DRVNUM  ; check drive number for RAM
+   824 3654 CD 01 03		            cmp DUNIT
+   825 3657 F0 1E		            beq NEWSIOGO
+   826
+   827 3659 A2 00					ldx #$00
+   828 365B BD 20 38		REAA026		lda FDRVNUM,X  ; check drive number for Flash
+   829 365E CD 01 03		            cmp DUNIT
+   830 3661 F0 08		            beq NEWSIOGOF
+   831 3663 E8						inx
+   832 3664 E0 04					cpx #$04
+   833 3666 D0 F3					bne REAA026
+   834
+   835 3668 4C 00 00		JMPSIO      jmp $0000
+   836
+   837 				; set flash bank
+   838 366B			NEWSIOGOF
+   839 366B BD 17 38		REAA027		lda FBANKL,X
+   840 366E 8D 71 37		REAA028		sta SFBANKL+1	
+   841 3671 BD 1B 38		REAA029		lda FBANKH,X
+   842 3674 8D 76 37		REAA030		sta SFBANKH+1
+   843 				; set buffer address
+   844 3677 AD 04 03		NEWSIOGO    lda DBUFLO
+   845 367A 85 34		            sta BFENLO
+   846 367C AD 05 03		            lda DBUFHI
+   847 367F 85 35		            sta BFENHI
+   848 				; load commad byte            
+   849 3681 AD 02 03		            lda DCOMND
+   850 				; command STATUS REQUEST
+   851 3684 C9 53		            cmp #$53 
+   852 3686 D0 1B		            bne NEXT1
+   853 3688 AD 12 38		REAA009     lda CONFSECSIZ
+   854 368B 4A			            lsr
+   855 368C 4A			            lsr
+   856 368D 49 30		            eor #$30
+   857 368F AC 0E 38		REAA010     ldy L36BB
+   858 3692 C0 1A		            cpy #$1A
+   859 3694 D0 02		            bne L35B4
+   860 3696 09 80		            ora #$80
+   861 3698 A0 00		L35B4       ldy #$00
+   862 369A 91 34		            sta (BFENLO),Y
+   863 369C C8			            iny
+   864 369D A9 FF		            lda #$FF
+   865 369F 91 34		            sta (BFENLO),Y
+   866 36A1 30 24		            bmi JMPSIOEND
+   867 				            
+   868 				; command RETURN CONFIGURATION            
+   869 36A3 C9 4E		NEXT1       cmp #$4E
+   870 36A5 D0 0C		            bne NEXT2
+   871 36A7 A0 0B		            ldy #$0B            ; 12 bytes
+   872 36A9			RETCNFLOOP
+   873 36A9 B9 0B 38		REAA011     lda CONFBUF,Y
+   874 36AC 91 34		            sta (BFENLO),Y
+   875 36AE 88			            dey
+   876 36AF 10 F8		            bpl RETCNFLOOP
+   877 36B1 30 14		            bmi JMPSIOEND
+   878
+   879 				; command SET CONFIGURATION
+   880 36B3 C9 4F		NEXT2       cmp #$4F
+   881 36B5 D0 13		            bne NEXT3
+   882 36B7 A0 07		            ldy #$07
+   883 36B9 B1 34		            lda (BFENLO),Y
+   884 36BB F0 38		            beq REAA020         ; error if sec size <> $80 ( $00 -> $100)            
+   885 36BD 8D 12 38		REAA012     sta CONFSECSIZ
+   886 36C0 A0 03		            ldy #$03
+   887 36C2 B1 34		            lda (BFENLO),Y
+   888 36C4 8D 0E 38		REAA013     sta L36BB
+   889
+   890 36C7			JMPSIOEND
+   891 36C7 4C 01 38		REAA014     jmp RDSIOEND
+   892
+   893 				; command FORMAT DISK
+   894 36CA C9 21		NEXT3       cmp #$21
+   895 36CC D0 0B		            bne NEXT4
+   896 36CE A0 00		SIOFRMT     ldy #$00
+   897 36D0 A9 FF		            lda #$FF
+   898 36D2 91 34		            sta (BFENLO),Y
+   899 36D4 C8			            iny
+   900 36D5 91 34		            sta (BFENLO),Y
+   901 36D7 D0 EE		            bne JMPSIOEND
    902
-   903 35F7 A9 03		setTCram    lda #TCMOFR.PBRAM       ; set to RAM
-   904 35F9 8D A7 D5		            sta TCMOFR
-   905 35FC 8A			            txa
-   906 35FD 0A			            asl   
-   907 35FE 8D A0 D5		            sta TCPBRL              ; get bank number from X
-   908 3601 A9 00		            lda #$00                     
-   909 3603 8D A1 D5		            sta TCPBRH              ; set high to $00
-   910
-   911 3606 A9 01		setTCend    lda #$01
-   912 3608 8D A2 D5		            sta TCPBEN              ; enable        
-   913 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   914 				; check for PUT
-   915 360B A0 7F		            ldy #$7F            ; 9 cycles
-   916 360D AD 02 03		            lda DCOMND
-   917 3610 C9 52		            cmp #$52
-   918 3612 D0 31		            bne L369B           ; is PUT
-   919 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   920 				; GET: read data to buffer
-   921 3614			L367B
-   922 3614 B9 FF FF		GETADRLP    lda $FFFF,Y         ; 5 cycles +
-   923 3617 99 82 36		REAA006     sta BUFFERXX1,Y     ; 5 cycles +
-   924 361A 88			            dey                 ; 2 cycles +
-   925 361B 10 F7		            bpl L367B           ; 4 cycles + * 128 = 2048
-   926 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   927 				; restore bank for write to user buffer
-   928 361D			            M_cart_pop          ; restore register            
-Macro: M_CART_POP [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
-     1 361D 68			            pla                 
-     2 361E 8D A1 D5		            sta TCPBRH          
-     3 3621 68			            pla                 
-     4 3622 8D A0 D5		            sta TCPBRL          
-     5 3625 68			            pla                 
-     6 3626 8D A7 D5		            sta TCMOFR          
-     7 3629 68			            pla                 
-     8 362A 8D A6 D5		            sta TCMOSL          
-     9 362D 68			            pla                 
-    10 362E 8D A2 D5		            sta TCPBEN          
+   903 				; command FORMAT DISK ENHANCED
+   904 36D9 C9 22		NEXT4       cmp #$22
+   905 36DB D0 0C		            bne NEXT5
+   906 36DD A9 1A		            lda #$1A
+   907 36DF 8D 0E 38		REAA015     sta L36BB
+   908 36E2 A9 80		            lda #$80
+   909 36E4 8D 12 38		REAA016     sta CONFSECSIZ
+   910 36E7 D0 E5		            bne SIOFRMT
+   911 				            
+   912 				; command PUT/GET SECTOR 
+   913 36E9 C9 52		NEXT5       cmp #$52            ; command GET SECTOR
+   914 36EB F0 0B		            beq PUTGETSEC
+   915 36ED C9 57		            cmp #$57            ; command PUT SECTOR WITH VERIFY
+   916 36EF F0 07		            beq PUTGETSEC
+   917 36F1 C9 50		            cmp #$50            ; command PUT SECTOR
+   918 36F3 F0 03		            beq PUTGETSEC
+   919 36F5 4C 04 38		REAA020     jmp RDSIOEND+3      ; error NAK, command not supported
+   920 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   921 				; buffer address and calc byte count
+   922 36F8 A9 00		PUTGETSEC   lda #$00
+   923 36FA 85 32		            sta BUFRLO
+   924 36FC AD 0A 03		            lda DAUX1
+   925 36FF 38			            sec
+   926 3700 E9 01		            sbc #$01
+   927 3702 85 33		            sta BUFRHI
+   928 3704 AD 0B 03		            lda DAUX2
+   929 3707 E9 00		            sbc #$00
+   930 3709 06 33		            asl BUFRHI
+   931 370B 2A			            rol
+   932 370C AA			            tax                 ; set X with memory bank number
+   933 370D A5 33		            lda BUFRHI
+   934 370F 4A			            lsr
+   935 3710 4A			            lsr
+   936 3711 66 32		            ror BUFRLO
+   937 3713 09 80		            ora #$80
+   938 3715 85 33		            sta BUFRHI
+   939 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   940 				; set buffer address in copy loops
+   941 3717 A5 32		            lda BUFRLO
+   942 3719 8D AC 37		REAA021     sta GETADRLP+1
+   943 371C 8D E0 37		REAA022     sta PUTADRLP+1
+   944 371F A5 33		            lda BUFRHI
+   945 3721 8D AD 37		REAA023     sta GETADRLP+2
+   946 3724 8D E1 37		REAA024     sta PUTADRLP+2            
+   947 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   948 				; check for GET
+   949 3727 AD 02 03		            lda DCOMND
+   950 372A C9 52		            cmp #$52
+   951 372C F0 0A		            beq L3656           ; is GET
+   952 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   953 				; PUT: put user data to buffer            
+   954 372E A0 7F		            ldy #$7F
+   955 3730 B1 34		L364B       lda (BFENLO),Y
+   956 3732 99 24 38		REAA005     sta BUFFERXX1,Y
+   957 3735 88			            dey
+   958 3736 10 F8		            bpl L364B
+   959 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   960 				; check if bank number is in range            
+   961 3738 E0 20		L3656       cpx #$20            ; check bank number
+   962 373A B0 B9		            bcs REAA020         ; intermediate jmp to NAK
+   963 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   964 373C			            M_cart_push         ; save register
+Macro: M_CART_PUSH [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
+     1 373C AD A2 D5		            lda TCPBEN
+     2 373F 48			            pha
+     3 3740 AD A6 D5		            lda TCMOSL
+     4 3743 48			            pha
+     5 3744 AD A7 D5		            lda TCMOFR
+     6 3747 48			            pha
+     7 3748 AD A0 D5		            lda TCPBRL
+     8 374B 48			            pha
+     9 374C AD A1 D5		            lda TCPBRH
+    10 374F 48			            pha
 Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
-   929 3631 A9 E0		            lda #$e0            ; enable interrupts
-   930 3633 8D 0E D4		            sta NMIEN
-   931 3636 58			            cli
-   932 3637 C6 42		            dec CRITIC          ; 54 cycles
-   933 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
-   934 				; GET: write buffer to user data            
-   935 3639 A0 7F		            ldy #$7F
-   936 363B			L368E
-   937 363B B9 82 36		REAA008     lda BUFFERXX1,Y
-   938 363E 91 34		            sta (BFENLO),Y
-   939 3640 88			            dey
-   940 3641 10 F8		            bpl L368E
-   941 3643 30 25		            bmi RDSIOEND
-   942 				            
-   943 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   944 				; PUT: buffer data to sector
-   945 3645			L369B
-   946 3645 B9 82 36		REAA007     lda BUFFERXX1,Y   ; 5 cycles                
-   947 3648 99 FF FF		PUTADRLP    sta $FFFF,Y       ; 5 cycles
-   948 364B 88			            dey               ; 2 cycles +              
-   949 364C 10 F7		            bpl L369B         ; 4 cycles + * 128 = 2048 
-   950 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   951 				; restore register
-   952 364E			            M_cart_pop          ; restore register
+   965 3750 E6 42		            inc CRITIC
+   966 3752 A5 14		            lda RTCLOK+2
+   967 3754 C5 14		WAITLOOP2   cmp RTCLOK+2
+   968 3756 F0 FC		            beq WAITLOOP2
+   969 3758 78			            sei                 ; disable interrupts
+   970 3759 A9 00		            lda #$00
+   971 375B 8D 0E D4		            sta NMIEN           ; 40 cycles
+   972 				; set bank, number in X
+   973 375E A9 21		            lda #TCMOSL.16K     ; set 2x8k mode at $8000-$BFFF
+   974 3760 8D A6 D5		            sta TCMOSL          
+   975
+   976 3763 AD 1F 38		REAA025     lda DRVNUM  		; check drive number for ram
+   977 3766 CD 01 03		            cmp DUNIT
+   978 3769 F0 23		            beq setTCram
+   979
+   980 				; 512k user space start bank $3fc0
+   981 				; 640k user space start bank $3fb0
+   982 376B A9 00		setTCflash  lda #TCMOFR.FLASH       ; set to FLASH
+   983 376D 8D A7 D5		            sta TCMOFR
+   984 3770 A9 B0		SFBANKL		lda #$b0
+   985 3772 8D A0 D5		            sta TCPBRL
+   986 3775 A9 3F		SFBANKH		lda #$3f
+   987 3777 8D A1 D5		            sta TCPBRH
+   988 377A 8A			            txa
+   989 377B 0A			            asl
+   990 377C 18			            clc   
+   991 377D 6D A0 D5		            adc TCPBRL              ; get bank number from X
+   992 3780 8D A0 D5		            sta TCPBRL
+   993 3783 AD A1 D5		            lda TCPBRH
+   994 3786 69 00		            adc #$00                     
+   995 3788 8D A1 D5		            sta TCPBRH              ; set high to $00
+   996 378B 18			            clc
+   997 378C 90 0F		            bcc setTcend
+   998
+   999 378E A9 03		setTCram    lda #TCMOFR.PBRAM       ; set to RAM
+  1000 3790 8D A7 D5		            sta TCMOFR
+  1001 3793 8A			            txa
+  1002 3794 0A			            asl   
+  1003 3795 8D A0 D5		            sta TCPBRL              ; get bank number from X
+  1004 3798 A9 00		            lda #$00                     
+  1005 379A 8D A1 D5		            sta TCPBRH              ; set high to $00
+  1006
+  1007 379D A9 01		setTCend    lda #$01
+  1008 379F 8D A2 D5		            sta TCPBEN              ; enable        
+  1009 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1010 				; check for PUT
+  1011 37A2 A0 7F		            ldy #$7F            ; 9 cycles
+  1012 37A4 AD 02 03		            lda DCOMND
+  1013 37A7 C9 52		            cmp #$52
+  1014 37A9 D0 31		            bne L369B           ; is PUT
+  1015 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1016 				; GET: read data to buffer
+  1017 37AB			L367B
+  1018 37AB B9 FF FF		GETADRLP    lda $FFFF,Y         ; 5 cycles +
+  1019 37AE 99 24 38		REAA006     sta BUFFERXX1,Y     ; 5 cycles +
+  1020 37B1 88			            dey                 ; 2 cycles +
+  1021 37B2 10 F7		            bpl L367B           ; 4 cycles + * 128 = 2048
+  1022 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1023 				; restore bank for write to user buffer
+  1024 37B4			            M_cart_pop          ; restore register            
 Macro: M_CART_POP [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
-     1 364E 68			            pla                 
-     2 364F 8D A1 D5		            sta TCPBRH          
-     3 3652 68			            pla                 
-     4 3653 8D A0 D5		            sta TCPBRL          
-     5 3656 68			            pla                 
-     6 3657 8D A7 D5		            sta TCMOFR          
-     7 365A 68			            pla                 
-     8 365B 8D A6 D5		            sta TCMOSL          
-     9 365E 68			            pla                 
-    10 365F 8D A2 D5		            sta TCPBEN          
+     1 37B4 68			            pla                 
+     2 37B5 8D A1 D5		            sta TCPBRH          
+     3 37B8 68			            pla                 
+     4 37B9 8D A0 D5		            sta TCPBRL          
+     5 37BC 68			            pla                 
+     6 37BD 8D A7 D5		            sta TCMOFR          
+     7 37C0 68			            pla                 
+     8 37C1 8D A6 D5		            sta TCMOSL          
+     9 37C4 68			            pla                 
+    10 37C5 8D A2 D5		            sta TCPBEN          
 Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
-   953 3662 A9 E0		            lda #$e0            ; enable interrupts
-   954 3664 8D 0E D4		            sta NMIEN
-   955 3667 58			            cli
-   956 3668 C6 42		            dec CRITIC          ; 54 cycles
-   957 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   958 				; set rc            
-   959 366A A0 01		RDSIOEND    ldy #$01
-   960 366C 2C A0 8B		            bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
-   961
-   962 366F 8C 03 03					sty DSTATS
-   963 3672 98			            tya                 ; set RC
-   964 3673 60			            rts
-   965 				            
-   966 				; drive configuration buffer
-   967 3674 28 01 12		CONFBUF     .byte $28,$01,$12
-   968 3677 00			L36BB       .byte $00
-   969 3678 00 00 00		            .byte $00,$00,$00
-   970 367B 80			CONFSECSIZ  .byte $80                   ; $80 -> 128Byte, $00 -> 256Byte
-   971 367C FF 00 00 00		            .byte $FF,$00,$00,$00
-   972
-   973 3680 FF			DRVNUM      .byte $ff
-   974 3681 FF			FDRVNUM     .byte $ff
-   975 				; $80 for 128Bytes ($100 for 256Bytes)
-   976 3682			BUFFERXX1
-   977 				;            org $37E6
-   978 = 3702			REAEND      = BUFFERXX1 + $80
-   979 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   980 				;;; END OF REALLOC BLOCK
-   981 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   982
-   983
-   984 				; $20 Bytes
-   985 = 3702			BNKSAVBUF   = REAEND
-   986
-   987 				; $20 bytes
-   988 				;            org $3806
-   989 				;BNKSAVBUF2  = BNKSAVBUF + $20
-   990
-   991 				 
-   992 				;           org $3826
-   993 3682			            org BNKSAVBUF + $20
-   994 				; realloc whole addresses
-   995 3722-3836> 98 32		REATAB      .word REAA001+1 ;$33CA
-   996 3724 A2 32		            .word REAA002+1 ;$33D4
-   997 3726 A9 32		            .word REAA003+1 ;$33DB
-   998 3728 CE 34		            .word REAA004+1 ;$3583
-   999 372A 9C 35		            .word REAA005+1 ;$364E
-  1000 372C 18 36		            .word REAA006+1 ;$367E
-  1001 372E 46 36		            .word REAA007+1 ;$369C
-  1002 3730 3C 36		            .word REAA008+1 ;$368F
-  1003 3732 F2 34		            .word REAA009+1 ;$35A5
-  1004 3734 F9 34		            .word REAA010+1 ;$35AC
-  1005 3736 13 35		            .word REAA011+1 ;$35C6
-  1006 3738 27 35		            .word REAA012+1 ;$35D8
-  1007 373A 2E 35		            .word REAA013+1 ;$35DF
-  1008 373C 31 35		            .word REAA014+1 ;$35E2
-  1009 373E 49 35		            .word REAA015+1 ;$35FA
-  1010 3740 4E 35		            .word REAA016+1 ;$35FF
-  1011 3742 5F 35		            .word REAA020+1 ;$3610
-  1012 3744 83 35		            .word REAA021+1
-  1013 3746 86 35		            .word REAA022+1
-  1014 3748 8B 35		            .word REAA023+1
-  1015 374A 8E 35		            .word REAA024+1
-  1016 374C CD 35		            .word REAA025+1
-  1017 374E D6 34		            .word REAA026+1
-  1018 3750 00 00		            .word $0000
-  1019 				 
-  1020 				; realloc address low byte           
-  1021 3752 7F 32		            .word REAL001+1 ;$33B1
-  1022 3754 9B 32		            .word REAL002+1 ;$33CD
-  1023 3756 BC 34		            .word REAL003+1 ;$356E
-  1024 3758 00 00		            .word $0000
-  1025 				; realloc address high byte (address to high byte and value of low byte)
-  1026 375A 83 32		            .word REAH001+1  ;$33B5
-  1027 375C B8			            .byte <JSRDOSINI ;$6A
-  1028 				                        
-  1029 375D A5 32		            .word REAH002+1 ;$33D7
-  1030 375F C6			            .byte <RAMDSIO  ;$78
-  1031 				            
-  1032 3760 C1 34		            .word REAH003+1  ;$3573
-  1033 3762 02			            .byte <REAEND    ;$E6
-  1034 				            
-  1035
-  1036 3763 00 00		            .word $0000
-  1037 				            
-  1038 3765 A9 00		REASTART    lda #$00
-  1039 3767 8D 37 38		            sta REALOOPCNT
-  1040 376A AE 37 38		REALOOP     ldx REALOOPCNT
-  1041 376D BD 29 38		            lda REATABADR,X
-  1042 3770 8D 0F 38		            sta L3910+1
-  1043 3773 BD 2A 38		            lda REATABADR+1,X
-  1044 3776 8D 10 38		            sta L3910+2
-  1045 3779 0D 0F 38		            ora L3910+1
-  1046 377C D0 01		            bne L3881
-  1047 377E 60			            rts
-  1048 				            
-  1049 377F 38			L3881       sec
-  1050 3780 BD 2D 38		            lda READSTADR,X
-  1051 3783 FD 2B 38		            sbc REASRCADR,X
-  1052 3786 8D 38 38		            sta READIFLO
-  1053 3789 BD 2E 38		            lda READSTADR+1,X
-  1054 378C FD 2C 38		            sbc REASRCADR+1,X
-  1055 378F 8D 39 38		            sta READIFHI
-  1056 				            
-  1057 3792 20 1A 38		L3894       jsr L391C
-  1058 3795 F0 13		            beq L38AC
-  1059 3797 B1 D7		            lda ($D7),Y
-  1060 3799 18			            clc
-  1061 379A 6D 38 38		            adc READIFLO
-  1062 379D 91 D7		            sta ($D7),Y
-  1063 379F C8			            iny
-  1064 37A0 B1 D7		            lda ($D7),Y
-  1065 37A2 6D 39 38		            adc READIFHI
-  1066 37A5 91 D7		            sta ($D7),Y
-  1067 37A7 4C 92 37		            jmp L3894
-  1068 37AA 20 1A 38		L38AC       jsr L391C
-  1069 37AD F0 0B		            beq L38BC
-  1070 37AF B1 D7		            lda ($D7),Y
-  1071 37B1 18			            clc
-  1072 37B2 6D 38 38		            adc READIFLO
-  1073 37B5 91 D7		            sta ($D7),Y
-  1074 37B7 4C AA 37		            jmp L38AC
-  1075 37BA 20 1A 38		L38BC       jsr L391C
-  1076 37BD F0 11		            beq L38D2
-  1077 37BF 20 0E 38		            jsr L3910
-  1078 37C2 18			            clc
-  1079 37C3 6D 38 38		            adc READIFLO
-  1080 37C6 B1 D7		            lda ($D7),Y
-  1081 37C8 6D 39 38		            adc READIFHI
-  1082 37CB 91 D7		            sta ($D7),Y
-  1083 37CD 4C BA 37		            jmp L38BC
-  1084 37D0 AE 37 38		L38D2       ldx REALOOPCNT
+  1025 37C8 A9 E0		            lda #$e0            ; enable interrupts
+  1026 37CA 8D 0E D4		            sta NMIEN
+  1027 37CD 58			            cli
+  1028 37CE C6 42		            dec CRITIC          ; 54 cycles
+  1029 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;            
+  1030 				; GET: write buffer to user data            
+  1031 37D0 A0 7F		            ldy #$7F
+  1032 37D2			L368E
+  1033 37D2 B9 24 38		REAA008     lda BUFFERXX1,Y
+  1034 37D5 91 34		            sta (BFENLO),Y
+  1035 37D7 88			            dey
+  1036 37D8 10 F8		            bpl L368E
+  1037 37DA 30 25		            bmi RDSIOEND
+  1038 				            
+  1039 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1040 				; PUT: buffer data to sector
+  1041 37DC			L369B
+  1042 37DC B9 24 38		REAA007     lda BUFFERXX1,Y   ; 5 cycles                
+  1043 37DF 99 FF FF		PUTADRLP    sta $FFFF,Y       ; 5 cycles
+  1044 37E2 88			            dey               ; 2 cycles +              
+  1045 37E3 10 F7		            bpl L369B         ; 4 cycles + * 128 = 2048 
+  1046 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1047 				; restore register
+  1048 37E5			            M_cart_pop          ; restore register
+Macro: M_CART_POP [Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM]
+     1 37E5 68			            pla                 
+     2 37E6 8D A1 D5		            sta TCPBRH          
+     3 37E9 68			            pla                 
+     4 37EA 8D A0 D5		            sta TCPBRL          
+     5 37ED 68			            pla                 
+     6 37EE 8D A7 D5		            sta TCMOFR          
+     7 37F1 68			            pla                 
+     8 37F2 8D A6 D5		            sta TCMOSL          
+     9 37F5 68			            pla                 
+    10 37F6 8D A2 D5		            sta TCPBEN          
+Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/RAMCART.ASM
+  1049 37F9 A9 E0		            lda #$e0            ; enable interrupts
+  1050 37FB 8D 0E D4		            sta NMIEN
+  1051 37FE 58			            cli
+  1052 37FF C6 42		            dec CRITIC          ; 54 cycles
+  1053 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1054 				; set rc            
+  1055 3801 A0 01		RDSIOEND    ldy #$01
+  1056 3803 2C A0 8B		            bit $8BA0           ; $2c, ldy #$8b; bank/sector number error #139 NAK
+  1057
+  1058 3806 8C 03 03					sty DSTATS
+  1059 3809 98			            tya                 ; set RC
+  1060 380A 60			            rts
+  1061 				            
+  1062 				; drive configuration buffer
+  1063 380B 28 01 12		CONFBUF     .byte $28,$01,$12
+  1064 380E 00			L36BB       .byte $00
+  1065 380F 00 00 00		            .byte $00,$00,$00
+  1066 3812 80			CONFSECSIZ  .byte $80                   ; $80 -> 128Byte, $00 -> 256Byte
+  1067 3813 FF 00 00 00		            .byte $FF,$00,$00,$00
+  1068
+  1069 3817 B0			FBANKL		.byte $b0	; F1: 16.304 bank
+  1070 3818 70						.byte $70	; F2: 16.240 bank
+  1071 3819 30						.byte $30	; F3: 16.176 bank
+  1072 381A F0						.byte $f0
+  1073
+  1074 381B 3F			FBANKH		.byte $3f	; F1: 16.304 bank
+  1075 381C 3F						.byte $3f	; F2: 16.240 bank
+  1076 381D 3F						.byte $3f	; F3: 16.176 bank
+  1077 381E 3E						.byte $3e	; F4: 16.112 bank
+  1078
+  1079 381F 00			DRVNUM      .byte $00	; RAM
+  1080
+  1081 3820 00			FDRVNUM     .byte $00	; F1:
+  1082 3821 00						.byte $00	; F2:
+  1083 3822 00						.byte $00	; F3:
+  1084 3823 00						.byte $00	; F4:
   1085
-  1086 37D3 BD 2F 38		            lda CPYFROMADR,X
-  1087 37D6 8D F1 37		            sta L38F2+1
-  1088 37D9 BD 30 38		            lda CPYFROMADR+1,X
-  1089 37DC 8D F2 37		            sta L38F2+2
-  1090
-  1091 37DF BD 33 38		            lda CPYTOADR,X
-  1092 37E2 8D F4 37		            sta L38F2+4
-  1093 37E5 BD 34 38		            lda CPYTOADR+1,X
-  1094 37E8 8D F5 37		            sta L38F2+5
+  1086
+  1087 				; $80 for 128Bytes ($100 for 256Bytes)
+  1088 3824			BUFFERXX1
+  1089 				;            org $37E6
+  1090 = 38A4			REAEND      = BUFFERXX1 + $80
+  1091 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1092 				;;; END OF REALLOC BLOCK
+  1093 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  1094
   1095
-  1096 37EB BC 32 38		            ldy CPYLENGTH+1,X
-  1097 37EE A2 00		            ldx #$00
-  1098 37F0 BD FF FF		L38F2       lda $FFFF,X
-  1099 37F3 9D FF FF		            sta $FFFF,X
-  1100 37F6 E8			            inx
-  1101 37F7 D0 F7		            bne L38F2
-  1102 37F9 EE F2 37		            inc L38F2+2
-  1103 37FC EE F5 37		            inc L38F2+5
-  1104 37FF 88			            dey
-  1105 3800 10 EE		            bpl L38F2
-  1106 3802 AD 37 38		            lda REALOOPCNT
-  1107 3805 18			            clc
-  1108 3806 69 0C		            adc #$0C
-  1109 3808 8D 37 38		            sta REALOOPCNT
-  1110 380B 4C 6A 37		            jmp REALOOP
-  1111 				            
-  1112 380E AD FF FF		L3910       lda $FFFF
-  1113 3811 EE 0F 38		            inc L3910+1
-  1114 3814 D0 03		            bne L391B
-  1115 3816 EE 10 38		            inc L3910+2
-  1116 3819 60			L391B       rts
-  1117
-  1118 381A 20 0E 38		L391C       jsr L3910
-  1119 381D 85 D7		            sta $D7
-  1120 381F 20 0E 38		            jsr L3910
-  1121 3822 A0 00		            ldy #$00
-  1122 3824 85 D8		            sta $D8
-  1123 3826 05 D7		            ora $D7
-  1124 3828 60			            rts
-  1125
-  1126 				; realloc code pointer
-  1127 3829 22 37		REATABADR   .word REATAB
-  1128 382B B8 34		REASRCADR   .word REABEGIN
-  1129 382D FF FF		READSTADR   .word $FFFF
-  1130 				; copy code pointer
-  1131 382F B8 34		CPYFROMADR  .word REABEGIN
-  1132 3831 4A 02		CPYLENGTH   .word REAEND-REABEGIN ;$027C
-  1133 3833 FF FF		CPYTOADR    .word $FFFF
-  1134 3835 00 00		            .word $0000
-  1135 				            
-  1136 				; $01 byte
-  1137 3837			REALOOPCNT  ;= $392B
-  1138 = 3838			READIFLO   = REALOOPCNT+1
-  1139 = 3839			READIFHI   = READIFLO+1
-  1140
-  1141
-  1142 				         
+  1096 				; $20 Bytes
+  1097 = 38A4			BNKSAVBUF   = REAEND
+  1098
+  1099 				; $20 bytes
+  1100 				;            org $3806
+  1101 				;BNKSAVBUF2  = BNKSAVBUF + $20
+  1102
+  1103 				 
+  1104 				;           org $3826
+  1105 3824			            org BNKSAVBUF + $20
+  1106 				; realloc whole addresses
+  1107 38C4-39E0> D1 32		REATAB      .word REAA001+1 ;$33CA
+  1108 38C6 DB 32		            .word REAA002+1 ;$33D4
+  1109 38C8 E2 32		            .word REAA003+1 ;$33DB
+  1110 38CA 52 36		            .word REAA004+1 ;$3583
+  1111 38CC 33 37		            .word REAA005+1 ;$364E
+  1112 38CE AF 37		            .word REAA006+1 ;$367E
+  1113 38D0 DD 37		            .word REAA007+1 ;$369C
+  1114 38D2 D3 37		            .word REAA008+1 ;$368F
+  1115 38D4 89 36		            .word REAA009+1 ;$35A5
+  1116 38D6 90 36		            .word REAA010+1 ;$35AC
+  1117 38D8 AA 36		            .word REAA011+1 ;$35C6
+  1118 38DA BE 36		            .word REAA012+1 ;$35D8
+  1119 38DC C5 36		            .word REAA013+1 ;$35DF
+  1120 38DE C8 36		            .word REAA014+1 ;$35E2
+  1121 38E0 E0 36		            .word REAA015+1 ;$35FA
+  1122 38E2 E5 36		            .word REAA016+1 ;$35FF
+  1123 38E4 F6 36		            .word REAA020+1 ;$3610
+  1124 38E6 1A 37		            .word REAA021+1
+  1125 38E8 1D 37		            .word REAA022+1
+  1126 38EA 22 37		            .word REAA023+1
+  1127 38EC 25 37		            .word REAA024+1
+  1128 38EE 64 37		            .word REAA025+1
+  1129 38F0 5C 36		            .word REAA026+1
+  1130 38F2 6C 36		            .word REAA027+1
+  1131 38F4 6F 36		            .word REAA028+1
+  1132 38F6 72 36		            .word REAA029+1
+  1133 38F8 75 36		            .word REAA030+1
+  1134 38FA 00 00		            .word $0000
+  1135 				 
+  1136 				; realloc address low byte           
+  1137 38FC B8 32		            .word REAL001+1 ;$33B1
+  1138 38FE D4 32		            .word REAL002+1 ;$33CD
+  1139 3900 40 36		            .word REAL003+1 ;$356E
+  1140 3902 00 00		            .word $0000
+  1141 				; realloc address high byte (address to high byte and value of low byte)
+  1142 3904 BC 32		            .word REAH001+1  ;$33B5
+  1143 3906 3C			            .byte <JSRDOSINI ;$6A
+  1144 				                        
+  1145 3907 DE 32		            .word REAH002+1 ;$33D7
+  1146 3909 4A			            .byte <RAMDSIO  ;$78
+  1147 				            
+  1148 390A 45 36		            .word REAH003+1  ;$3573
+  1149 390C A4			            .byte <REAEND    ;$E6
+  1150 				            
+  1151
+  1152 390D 00 00		            .word $0000
+  1153 				            
+  1154 390F A9 00		REASTART    lda #$00
+  1155 3911 8D E1 39		            sta REALOOPCNT
+  1156 3914 AE E1 39		REALOOP     ldx REALOOPCNT
+  1157 3917 BD D3 39		            lda REATABADR,X
+  1158 391A 8D B9 39		            sta L3910+1
+  1159 391D BD D4 39		            lda REATABADR+1,X
+  1160 3920 8D BA 39		            sta L3910+2
+  1161 3923 0D B9 39		            ora L3910+1
+  1162 3926 D0 01		            bne L3881
+  1163 3928 60			            rts
+  1164 				            
+  1165 3929 38			L3881       sec
+  1166 392A BD D7 39		            lda READSTADR,X
+  1167 392D FD D5 39		            sbc REASRCADR,X
+  1168 3930 8D E2 39		            sta READIFLO
+  1169 3933 BD D8 39		            lda READSTADR+1,X
+  1170 3936 FD D6 39		            sbc REASRCADR+1,X
+  1171 3939 8D E3 39		            sta READIFHI
+  1172 				            
+  1173 393C 20 C4 39		L3894       jsr L391C
+  1174 393F F0 13		            beq L38AC
+  1175 3941 B1 D7		            lda ($D7),Y
+  1176 3943 18			            clc
+  1177 3944 6D E2 39		            adc READIFLO
+  1178 3947 91 D7		            sta ($D7),Y
+  1179 3949 C8			            iny
+  1180 394A B1 D7		            lda ($D7),Y
+  1181 394C 6D E3 39		            adc READIFHI
+  1182 394F 91 D7		            sta ($D7),Y
+  1183 3951 4C 3C 39		            jmp L3894
+  1184 3954 20 C4 39		L38AC       jsr L391C
+  1185 3957 F0 0B		            beq L38BC
+  1186 3959 B1 D7		            lda ($D7),Y
+  1187 395B 18			            clc
+  1188 395C 6D E2 39		            adc READIFLO
+  1189 395F 91 D7		            sta ($D7),Y
+  1190 3961 4C 54 39		            jmp L38AC
+  1191 3964 20 C4 39		L38BC       jsr L391C
+  1192 3967 F0 11		            beq L38D2
+  1193 3969 20 B8 39		            jsr L3910
+  1194 396C 18			            clc
+  1195 396D 6D E2 39		            adc READIFLO
+  1196 3970 B1 D7		            lda ($D7),Y
+  1197 3972 6D E3 39		            adc READIFHI
+  1198 3975 91 D7		            sta ($D7),Y
+  1199 3977 4C 64 39		            jmp L38BC
+  1200 397A AE E1 39		L38D2       ldx REALOOPCNT
+  1201
+  1202 397D BD D9 39		            lda CPYFROMADR,X
+  1203 3980 8D 9B 39		            sta L38F2+1
+  1204 3983 BD DA 39		            lda CPYFROMADR+1,X
+  1205 3986 8D 9C 39		            sta L38F2+2
+  1206
+  1207 3989 BD DD 39		            lda CPYTOADR,X
+  1208 398C 8D 9E 39		            sta L38F2+4
+  1209 398F BD DE 39		            lda CPYTOADR+1,X
+  1210 3992 8D 9F 39		            sta L38F2+5
+  1211
+  1212 3995 BC DC 39		            ldy CPYLENGTH+1,X
+  1213 3998 A2 00		            ldx #$00
+  1214 399A BD FF FF		L38F2       lda $FFFF,X
+  1215 399D 9D FF FF		            sta $FFFF,X
+  1216 39A0 E8			            inx
+  1217 39A1 D0 F7		            bne L38F2
+  1218 39A3 EE 9C 39		            inc L38F2+2
+  1219 39A6 EE 9F 39		            inc L38F2+5
+  1220 39A9 88			            dey
+  1221 39AA 10 EE		            bpl L38F2
+  1222 39AC AD E1 39		            lda REALOOPCNT
+  1223 39AF 18			            clc
+  1224 39B0 69 0C		            adc #$0C
+  1225 39B2 8D E1 39		            sta REALOOPCNT
+  1226 39B5 4C 14 39		            jmp REALOOP
+  1227 				            
+  1228 39B8 AD FF FF		L3910       lda $FFFF
+  1229 39BB EE B9 39		            inc L3910+1
+  1230 39BE D0 03		            bne L391B
+  1231 39C0 EE BA 39		            inc L3910+2
+  1232 39C3 60			L391B       rts
+  1233
+  1234 39C4 20 B8 39		L391C       jsr L3910
+  1235 39C7 85 D7		            sta $D7
+  1236 39C9 20 B8 39		            jsr L3910
+  1237 39CC A0 00		            ldy #$00
+  1238 39CE 85 D8		            sta $D8
+  1239 39D0 05 D7		            ora $D7
+  1240 39D2 60			            rts
+  1241
+  1242 				; realloc code pointer
+  1243 39D3 C4 38		REATABADR   .word REATAB
+  1244 39D5 3C 36		REASRCADR   .word REABEGIN
+  1245 39D7 FF FF		READSTADR   .word $FFFF
+  1246 				; copy code pointer
+  1247 39D9 3C 36		CPYFROMADR  .word REABEGIN
+  1248 39DB 68 02		CPYLENGTH   .word REAEND-REABEGIN ;$027C
+  1249 39DD FF FF		CPYTOADR    .word $FFFF
+  1250 39DF 00 00		            .word $0000
+  1251 				            
+  1252 				; $01 byte
+  1253 39E1			REALOOPCNT  ;= $392B
+  1254 = 39E2			READIFLO   = REALOOPCNT+1
+  1255 = 39E3			READIFHI   = READIFLO+1
+  1256
+  1257
+  1258 				         

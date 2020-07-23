@@ -111,6 +111,97 @@ TCCOLO = $d5af
 ; Writing to this register disables "The!Cart" registers
 ; at $d5aX.
 
+;
+; SpartaDOS 
+;
+DOSVEC         = $000A
+SD_BUFOFF      = $0A ; offset in line buffer
+SD_LBUF        = $3F ; offset to line buffer
+SD_ZCRNAME     = $03 ; offset for jmp to crunch name
+SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
+SD_LSIO        = $0A ; negative offset to SIO vector
+
+; tab for flash address and banks for F1: to F4:
+; 512k user space start bank $3fc0
+; 640k user space start bank $3fb0
+
+flash_tab_adr
+			.byte $f6		; F1: address $00:00:f6:07
+			.byte $ee		; F2: address $00:00:ee:07
+			.byte $e6		; F3: address $00:00:e6:07
+			.byte $de		; F4: address $00:00:de:07
+
+flash_tab_bank
+			.byte $b0,$3f	; F1: 16.304 bank
+			.byte $70,$3f	; F2: 16.240 bank
+			.byte $30,$3f	; F3: 16.176 bank
+			.byte $f0,$3e	; F4: 16.112 bank
+
+;
+; check for next parameter
+;   sets carry if next parameter is available
+;
+chk_for_param
+			ldy #SD_BUFOFF
+            lda (DOSVEC),Y
+            clc
+            adc #SD_LBUF
+            tay
+            lda (DOSVEC),Y
+            cmp #$9b
+            clc
+            beq chk_for_param_end
+			sec
+chk_for_param_end
+			rts
+
+
+;
+; get flash drive number Fx:, if no param => 0
+; X contains index F1: => 0, .., F4: => 3
+; Carry set if param error
+;
+CRNAME      jmp $FFFF
+
+get_drv_idx
+			jsr chk_for_param
+			bcs get_drv_nr
+get_drv_err
+			jsr PRINT
+			.byte "Error - parameter F(1..4): expected",$9b,$ff
+			ldx #$00
+			clc
+			rts			
+get_drv_nr
+			lda DOSVEC		; init CRNAME address
+            clc
+            adc #SD_ZCRNAME
+            sta CRNAME+1
+            lda DOSVEC+1
+            adc #$00
+            sta CRNAME+2
+
+            jsr CRNAME		; crunch name
+            bne get_drv_err
+            ldy #SD_COMFNAM
+            lda (DOSVEC),Y
+			cmp #$46		; F
+			bne get_drv_err         
+            iny
+            lda (DOSVEC),Y
+            and #$0F
+            sta drv_idx+1
+
+			jsr chk_for_param	; no additional parameter
+            bcs get_drv_err
+
+drv_idx		ldx #$00
+			dex
+			cpx #$04
+			bcs get_drv_err
+			sec
+			rts
+
 
 
 ;

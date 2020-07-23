@@ -240,7 +240,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk for The!Cart ver65 by hjx',$9B,$FF
+            .byte 'The!Ramdisk for The!Cart ver66 by hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL
@@ -282,30 +282,47 @@ PRSPARM     lda DOSVEC
 ; parameter parsing            
 ; get drive number SD_COMFNAM starts alway with Dx:
             jsr CRNAME
-            bne PARAMERR
-            ldy #SD_COMFNAM+1
+            bne PARAMERR1
+            ldy #SD_COMFNAM
+            lda (DOSVEC),Y
+			cmp #'D'
+			bne PARAMERR1         
+            iny
             lda (DOSVEC),Y
             and #$0F
             sta DRVNUM
 
-			jsr PARAMCHECK
+; check for list auf drives for flash drives
+			ldx #$00
+			stx FPARSLOOPX+1
+FPARSLOOP	jsr PARAMCHECK
             bcc PRSPAREND
-
-            jsr CRNAME
+			jsr CRNAME
             bne PARAMOPT
-            ldy #SD_COMFNAM+1
+            ldy #SD_COMFNAM
+            lda (DOSVEC),Y
+			cmp #'D'
+			bne PARAMERR            
+            iny
             lda (DOSVEC),Y
             and #$0F
-            sta FDRVNUM
+			ldx FPARSLOOPX+1
+            sta FDRVNUM,X
+            inc FPARSLOOPX+1
+FPARSLOOPX	ldx #$04
+            cpx #$04
+            bne FPARSLOOP
             
 ; check options /xxx
+			jsr PARAMCHECK
+            bcc PRSPAREND
             jsr CRNAME
-            beq PRSPAREND
+            beq PARAMERR
 
 PARAMOPT	ldy #SD_COMFNAM+3
             lda (DOSVEC),Y
             cmp #'/'
-            bne PARAMERR
+PARAMERR1   bne PARAMERR
 PRSPARLOOP  iny
             lda (DOSVEC),Y
 
@@ -327,6 +344,9 @@ PRSPARNXT2  cmp #'D'         ; driver only ?
             jmp PRSPARLOOP
 
 PRSPAREND
+			jsr PARAMCHECK	; too many parameter
+            bcs PARAMERR
+
 ; set format and ini by options
             bit CHKOPTN
             bmi STRTINIFMT ; no options set default /DF
@@ -354,44 +374,52 @@ PARAMERR    jsr PRINT
             .byte '  Error: Wrong parameter',$9B,$FF
 PRNHLP
             jsr PRINT
-            .byte '  Use RAMCART Dx: [Dy:] [/DF]',$9B
-            .byte '    x - drive number for ramdisk',$9B
-            .byte '    y - drive number for flashdisk',$9B
+            .byte '  Parameter: Dx: [Da:]..[Dd:] [/DF]',$9B
+            .byte '    x - number for ramdisk',$9B
+            .byte '    a-d - number for flash disk 1-4',$9B
             .byte '    D - install driver only',$9B
             .byte '    F - format ramdisk only',$9B
             .byte '  Use shift+return/esc in start menu.',$9B
-            .byte '  If Dx: equals Dy: then Dy: precedes.',$9B,$FF
+            .byte '  If Dx: equals Da-d:, Dx: precedes.',$9B,$FF
             rts
+
 
 STARTINST   
             jsr PRINT
-            .byte 'Driver installed ',$ff
+            .byte 'Driver installed',$9b,$ff
 
             lda DRVNUM
-            bmi PRTFLASHDRV
-			cmp FDRVNUM
-			beq PRTFLASHDRV
+            beq PRTFLASHDRV
             clc
             adc #'0'
             sta ramDx
 			jsr PRINT
-            .byte 'RAM=D'
-ramDx       .byte 'x: ',$ff
+            .byte '  RAM=D'
+ramDx       .byte 'x:',$9b,$ff
 
 PRTFLASHDRV
-            lda FDRVNUM
-            bmi PRTDRVEND
+			ldx #$00
+			stx PRNDRVLPX+1
+PRNDRVLP	ldx PRNDRVLPX+1
+            lda FDRVNUM,X
+            beq PRTDRVNXT
             clc
             adc #'0'
             sta flashDy
+            txa
+            clc
+            adc #'1'
+            sta flashDx
 			jsr PRINT
-			.byte 'Flash=D'
-flashDy     .byte 'y:',$ff
+			.byte '  F'
+flashDx		.byte 'x:=D'
+flashDy     .byte 'y:',$9b,$ff
+PRTDRVNXT	inc PRNDRVLPX+1
+PRNDRVLPX	ldx #$04
+			cpx #$04
+			bne PRNDRVLP
 
 PRTDRVEND
-			jsr PRINT
-			.byte $9B,$FF
-
 ; set jsr to original DOSINI
             lda DOSINI
             sta JSRDOSINI+1
@@ -437,44 +465,42 @@ REAH002     lda #>RAMDSIO
 REAA003     jsr SETMEMLO      ;realloc $33DB
             rts
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
 ; format ramdisk
+;
 FRMTRD      jsr PRINT
             .byte 'Ramdisk formatted',$9B,$FF
 
             jsr cart_save
 
-; clear sector 1-4
-_loop03     ldx #$00
-            jsr cart_set
-            lda #$00
-            ldy #$7f
-FRMTCLP03   sta $8000,Y
-            dey
-            bpl FRMTCLP03
-            jsr cart_restore
-            lda FRMTCLP03+1
-            clc
-            adc #$80
-            sta FRMTCLP03+1
-            lda FRMTCLP03+2
-            adc #$00
-            sta FRMTCLP03+2
-_loopcnt03  lda #$04
-            dec _loopcnt03+1
-            bne _loop03
-
 ; header loop            
             ldx #$00
             jsr cart_set
-            ldy #$2b
-_loopheader lda RDHEAD,Y
+            ldy #$7f
+_loophead1  lda RDSEC1,Y
             sta $8000,Y		; sector 1
             dey
-            bpl _loopheader
-            lda #$60    ; write RTS to second boot sector
-            sta $8080   ; see header jmp $3080, sector 2
+            bpl _loophead1
             jsr cart_restore
 
+            ldx #$00
+            jsr cart_set
+            ldy #$7f
+_loophead2  lda RDSEC2,Y
+            sta $8080,Y		; sector 2
+            dey
+            bpl _loophead2
+            jsr cart_restore
+
+            ldx #$00
+            jsr cart_set
+            ldy #$7f
+_loophead3  lda RDSEC3,Y
+            sta $8100,Y		; sector 3
+            dey
+            bpl _loophead3
+            jsr cart_restore
 
 ; set sector 4-7 to $ff VTOV 512k = 4096 sectors
 ; = 4 VTOC sectors
@@ -497,7 +523,7 @@ _loopcnt47  lda #$04
             dec _loopcnt47+1
             bne _loop47
 
-; clear sector 8-9 
+; clear sector 8-11 
 _loop89     ldx #$00
             jsr cart_set
             lda #$00
@@ -513,7 +539,7 @@ FRMTCLP89   sta $8380,Y
             lda FRMTCLP89+2
             adc #$00
             sta FRMTCLP89+2
-_loopcnt89  lda #$02
+_loopcnt89  lda #$04
             dec _loopcnt89+1
             bne _loop89
 
@@ -522,28 +548,133 @@ _loopcnt89  lda #$02
 ; mark used sectors
             lda #$00
             sta $8180   ; sector 1-8
-            lda #$3f
-            sta $8181   ; sector 9
-;            lda #$fe
-;            sta $83ff   ; sector 4096 does not exit
+            lda #$1f
+            sta $8181   ; sector 9-11
 ; set sector map for MAIN
             lda #$00    ; two words $0000 (first and last)
-            sta $8380
-            sta $8381
-            sta $8382
-            sta $8383
-            lda #$09    ;  and third $0009 start of main
-            sta $8384
+            sta $8400
+            sta $8401
+            sta $8402
+            sta $8403
+            lda #$0a    ;  and third $0009 start of main
+            sta $8404
 ; set MAIN directory            
             ldx #$00
 _loopmain   lda RDMAIN,x
-            sta $8400,x
+            sta $8480,x
             inx
             cpx #$17
             bne _loopmain
             jsr cart_restore
 ; finished
             rts
+
+; check preformat
+checkfrmt
+            jsr cart_save
+            ldx #$00
+            jsr cart_set
+
+_nxtcharv   lda RDMAINNAME,x    ; check volume name
+            cmp $8486,x			; sector $09
+            bne _nofrmt
+            inx
+            cpx #$0b
+            bne _nxtcharv
+            
+            jsr cart_restore
+            lda #$00
+            sta CHKFRMT
+            sec
+            rts
+            
+_nofrmt     jsr cart_restore
+            lda #$FF
+            sta CHKFRMT
+            clc
+            rts
+
+; load boot sector to $3000 start $3080 and RTS ($60)
+RDSEC1
+			.byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
+            .byte $03 ; Number of sectors to boot.
+            .byte $00,$30 ; Address where the boot sectors are loaded to
+            .byte $E0,$07 ; This address is copied to DOSINI
+            .byte $4c,$80,$30 ; After boot jump here: jmp $3080 (just RTS)
+            .byte $09,$00 ; Sector number of the first sector map of the MAIN directory
+            .word $1000 ; total sector count
+            .word $0ff5 ; free sector count
+            .byte $05 ; Number of bit map sectors on the disk
+            .byte $04,$00 ; Sector number of the first bit map sector
+            .byte $51,$00 ; Sector number to begin the file data sector allocation search
+            .byte $0B,$00 ; Sector number to begin the directory data sector allocation search
+            .byte 'CART512K' ; Volume name, 8 chars
+            .byte $01 ; Tracks on disk (1 for ramdisks and HDs)
+            .byte $80 ; Sector size ($80=128,$00=256,$01=512)
+;            .byte $20 ; File system version ($20=SD1.1-4.2 version 2.0, $21=Sd4.4> version 2.1) 
+;            .byte $00,$00,$00,$00,$00 ; reserved - no known use
+;            .byte $00 ; Volume sequence number
+;            .byte $00 ; Volume random number
+;            .byte $00,$00 ; Sector number of the first sector map of the file to be loaded when the disk is booted
+;            .byte $00 ; Lock flag ($ff=locked, $00=unlocked)
+;            .byte $00
+			.byte $20,$06,$01,$FF,$FF,$00,$00,$E4
+			.byte $00,$00,$00,$00,$00,$00,$00,$00
+			.byte $45,$72,$72,$6F,$72,$3A,$20,$4E
+			.byte $6F,$20,$44,$4F,$53,$9B,$AD,$28
+			.byte $30,$8D,$0A,$03,$AD,$29,$30,$8D
+			.byte $0B,$03,$A9,$00,$A2,$2F,$20,$F1
+			.byte $30,$AD,$00,$2F,$8D,$28,$30,$AD
+			.byte $01,$2F,$8D,$29,$30,$A0,$04,$84
+			.byte $91,$A4,$91,$CC,$1F,$30,$F0,$D6
+			.byte $B9,$00,$2F,$8D,$0A,$03,$B9,$01
+			.byte $2F,$8D,$0B,$03,$C8,$C8,$84,$91
+			.byte $60,$6C,$E2,$02,$00,$00,$00,$00
+
+RDSEC2
+			.byte $A2,$00,$AD,$1F,$30,$85,$91,$85
+			.byte $90,$8D,$08,$03,$D0,$01,$E8,$8E
+			.byte $09,$03,$20,$0A,$31,$85,$96,$20
+			.byte $0A,$31,$25,$96,$C9,$FF,$D0,$37
+			.byte $A9,$78,$8D,$E2,$02,$A9,$30,$8D
+			.byte $E3,$02,$20,$0A,$31,$85,$92,$20
+			.byte $0A,$31,$85,$93,$05,$92,$F0,$1C
+			.byte $20,$0A,$31,$38,$E5,$92,$48,$08
+			.byte $20,$0A,$31,$28,$E5,$93,$85,$95
+			.byte $68,$85,$94,$20,$6B,$31,$20,$79
+			.byte $30,$4C,$A0,$30,$6C,$E0,$02,$A9
+			.byte $30,$A2,$30,$8D,$44,$03,$8E,$45
+			.byte $03,$8E,$48,$03,$A9,$09,$8D,$42
+			.byte $03,$A2,$00,$20,$56,$E4,$4C,$EE
+			.byte $30,$A0,$40,$8C,$03,$03,$8D,$04
+			.byte $03,$8E,$05,$03,$AD,$0A,$03,$0D
+
+RDSEC3
+			.byte $0B,$03,$F0,$D3,$20,$59,$E4,$30
+			.byte $CE,$60,$A9,$00,$85,$95,$85,$94
+			.byte $A6,$90,$EC,$1F,$30,$F0,$06,$BD
+			.byte $00,$2E,$E6,$90,$60,$20,$61,$30
+			.byte $A5,$95,$D0,$17,$AD,$1F,$30,$F0
+			.byte $04,$A5,$94,$30,$0E,$A9,$00,$A2
+			.byte $2E,$20,$F1,$30,$38,$26,$90,$AD
+			.byte $00,$2E,$60,$A5,$92,$A6,$93,$20
+			.byte $F1,$30,$A5,$92,$18,$6D,$08,$03
+			.byte $85,$92,$A5,$93,$6D,$09,$03,$85
+			.byte $93,$38,$A5,$94,$ED,$08,$03,$85
+			.byte $94,$A5,$95,$ED,$09,$03,$85,$95
+			.byte $4C,$1D,$31,$A5,$94,$D0,$02,$C6
+			.byte $95,$C6,$94,$20,$10,$31,$A0,$00
+			.byte $91,$92,$E6,$92,$D0,$02,$E6,$93
+			.byte $A5,$94,$05,$95,$D0,$E5,$60,$00
+
+
+
+RDMAIN      .byte $28 ; Bits 7-0: OpenWrite,-,SubDir,Del,Used,Arc,Hid,Prot
+            .word $0000 ; First sector map of parent directory (MAIN=0)
+            .byte $17,$00,$00 ; length of directory in bytes (always times 23 bytes)
+RDMAINNAME  .byte 'MAIN       ' ; Name 11 chars
+            .byte $0b,$07,$47 ; Date DD/MM/YY
+            .byte $0b,$0b,$0b ; Time HH:MM:SS
             
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -566,61 +697,10 @@ PARAMCHECK	ldy #SD_BUFOFF
 			sec
 PARAMCHECKE	rts
             
-; load boot sector to $3000 start $3080 and RTS ($60)
-RDHEAD      .byte $00 ; Usually 0. Some formatting tools put a $53 (='S) for SD here.
-            .byte $03 ; Number of sectors to boot.
-            .byte $00,$30 ; Address where the boot sectors are loaded to
-            .byte $E0,$07 ; This address is copied to DOSINI
-            .byte $4c,$80,$30 ; After boot jump here: jmp $3080 (just RTS)
-            .byte $08,$00 ; Sector number of the first sector map of the MAIN directory
-            .word $1000 ; total sector count
-            .word $0ff6 ; free sector count
-            .byte $04 ; Number of bit map sectors on the disk
-            .byte $04,$00 ; Sector number of the first bit map sector
-            .byte $28,$00 ; Sector number to begin the file data sector allocation search
-            .byte $0A,$00 ; Sector number to begin the directory data sector allocation search
-            .byte 'CART512K' ; Volume name, 8 chars
-            .byte $01 ; Tracks on disk (1 for ramdisks and HDs)
-            .byte $80 ; Sector size ($80=128,$00=256,$01=512)
-            .byte $20 ; File system version ($20=SD1.1-4.2 version 2.0, $21=Sd4.4> version 2.1) 
-            .byte $00,$00,$00,$00,$00 ; reserved - no known use
-            .byte $00 ; Volume sequence number
-            .byte $00 ; Volume random number
-            .byte $00,$00 ; Sector number of the first sector map of the file to be loaded when the disk is booted
-            .byte $00 ; Lock flag ($ff=locked, $00=unlocked)
-            .byte $00
-
-RDMAIN      .byte $28 ; Bits 7-0: OpenWrite,-,SubDir,Del,Used,Arc,Hid,Prot
-            .word $0000 ; First sector map of parent directory (MAIN=0)
-            .byte $17,$00,$00 ; length of directory in bytes (always times 23 bytes)
-RDMAINNAME  .byte 'MAIN       ' ; Name 11 chars
-            .byte $0b,$07,$47 ; Date DD/MM/YY
-            .byte $0b,$0b,$0b ; Time HH:MM:SS
-
-; check preformat
-checkfrmt
-            jsr cart_save
-            ldx #$00
-            jsr cart_set
-
-_nxtcharv   lda RDMAINNAME,x    ; check volume name
-            cmp $8406,x			; sector $09
-            bne _nofrmt
-            inx
-            cpx #$0b
-            bne _nxtcharv
-            
-            jsr cart_restore
-            lda #$00
-            sta CHKFRMT
-            sec
-            rts
-            
-_nofrmt     jsr cart_restore
-            lda #$FF
-            sta CHKFRMT
-            clc
-            rts
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; subroutines for The Cart
+;
 
 ; wait for sync            
 WAITSYNC    lda RTCLOK+2
@@ -688,7 +768,11 @@ _tcpbrl     .byte $00
 _tcpbrh     .byte $00
 _tcpben     .byte $00
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
 ; print subroutine            
+;
+
 PRINT       pla
             sta PRINTITER+1
             pla
@@ -739,11 +823,23 @@ RAMDSIO     lda DDEVIC
 REAA004     lda DRVNUM  ; check drive number for RAM
             cmp DUNIT
             beq NEWSIOGO
-REAA026		lda FDRVNUM  ; check drive number for Flash
+
+			ldx #$00
+REAA026		lda FDRVNUM,X  ; check drive number for Flash
             cmp DUNIT
-            beq NEWSIOGO
+            beq NEWSIOGOF
+			inx
+			cpx #$04
+			bne REAA026
+
 JMPSIO      jmp $0000
 
+; set flash bank
+NEWSIOGOF
+REAA027		lda FBANKL,X
+REAA028		sta SFBANKL+1	
+REAA029		lda FBANKH,X
+REAA030		sta SFBANKH+1
 ; set buffer address
 NEWSIOGO    lda DBUFLO
             sta BFENLO
@@ -877,17 +973,17 @@ WAITLOOP2   cmp RTCLOK+2
             lda #TCMOSL.16K     ; set 2x8k mode at $8000-$BFFF
             sta TCMOSL          
 
-REAA025     lda FDRVNUM  ; check drive number for flash
+REAA025     lda DRVNUM  		; check drive number for ram
             cmp DUNIT
-            bne setTCram
+            beq setTCram
 
 ; 512k user space start bank $3fc0
 ; 640k user space start bank $3fb0
 setTCflash  lda #TCMOFR.FLASH       ; set to FLASH
             sta TCMOFR
-            lda #$b0
+SFBANKL		lda #$b0
             sta TCPBRL
-            lda #$3f
+SFBANKH		lda #$3f
             sta TCPBRH
             txa
             asl
@@ -970,8 +1066,24 @@ L36BB       .byte $00
 CONFSECSIZ  .byte $80                   ; $80 -> 128Byte, $00 -> 256Byte
             .byte $FF,$00,$00,$00
 
-DRVNUM      .byte $ff
-FDRVNUM     .byte $ff
+FBANKL		.byte $b0	; F1: 16.304 bank
+			.byte $70	; F2: 16.240 bank
+			.byte $30	; F3: 16.176 bank
+			.byte $f0
+
+FBANKH		.byte $3f	; F1: 16.304 bank
+			.byte $3f	; F2: 16.240 bank
+			.byte $3f	; F3: 16.176 bank
+			.byte $3e	; F4: 16.112 bank
+
+DRVNUM      .byte $00	; RAM
+
+FDRVNUM     .byte $00	; F1:
+			.byte $00	; F2:
+			.byte $00	; F3:
+			.byte $00	; F4:
+
+
 ; $80 for 128Bytes ($100 for 256Bytes)
 BUFFERXX1
 ;            org $37E6
@@ -1015,6 +1127,10 @@ REATAB      .word REAA001+1 ;$33CA
             .word REAA024+1
             .word REAA025+1
             .word REAA026+1
+            .word REAA027+1
+            .word REAA028+1
+            .word REAA029+1
+            .word REAA030+1
             .word $0000
  
 ; realloc address low byte           

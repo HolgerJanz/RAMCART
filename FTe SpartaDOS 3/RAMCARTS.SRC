@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE ver63 for The!Ramdisk by hjx",$9B,$FF
+        .byte "STORE ver64 for The!Ramdisk by hjx",$9B,$FF
 
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -20,7 +20,7 @@
         beq errorNoCart
         cmp #TCMOSLXELOCK
         beq errorNoCart
-        bne startCopy
+        bne startCheckParam
  
 errorNoCart
  ; no cart no flash
@@ -28,11 +28,26 @@ errorNoCart
         .byte "  Error - The!Cart not found",$9B,$FF
         rts
 
+startCheckParam
+		jsr get_drv_idx
+		bcs startCopy
+		rts 
+
 startCopy
+; set flash ram bank
+        lda flash_tab_adr,X
+        sta flash_adr3+1		; set 3rd address byte
+        
+		inx		; conver to flash drive number
+		txa
+		ora #$30
+		sta flash_drv_anr
+
         jsr PRINT
-        .byte "Copy RAM disk to Flash disk.",$9b
+        .byte "Copy RAM disk to Flash disk F"
+flash_drv_anr
+        .byte "x:.",$9b
         .byte "Flash disk will be deleted!",$9b
-        .byte "Banks $3FB0-$3FEF will be flashed.",$9b
         .byte "Screen goes black for ca. 20 seconds.",$9b
         .byte "Start store (flashing) RAM disk? (Y)",$ff
         
@@ -65,6 +80,7 @@ startCopy2
         lda #$00
         sta flashadr
         sta flashadr+1
+flash_adr3
         lda #$f6
         sta flashadr+2
         lda #$07

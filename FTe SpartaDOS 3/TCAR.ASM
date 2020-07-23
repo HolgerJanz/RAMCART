@@ -11,6 +11,9 @@ CRITIC  = $0042
 SDMCTL  = $022f
 GINTLK  = $3fa
 CARTCK  = $3eb
+RAMSIZ	= $02e4
+MEMTOP  = $02E5
+MEMLO   = $02E7
 
 TRIG3   = $d013
 DMACTL  = $d400 
@@ -177,13 +180,33 @@ TCCOLO = $d5af
 ; at $d5aX.
 
 
+;		    org $480
+;clear_and_warm
+;			lda MEMLO
+;			sta clear_loop+1
+;			lda MEMLO+1
+;			sta clear_loop+2
+;			
+;			ldx #$00
+;clear_loop	stx $ffff
+;
+;			inc clear_loop+1	; inc address
+;           bne clear_loop
+;			inc clear_loop+2
+;			lda clear_loop+2
+;			cmp RAMSIZ
+;			bcc clear_loop
+			
+;clear_end	jmp WARMST      ; warm start
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Main
 ;
 
-        org $3000
-        
+        org $5000
+start        
 ; message
         ldx #<startmsg.begin
         ldy #>startmsg.begin
@@ -308,7 +331,8 @@ _nocar  lda #$00        ; set cartridge flag
 _end    pla             ; clear return adr from stack 
         pla
         
-        jmp WARMST      ; warm start
+;        jmp clear_and_warm
+		jmp WARMST
 
 ; THE END
 
@@ -316,7 +340,7 @@ _end    pla             ; clear return adr from stack
 ; messages        
 
 startmsg.begin
-        .byte 'Menu ver46 for The!Cart by hjx',$9B
+        .byte 'Menu ver47 for The!Cart by hjx',$9B
 startmsg.end
 
 errprs.begin
@@ -576,3 +600,8 @@ close   lda #XIO.CLOSE
         jsr CIOV
         rts
         
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 
+; Run address
+;
+        run start
