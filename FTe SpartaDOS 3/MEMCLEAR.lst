@@ -23,126 +23,244 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/FTe SpartaDOS 3/ME
     21 = 034A			ICAX1		= $034a
     22 = 034B			ICAX2		= $034b
     23
-    24 							org $0480
-    25
-    26 FFFF> 0480-0576> AD E8 + 			lda MEMLO+1
-    27 0483 20 51 05					jsr convh2a
-    28 0486 8E C1 04					stx adr_low
-    29 0489 8C C2 04					sty adr_low+1
-    30 048C AD E7 02					lda MEMLO
-    31 048F 20 51 05					jsr convh2a
-    32 0492 8E C3 04					stx adr_low+2
-    33 0495 8C C4 04					sty adr_low+3
-    34
-    35 0498 AD E6 02					lda MEMTOP+1
-    36 049B 20 51 05					jsr convh2a
-    37 049E 8E C7 04					stx adr_high
-    38 04A1 8C C8 04					sty adr_high+1
-    39 04A4 AD E5 02					lda MEMTOP
-    40 04A7 20 51 05					jsr convh2a
-    41 04AA 8E C9 04					stx adr_high+2
-    42 04AD 8C CA 04					sty adr_high+3
-    43
-    44 04B0 20 1E 05			        jsr PRINT
-    45 04B3 43 6C 65 61 72 20 +     	    .byte 'Clear memory $' 
-    46 04C1 78 78 78 78 2D 24	adr_low		.byte 'xxxx-$'
-    47 04C7 79 79 79 79 20 3F + adr_high	.byte 'yyyy ? (Y)',$ff
-    48
-    49 04D2 20 68 05			        jsr getKey
-    50 04D5 C9 2B		    	    cmp #$2B
-    51 04D7 F0 0D		        	beq clear_start
-    52 04D9 20 1E 05			        jsr PRINT
-    53 04DC 9B 41 62 6F 72 74 +     	    .byte $9b,'Abort.',$9b,$ff 
-    54 04E5 60						rts
-    55
-    56 04E6			clear_start
-    57 04E6 AD E7 02					lda MEMLO
-    58 04E9 8D F5 04					sta clear_loop+1
-    59 04EC AD E8 02					lda MEMLO+1
-    60 04EF 8D F6 04					sta clear_loop+2
-    61 							
-    62 04F2 A2 00					ldx #$00
-    63 04F4 8E FF FF		clear_loop	stx $ffff
+    24
+    25 				;
+    26 				; SpartaDOS 
+    27 				;
+    28 = 000A			DOSVEC		= $000A
+    29 				;
+    30 = 000A			SD_BUFOFF   = $0A ; offset in line buffer
+    31 = 003F			SD_LBUF     = $3F ; offset to line buffer
+    32 = 0003			SD_ZCRNAME  = $03 ; offset for jmp to crunch name
+    33 = 0021			SD_COMFNAM  = $21 ; offset to buffer for crunch name 
+    34 = 000A			SD_LSIO     = $0A ; negative offset to SIO vector
+    35
+    36
+    37 							org $0480
+    38
+    39 FFFF> 0480-0621> 20 F3 + 			jsr pcheck			; check for parameter 1
+    40 0483 90 57					bcc startClear
+    41
+    42 0485 20 05 06					jsr pget			; get parameter
+    43 0488 F0 2A					beq parameterError
+    44 							
+    45 048A A2 00		            ldx #$00
+    46 048C A0 24		            ldy #SD_COMFNAM+3	; get value
+    47 048E B1 0A		loop_r2     lda (DOSVEC),Y
+    48 0490 C9 9B					cmp #$9b
+    49 0492 F0 20					beq parameterError
+    50 0494 9D 27 05					sta clr_char,x
+    51 0497 C8						iny
+    52 0498 E8						inx
+    53 0499 E0 02		vchar_cnt	cpx #$02
+    54 049B D0 F1					bne loop_r2
+    55 							
+    56 049D B1 0A					lda (DOSVEC),Y		; check for end after second char
+    57 049F C9 9B					cmp #$9b
+    58 04A1 D0 11					bne parameterError
+    59 							
+    60 04A3 AE 27 05					ldx clr_char			; convert to hex
+    61 04A6 AC 28 05					ldy clr_char+1
+    62 04A9 20 C5 05					jsr conva2h			
+    63 04AC 8D 50 05					sta clearValue+1
     64
-    65 04F7 AD F6 04					lda clear_loop+2	; check for MEMTOP
-    66 04FA CD E6 02					cmp MEMTOP+1
-    67 04FD D0 08					bne clear_inc
-    68 04FF AD F5 04					lda clear_loop+1
-    69 0502 CD E5 02					cmp MEMTOP
-    70 0505 B0 0B		            bcs clear_end
-    71 				            
-    72 0507 EE F5 04		clear_inc   inc clear_loop+1	; inc address
-    73 050A D0 E8		            bne clear_loop
-    74 050C EE F6 04					inc clear_loop+2
-    75 050F 4C F4 04					jmp clear_loop
-    76 							
-    77 0512 20 1E 05		clear_end	jsr PRINT
-    78 0515 9B 44 6F 6E 65 2E +     	    .byte $9b,'Done.',$9b,$ff 
-    79 051D 60						rts
-    80
-    81 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    82 				;
-    83 				; print subroutine            
-    84 				;
-    85 051E 68			print		pla
-    86 051F 8D 2F 05		            sta print_iter+1
-    87 0522 68			            pla
-    88 0523 8D 30 05		            sta print_iter+2
-    89 0526 EE 2F 05		print_loop  inc print_iter+1
-    90 0529 D0 03		            bne print_iter
-    91 052B EE 30 05		            inc print_iter+2
-    92 052E AD FF FF		print_iter  lda $ffff
-    93 0531 C9 FF		            cmp #$ff
-    94 0533 F0 13		            beq print_end
-    95 				            
-    96 0535 A2 00		            ldx #$00			; put char
-    97 0537 8E 48 03		            stx ICBLL
-    98 053A 8E 49 03		            stx ICBLH
-    99 053D A0 0B		            ldy #$0B
-   100 053F 8C 42 03		            sty ICCOM
-   101 0542 20 56 E4		            jsr CIOV
-   102 				            
-   103 0545 4C 26 05		            jmp print_loop
-   104 0548 AD 30 05		print_end   lda print_iter+2
-   105 054B 48			            pha
-   106 054C AD 2F 05		            lda print_iter+1
-   107 054F 48			            pha
-   108 0550 60			            rts
-   109
-   110 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   111 				;
-   112 				; convert hex to atascii
-   113 				;   hex A -> atascii X,Y            
-   114 				;
-   115 0551 48			convh2a		pha
-   116 0552 4A						lsr
-   117 0553 4A						lsr
-   118 0554 4A						lsr
-   119 0555 4A						lsr
-   120 0556 F8						sed		
-   121 0557 18						clc
-   122 0558 69 90					adc #$90
-   123 055A 69 40					adc #$40
-   124 055C AA						tax
-   125 055D 68						pla
-   126 055E 29 0F					and #$0f
-   127 0560 18						clc
-   128 0561 69 90					adc #$90
-   129 0563 69 40					adc #$40
-   130 0565 A8						tay
-   131 0566 D8						cld			
-   132 0567 60						rts
-   133
-   134 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   135 				;
-   136 				; get key
-   137 				;
-   138 0568			getKey
-   139 0568 A9 FF				lda #$FF		; check for key
-   140 056A AA					tax
-   141 056B CD FC 02				cmp CH
-   142 056E F0 F8				beq getKey
-   143 0570 AD FC 02				lda CH
-   144 0573 8E FC 02				stx CH
-   145 0576 60					rts
-   146 							
+    65 04AF 20 F3 05					jsr pcheck			; check for too many parameter
+    66 04B2 90 28					bcc startClear
+    67
+    68 04B4			parameterError
+    69 04B4 20 7B 05					jsr print
+    70 04B7 50 61 72 61 6D 65 + 			.byte 'Parameter Error: use MEMCLEAR [hh]',$9b,$ff
+    71 04DB 60						rts
+    72
+    73 04DC			startClear
+    74 04DC AD E8 02					lda MEMLO+1
+    75 04DF 20 AE 05					jsr convh2a
+    76 04E2 8E 16 05					stx adr_low
+    77 04E5 8C 17 05					sty adr_low+1
+    78 04E8 AD E7 02					lda MEMLO
+    79 04EB 20 AE 05					jsr convh2a
+    80 04EE 8E 18 05					stx adr_low+2
+    81 04F1 8C 19 05					sty adr_low+3
+    82
+    83 04F4 AD E6 02					lda MEMTOP+1
+    84 04F7 20 AE 05					jsr convh2a
+    85 04FA 8E 1C 05					stx adr_high
+    86 04FD 8C 1D 05					sty adr_high+1
+    87 0500 AD E5 02					lda MEMTOP
+    88 0503 20 AE 05					jsr convh2a
+    89 0506 8E 1E 05					stx adr_high+2
+    90 0509 8C 1F 05					sty adr_high+3
+    91
+    92 050C 20 7B 05			        jsr PRINT
+    93 050F 43 6C 65 61 72 20 +     	    .byte 'Clear $' 
+    94 0516 78 78 78 78 2D 24	adr_low		.byte 'xxxx-$'
+    95 051C 79 79 79 79 20 77 + adr_high	.byte 'yyyy with $'
+    96 0527 30 30 3F 20 28 59 + clr_char	.byte '00? (Y)',$ff
+    97
+    98 052F 20 E4 05			        jsr getKey
+    99 0532 C9 2B		    	    cmp #$2B
+   100 0534 F0 0D		        	beq clear_start
+   101 0536 20 7B 05			        jsr PRINT
+   102 0539 9B 41 62 6F 72 74 +     	    .byte $9b,'Abort.',$9b,$ff 
+   103 0542 60						rts
+   104
+   105 0543			clear_start
+   106 0543 AD E7 02					lda MEMLO
+   107 0546 8D 52 05					sta clear_loop+1
+   108 0549 AD E8 02					lda MEMLO+1
+   109 054C 8D 53 05					sta clear_loop+2
+   110 							
+   111 054F A2 00		clearValue	ldx #$00
+   112 0551 8E FF FF		clear_loop	stx $ffff
+   113
+   114 0554 AD 53 05					lda clear_loop+2	; check for MEMTOP
+   115 0557 CD E6 02					cmp MEMTOP+1
+   116 055A D0 08					bne clear_inc
+   117 055C AD 52 05					lda clear_loop+1
+   118 055F CD E5 02					cmp MEMTOP
+   119 0562 B0 0B		            bcs clear_end
+   120 				            
+   121 0564 EE 52 05		clear_inc   inc clear_loop+1	; inc address
+   122 0567 D0 E8		            bne clear_loop
+   123 0569 EE 53 05					inc clear_loop+2
+   124 056C 4C 51 05					jmp clear_loop
+   125 							
+   126 056F 20 7B 05		clear_end	jsr PRINT
+   127 0572 9B 44 6F 6E 65 2E +     	    .byte $9b,'Done.',$9b,$ff 
+   128 057A 60						rts
+   129
+   130 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   131 				;
+   132 				; print subroutine            
+   133 				;
+   134 057B 68			print		pla
+   135 057C 8D 8C 05		            sta print_iter+1
+   136 057F 68			            pla
+   137 0580 8D 8D 05		            sta print_iter+2
+   138 0583 EE 8C 05		print_loop  inc print_iter+1
+   139 0586 D0 03		            bne print_iter
+   140 0588 EE 8D 05		            inc print_iter+2
+   141 058B AD FF FF		print_iter  lda $ffff
+   142 058E C9 FF		            cmp #$ff
+   143 0590 F0 13		            beq print_end
+   144 				            
+   145 0592 A2 00		            ldx #$00			; put char
+   146 0594 8E 48 03		            stx ICBLL
+   147 0597 8E 49 03		            stx ICBLH
+   148 059A A0 0B		            ldy #$0B
+   149 059C 8C 42 03		            sty ICCOM
+   150 059F 20 56 E4		            jsr CIOV
+   151 				            
+   152 05A2 4C 83 05		            jmp print_loop
+   153 05A5 AD 8D 05		print_end   lda print_iter+2
+   154 05A8 48			            pha
+   155 05A9 AD 8C 05		            lda print_iter+1
+   156 05AC 48			            pha
+   157 05AD 60			            rts
+   158
+   159 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   160 				;
+   161 				; convert hex to atascii
+   162 				;   hex A -> atascii X,Y            
+   163 				;
+   164 05AE 48			convh2a		pha
+   165 05AF 4A						lsr
+   166 05B0 4A						lsr
+   167 05B1 4A						lsr
+   168 05B2 4A						lsr
+   169 05B3 F8						sed		
+   170 05B4 18						clc
+   171 05B5 69 90					adc #$90
+   172 05B7 69 40					adc #$40
+   173 05B9 AA						tax
+   174 05BA 68						pla
+   175 05BB 29 0F					and #$0f
+   176 05BD 18						clc
+   177 05BE 69 90					adc #$90
+   178 05C0 69 40					adc #$40
+   179 05C2 A8						tay
+   180 05C3 D8						cld			
+   181 05C4 60						rts
+   182
+   183 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   184 				;
+   185 				; convert atascii to hex
+   186 				;   atascii X,Y -> hex A            
+   187 				;
+   188 05C5 8A			conva2h		txa
+   189 05C6 20 D7 05					jsr conva2h_h
+   190 05C9 0A						asl
+   191 05CA 0A						asl
+   192 05CB 0A						asl
+   193 05CC 0A						asl
+   194 05CD 8D D5 05					sta conva2h_o+1
+   195 05D0 98						tya
+   196 05D1 20 D7 05					jsr conva2h_h
+   197 05D4 09 00		conva2h_o	ora #$00
+   198 05D6 60						rts
+   199 							
+   200 05D7 38			conva2h_h   sec
+   201 05D8 E9 30		            sbc #'0'
+   202 05DA C9 0A		            cmp #$0A
+   203 05DC 90 03		            bcc conva2h_hl
+   204 05DE 18			            clc
+   205 05DF 69 09		            adc #$09
+   206 05E1 29 0F		conva2h_hl  and #$0F
+   207 05E3 60			            rts
+   208
+   209 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   210 				;
+   211 				; get key
+   212 				;
+   213 05E4			getKey
+   214 05E4 A9 FF				lda #$FF		; check for key
+   215 05E6 AA					tax
+   216 05E7 CD FC 02				cmp CH
+   217 05EA F0 F8				beq getKey
+   218 05EC AD FC 02				lda CH
+   219 05EF 8E FC 02				stx CH
+   220 05F2 60					rts
+   221 							
+   222 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   223 				;
+   224 				; check for next parameter
+   225 				;   sets carry if next parameter is available
+   226 				;
+   227 05F3 A0 0A		pcheck		ldy #SD_BUFOFF
+   228 05F5 B1 0A		            lda (DOSVEC),Y
+   229 05F7 18			            clc
+   230 05F8 69 3F		            adc #SD_LBUF
+   231 05FA A8			            tay
+   232 05FB B1 0A		            lda (DOSVEC),Y
+   233 05FD C9 9B		            cmp #$9b
+   234 05FF 18			            clc
+   235 0600 F0 01		            beq pcheck_end
+   236 0602 38						sec
+   237 0603 60			pcheck_end	rts
+   238
+   239 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   240 				;
+   241 				; get next parameter
+   242 				;   calls crunch name 
+   243 				;
+   244 				; jump for jsr to crunch name
+   245 0604 FF			pget_set	.byte $ff
+   246 0605			pget		; set crunch name address, if necessary
+   247 0605 2C 04 06					bit pget_set
+   248 0608 10 14					bpl pget_call
+   249 							
+   250 060A A5 0A					lda DOSVEC
+   251 060C 18			            clc
+   252 060D 69 03		            adc #SD_ZCRNAME
+   253 060F 8D 1F 06		            sta pget_call+1
+   254 				            
+   255 0612 A5 0B		            lda DOSVEC+1
+   256 0614 69 00		            adc #$00
+   257 0616 8D 20 06		            sta pget_call+2
+   258 				            
+   259 0619 A9 00					lda #$00
+   260 061B 8D 04 06					sta pget_set
+   261 							
+   262 061E 20 FF FF		pget_call	jsr $ffff
+   263 0621 60						rts
+   264 							

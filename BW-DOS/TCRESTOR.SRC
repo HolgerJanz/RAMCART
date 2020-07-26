@@ -1,0 +1,98 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Restore RAMCART RAM to flash
+;
+
+;
+; Main
+;
+; The!Cart 512k user space banks from $3fc0 - $3fff
+; The!Cart 640k user space banks from $3fb0 - $3fef
+;
+        *= $3000
+ 
+        jsr PRINT
+        .byte "RESTORE for The!Ramdisk ver42 hjx",$9B,$FF
+ 
+; check if we are running on THE!CART hardware
+        lda TCMOSL
+        cmp #TCMOSLXLLOCK
+        beq errorNoCart
+        cmp #TCMOSLXELOCK
+        beq errorNoCart
+        bne startCheckParam
+ 
+errorNoCart
+        jsr PRINT
+        .byte "  Error - The!Cart not found",$9B,$FF
+        rts
+
+startCheckParam
+		jsr get_drv_idx
+		bcs startCopy
+		rts 
+
+startCopy
+		txa		; for bank tab multiply by 2
+		asl
+		tax
+
+; set flash ram bank
+        lda flash_tab_bank,X
+        sta flashBL
+        lda flash_tab_bank+1,X
+        sta flashBH        
+
+		inx		; conver to flash drive number		
+		inx
+		txa
+		lsr
+		ora #$30
+		sta flash_drv_anr
+
+        jsr PRINT
+        .byte "Copy Flash disk F"
+flash_drv_anr
+        .byte "x: to RAM disk.",$9b
+        .byte "RAM disk will be deleted!",$9b
+        .byte "Screen goes black for ca. 5 seconds.",$9b
+        .byte "Start restore RAM disk? (Y)",$ff
+        
+        jsr getKey
+        cmp #$2B
+        beq startCopy2
+
+        jsr PRINT
+        .byte $9b,"Abort.",$9b,$ff
+        rts
+
+startCopy2
+        jsr globalStoreTCreg
+
+_loopCopy
+; read
+        jsr storeTCreg
+        jsr setTCFLASH
+        jsr copy8k_A24
+        jsr restoreTCreg
+; write
+        jsr storeTCreg
+        jsr setTCRAM
+        jsr copy8k_42A
+        jsr restoreTCreg
+; increase
+        inc flashBL
+        inc ramBank
+        lda #$40
+        cmp ramBank
+        bne _loopCopy
+; finished        
+        jsr globalRestoreTCreg        
+        jsr PRINT
+        .byte $9b,"Restore done.",$9B,$FF
+        rts
+        
+;
+; Subroutines
+;
+        .include "TCCOPY.INC"

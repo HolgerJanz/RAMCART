@@ -1,0 +1,351 @@
+mads 2.0.9
+Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/TCSETDRV.ASM
+     1 				;
+     2 				; Set drive for TCDRIVER the Ramdisk and Flashdisk driver for The!Cart
+     3 				;
+     4
+     5 				; System equates
+     6 				;
+     7 				; OS EQUATES
+     8 				; ----------
+     9 				; 
+    10 				; IO EQUATES
+    11 				; 
+    12 = 0002			ICCOM       = $0002
+    13 = 0008			ICBLL       = $0008
+    14 = 0009			ICBLH       = $0009
+    15 = 0340			IOCB0       = $0340
+    16
+    17 = 000A			DOSVEC		= $000A
+    18 = 02E7			MEMLO		= $02e7
+    19 				; 
+    20 				; ROM VECTORS
+    21 				; 
+    22 = E456			CIOV        = $E456
+    23
+    24 				;
+    25 				; SpartaDOS 
+    26 				;
+    27 = 000A			SD_BUFOFF      = $0A ; offset in line buffer
+    28 = 003F			SD_LBUF        = $3F ; offset to line buffer
+    29 = 0003			SD_ZCRNAME     = $03 ; offset for jmp to crunch name
+    30 = 0021			SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
+    31 = 000A			SD_LSIO        = $0A ; negative offset to SIO vector
+    32
+    33 				; 
+    34 				; The!Cart Register (from-to,default)
+    35 				;
+    36
+    37 				; Mode Select
+    38 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+    39 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
+    40 				; other than the ones listed here are reserved (and result
+    41 				; in "cartridge off"):
+    42 				; $00: off, cartridge disabled
+    43 				; $01: 8k banks at $A000
+    44 				; $02: AtariMax 1MBit / 128k
+    45 				; $03: Atarimax 8MBit / 1MB
+    46 				; $04: OSS M091
+    47 				; $08: SDX 64k cart, $D5Ex banking
+    48 				; $09: Diamond GOS 64k cart, $D5Dx banking
+    49 				; $0A: Express 64k cart, $D57x banking
+    50 				; $0C: Atrax 128k cart
+    51 				; $0D: Williams 64k cart
+    52 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
+    53 				; $21: standard 16k cart at $8000-$BFFF
+    54 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+    55 				; $23: Blizzard 16k
+    56 				; $24: Sic!Cart 512k
+    57 				; $28: 16k Mega cart
+    58 				; $29: 32k Mega cart
+    59 				; $2A: 64k Mega cart
+    60 				; $2B: 128k Mega cart
+    61 				; $2C: 256k Mega cart
+    62 				; $2D: 512k Mega cart
+    63 				; $2E: 1024k Mega cart
+    64 				; $2F: 2048k Mega cart
+    65 				; $30: 32k XEGS cart
+    66 				; $31: 64k XEGS cart
+    67 				; $32: 128k XEGS cart
+    68 				; $33: 256k XEGS cart
+    69 				; $34: 512k XEGS cart
+    70 				; $35: 1024k XEGS cart
+    71 				; $38: 32k SWXEGS cart
+    72 				; $39: 64k SWXEGS cart
+    73 				; $3A: 128k SWXEGS cart
+    74 				; $3B: 256k SWXEGS cart
+    75 				; $3C: 512k SWXEGS cart
+    76 				; $3D: 1024k SWXEGS cart
+    77 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
+    78 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
+    79 = 0021			TCMOSL.FLEXI = $21    ; flexi mode,
+    80 				                         ; separate 8k banks at $A000 and $8000
+    81 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+    82
+    83 				; how to figure out that The!Cart is not active?
+    84 				; If the address is not used then the XL returns $ff but
+    85 				; the XE (and old 800) return $d5 (high byte of address,
+    86 				; the value of the last bus cycle)
+    87 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+    88 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+    89
+    90 				; Mode Flash/RAM Select
+    91 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+    92 				; bit 0: primary bank write enable (0=readOnly, 1=write)
+    93 				; bit 1: primary bank source (0=flash, 1=RAM)
+    94 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
+    95 				; bit 3: secondary bank source (0=flash, 1=RAM)
+    96 = 0000			TCMOFR.FLASH = $00
+    97 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
+    98 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
+    99
+   100 				; Primary Bank
+   101 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
+   102 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
+   103 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+   104
+   105 				; Secondary Bank 
+   106 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
+   107 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
+   108 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   109
+   110 				; SPI interface to EEPROM
+   111 = D5A8			TCINEP = $d5a8
+   112 				; bit 0: SPI CLK
+   113 				; bit 1: SPI CS
+   114 				; bit 7: SPI data in (on reads), SPI data out (on writes)
+   115
+   116 				; configuration lock
+   117 = D5AF			TCCOLO = $d5af
+   118 				; Writing to this register disables "The!Cart" registers
+   119 				; at $d5aX.
+   120
+   121
+   122 							org $3000
+   123 				start
+   124 				; info message
+   125 FFFF> 3000-32B6> 20 81 +             jsr print
+   126 3003 54 68 65 21 43 61 +             .byte 'The!Cart Set Drive ver42 hjx',$9B,$FF
+   127
+   128 				; check for The!Cart
+   129 3021 AD A6 D5		             lda TCMOSL
+   130 3024 C9 FF		             cmp #TCMOSL.XLLOCK
+   131 3026 F0 04		             beq noRamDisk
+   132 3028 C9 D5		             cmp #TCMOSL.XELOCK
+   133 302A D0 23		             bne checkDOS
+   134 302C			noRamDisk
+   135 302C 20 81 32		            jsr print
+   136 302F 20 20 45 72 72 6F +             .byte '  Error: The!Cart not found',$9B,$FF
+   137 304C 4C 49 31		            jmp printHelp
+   138
+   139 304F			checkDOS
+   140 304F A2 07					ldx #$07
+   141 3051			checkDOSloop			
+   142 3051 BD 17 32					lda checkArray,X
+   143 3054 49 FF					eor #$ff
+   144 3056 DD 00 07		checkDOSa	cmp $700,X
+   145 3059 D0 05					bne noCheckArray
+   146 305B CA						dex 
+   147 305C 10 F3					bpl checkDOSloop
+   148 305E 30 3A					bmi setConfAddress
+   149 3060			noCheckArray			
+   150 3060 EE 57 30					inc checkDOSa+1		; increment address
+   151 3063 D0 03					bne *+5
+   152 3065 EE 58 30					inc checkDOSa+2
+   153 							
+   154 3068 AD E7 02					lda MEMLO			; check address for MEMLO
+   155 306B CD 57 30					cmp checkDOSa+1
+   156 306E D0 DF					bne checkDOS
+   157 3070 AD E8 02					lda MEMLO+1
+   158 3073 CD 58 30					cmp checkDOSa+2
+   159 3076 D0 D7					bne checkDOS		
+   160 3078			noBWTCDOS			
+   161 3078 20 81 32		            jsr print
+   162 307B 20 20 45 72 72 6F +             .byte '  Error: No BW-DOS 1.31 TC',$9B,$FF
+   163 3097 4C 49 31		            jmp printHelp
+   164
+   165 309A			setConfAddress
+   166 309A AD 57 30		            lda checkDOSa+1
+   167 309D 18			            clc
+   168 309E 69 08		            adc #$08
+   169 30A0 8D FC 30		            sta confAddr+1
+   170 30A3 8D 05 31		            sta disAddr+1
+   171 30A6 AD 58 30		            lda checkDOSa+2
+   172 30A9 69 00		            adc #$00
+   173 30AB 8D FD 30		            sta confAddr+2
+   174 30AE 8D 06 31		            sta disAddr+2
+   175
+   176 30B1			startParameter
+   177 30B1 20 52 32					jsr paramCheck			; check for parameter
+   178 30B4 90 1C					bcc parameterEnd
+   179 30B6 20 64 32					jsr paramGet
+   180 30B9 D0 71					bne parameterError
+   181
+   182 30BB A0 22		            ldy #SD_COMFNAM+1		; get drive number
+   183 30BD B1 0A		            lda (DOSVEC),Y
+   184 30BF 29 0F		            and #$0f
+   185 30C1 AE CB 30		            ldx driveCnt+1
+   186 30C4 9D 12 32		            sta driveNumbers,X
+   187
+   188 30C7 EE CB 30					inc driveCnt+1			; next
+   189 30CA A9 00		driveCnt	lda #$00
+   190 30CC C9 05					cmp #$05
+   191 30CE D0 E1					bne startParameter
+   192 30D0 F0 00					beq parameterEnd
+   193
+   194 30D2			parameterEnd
+   195 30D2 AD CB 30					lda driveCnt+1
+   196 30D5 F0 2B					beq displayDrive		; check no parameter
+   197 30D7 20 52 32					jsr paramCheck			; check for too many parameter
+   198 30DA B0 50					bcs parameterError
+   199
+   200 30DC 20 81 32					jsr print
+   201 30DF 4E 65 77 20 63 6F + 			.byte 'New configuration:',$9b,$FF
+   202 30F3 20 1F 32					jsr printDrive
+   203
+   204 30F6 A2 04					ldx #$04
+   205 30F8 BD 12 32		driveLoop	lda driveNumbers,X
+   206 30FB 9D 39 21		confAddr	sta $2139,X
+   207 30FE CA						dex
+   208 30FF 10 F7					bpl driveLoop
+   209 							
+   210 3101 60						rts
+   211
+   212 3102			displayDrive
+   213 3102 A2 04					ldx #$04
+   214 3104			driveLoop2
+   215 3104 BD 39 21		disAddr		lda $2139,X
+   216 3107 9D 12 32					sta driveNumbers,X
+   217 310A CA						dex
+   218 310B 10 F7					bpl driveLoop2
+   219 							
+   220 310D 20 81 32					jsr print
+   221 3110 43 75 72 72 65 6E + 			.byte 'Current configuration:',$9b,$FF
+   222 3128 20 1F 32					jsr printDrive 
+   223 312B 60						rts
+   224
+   225 312C			parameterError
+   226 312C 20 81 32		            jsr print
+   227 312F 20 20 45 72 72 6F +             .byte '  Error: Wrong parameter',$9B,$FF
+   228
+   229 3149			printHelp
+   230 3149 20 81 32		            jsr print
+   231 314C 20 20 50 61 72 61 +             .byte '  Parameter: Dx: [Da:]..[Dd:]',$9B
+   232 316A 20 20 20 20 78 20 +             .byte '    x - number for ramdisk',$9B
+   233 3185 20 20 20 20 61 2D +             .byte '    a-d - number for flash disk 1-4',$9B
+   234 31A9 20 20 55 73 65 20 + 			.byte '  Use D0: to disable drive.',$9b
+   235 31C5 20 20 55 73 65 20 +             .byte '  Use shift+return/esc in start menu.',$9B
+   236 31EB 20 20 49 66 20 44 +             .byte '  If Dx: equals Da-d:, Dx: precedes.',$9B,$FF
+   237 3211 60			            rts
+   238
+   239 3212			driveNumbers
+   240 3212 00						.byte $00	; Ramdisk
+   241 3213 00						.byte $00	; F1:
+   242 3214 00						.byte $00	; F2:
+   243 3215 00						.byte $00	; F3:
+   244 3216 00						.byte $00	; F4:
+   245
+   246 				;checkArray	.byte $b0,$70,$30,$f0,$3f,$3f,$3f,$3e
+   247 3217 4F 8F CF 0F C0 C0 + checkArray	.byte $4f,$8f,$Cf,$0f,$c0,$c0,$c0,$c1
+   248
+   249 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   250 				;
+   251 				; print drive config
+   252 				;
+   253 321F			printDrive
+   254 321F A2 00		loop		ldx #$00
+   255 3221 BD 12 32					lda driveNumbers,X
+   256 3224 09 30					ora #$30
+   257 3226 8D 31 32					sta printDrv
+   258 3229 20 81 32					jsr print
+   259 322C 52 41 4D 3D 44	printDev	.byte 'RAM=D'
+   260 3231 20 FF		printDrv	.byte ' ',$FF
+   261 3233 A9 20					lda #' '
+   262 3235 8D 2C 32					sta printDev
+   263 3238 A9 46					lda #'F'
+   264 323A 8D 2D 32					sta printDev+1
+   265 323D EE 20 32					inc loop+1
+   266 3240 AD 20 32					lda loop+1
+   267 3243 09 30					ora #$30
+   268 3245 8D 2E 32					sta printDev+2
+   269 3248 C9 35					cmp #$35
+   270 324A D0 D3					bne Loop
+   271 324C 20 81 32					jsr print
+   272 324F 9B FF					.byte $9b,$FF
+   273 3251 60						rts
+   274 							
+   275 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   276 				;
+   277 				; check for next parameter
+   278 				;   sets carry if next parameter is available
+   279 				;
+   280 3252 A0 0A		paramCheck	ldy #SD_BUFOFF
+   281 3254 B1 0A		            lda (DOSVEC),Y
+   282 3256 18			            clc
+   283 3257 69 3F		            adc #SD_LBUF
+   284 3259 A8			            tay
+   285 325A B1 0A		            lda (DOSVEC),Y
+   286 325C C9 9B		            cmp #$9b
+   287 325E 18			            clc
+   288 325F F0 01		            beq pcheck_end
+   289 3261 38						sec
+   290 3262 60			pcheck_end	rts
+   291
+   292 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   293 				;
+   294 				; get next parameter
+   295 				;   calls crunch name 
+   296 				;
+   297 				; jump for jsr to crunch name
+   298 3263 FF			pget_set	.byte $ff
+   299 3264			paramGet		; set crunch name address, if necessary
+   300 3264 2C 63 32					bit pget_set
+   301 3267 10 14					bpl pget_call
+   302 							
+   303 3269 A5 0A					lda DOSVEC
+   304 326B 18			            clc
+   305 326C 69 03		            adc #SD_ZCRNAME
+   306 326E 8D 7E 32		            sta pget_call+1
+   307 				            
+   308 3271 A5 0B		            lda DOSVEC+1
+   309 3273 69 00		            adc #$00
+   310 3275 8D 7F 32		            sta pget_call+2
+   311 				            
+   312 3278 A9 00					lda #$00
+   313 327A 8D 63 32					sta pget_set
+   314 							
+   315 327D 20 FF FF		pget_call	jsr $ffff
+   316 3280 60						rts
+   317
+   318
+   319 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   320 				;
+   321 				; print subroutine            
+   322 				;
+   323
+   324 3281 68			print       pla
+   325 3282 8D 92 32		            sta PRINTITER+1
+   326 3285 68			            pla
+   327 3286 8D 93 32		            sta PRINTITER+2
+   328 3289 EE 92 32		printLoop   inc PRINTITER+1
+   329 328C D0 03		            bne PRINTITER
+   330 328E EE 93 32		            inc PRINTITER+2
+   331 3291 AD FF FF		PRINTITER   lda $FFFF
+   332 3294 C9 FF		            cmp #$FF
+   333 3296 F0 06		            beq printEnd
+   334 3298 20 A7 32		            jsr CIOputChar
+   335 329B 4C 89 32		            jmp printLoop
+   336 329E AD 93 32		printEnd    lda PRINTITER+2
+   337 32A1 48			            pha
+   338 32A2 AD 92 32		            lda PRINTITER+1
+   339 32A5 48			            pha
+   340 32A6 60			            rts
+   341 				; call cio put char subroutine
+   342 32A7 A2 00		CIOputChar  ldx #$00
+   343 32A9 8E 48 03		            stx IOCB0+ICBLL
+   344 32AC 8E 49 03		            stx IOCB0+ICBLH
+   345 32AF A0 0B		            ldy #$0B
+   346 32B1 8C 42 03		            sty IOCB0+ICCOM
+   347 32B4 4C 56 E4		            jmp CIOV
+   348
+   349 02E0-02E1> 00 30					run start

@@ -1,0 +1,120 @@
+;  libflash-thecart - code for The Cart
+;
+;  Copyright (C) 2011 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+BANKREG	= $D5A0
+BANKSIZ	= 8	; 8k banks
+BANKBAS	= $A000	; base address
+
+; Turbo Freezer CartEmu control registers
+
+; enable/disable CartEmu
+TCENABLE = $D5A2
+
+; sram at $8000 bank
+TCBANK2	= $D5A3	; and A4
+; sram at $8000 enable
+TCENAB2	= $D5A5
+
+TCMODE	= $D5A6
+; 0 = off
+; 1 = 8k
+
+; config register:
+TCCFG	= $D5A7
+; bit 1: 0=source ROM 1=source RAM
+; bit 0: 0=write protect ROM 1=write enable
+
+; set bank number from BASEBNK
+	.MACRO SBASE
+	LDX FBASEBNK
+	STX BANKREG
+	LDX FBASEBNK+1
+	STX BANKREG+1
+	.ENDM
+
+; set bank number from BANKNO
+	.MACRO SBANK
+	LDX FBANKNO
+	STX BANKREG
+	LDX FBANKNO+1
+	STX BANKREG+1
+	.ENDM
+
+; disable cartemu
+	.MACRO SBANKOFF
+	LDA #0
+	STA TCENABLE
+	.ENDM
+
+; calculate bank number (in: FBANKTMP, out: FBANKNO)
+	.MACRO CBANK
+	LDA FBANKTMP
+	STA FBANKNO
+	LDA FBANKTMP+1
+	AND #$3F	; 16384 banks (128MB)
+	STA FBANKNO+1
+	.ENDM
+
+; calculate base bank number (in: FBANKTMP, out: FBASEBNK)
+	.MACRO CBASE
+	LDA #0		; only one chip
+	STA FBASEBNK
+	STA FBASEBNK+1
+	.ENDM
+
+; init flash library
+FINIT   INC $42
+	LDA #1
+	STA TCMODE	; set to 8k mode
+	LDA #0
+	STA BANKREG
+	STA BANKREG+1
+	SBANKOFF
+	LDA #0		; source ROM, write disable
+	STA TCCFG
+	LDA #0
+	STA TCENAB2	; disable RAM at $8000
+	LDA $D013
+	STA $3FA
+	DEC $42
+	JMP ?FINIT
+
+; enable flash access
+FENABLE	INC $42
+	LDA #1		; source ROM, write enable
+	BIT FRAMMOD
+	BMI ?FENAB1
+	ORA #2		; source RAM
+?FENAB1	STA TCCFG
+	LDA #1
+	STA TCENABLE
+	LDA $D013
+	STA $3FA
+	DEC $42
+	RTS
+
+; disable flash access
+FDISABLE INC $42
+	LDA #0		; source ROM, write disable
+	STA TCCFG
+	SBANKOFF
+	LDA $D013
+	STA $3FA
+	DEC $42
+	RTS
+

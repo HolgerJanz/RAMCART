@@ -1,0 +1,817 @@
+;  libflash - generic flash programming code
+;
+;  Copyright (C) 2004-2010 Matthias Reichl <hias@horus.com>
+;
+;  This program is free software; you can redistribute it and/or modify
+;  it under the terms of the GNU General Public License as published by
+;  the Free Software Foundation; either version 2 of the License, or
+;  (at your option) any later version.
+;
+;  This program is distributed in the hope that it will be useful,
+;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;  GNU General Public License for more details.
+;
+;  You should have received a copy of the GNU General Public License
+;  along with this program; if not, write to the Free Software
+;  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+.if .def THECART
+	.include "libflash16/libflash-thecart.src"
+.endif
+
+; initialize flash address to 0
+FADRZERO
+	LDA #0
+	STA FLASHADR
+	STA FLASHADR+1
+	STA FLASHADR+2
+	STA FLASHADR+3
+	RTS
+
+; copy external flash and user data addresses to
+; internal FLASHADI and DATAVEC variables
+?FCOPADR
+	LDA FLASHADR
+	STA FLASHADI
+	LDA FLASHADR+1
+	STA FLASHADI+1
+	LDA FLASHADR+2
+	STA FLASHADI+2
+	LDA FLASHADR+3
+	STA FLASHADI+3
+	LDA DATAADR
+	STA DATAVEC
+	LDA DATAADR+1
+	STA DATAVEC+1
+	RTS
+
+; increment internal flash address by 1 page (256 bytes)
+?FADRIP	INC FLASHADI+1
+	BNE ?FADRIP1
+	INC FLASHADI+2
+	BNE ?FADRIP1
+	INC FLASHADI+3
+?FADRIP1
+	RTS
+
+; setup all addresses
+?FSETUPA
+	JSR ?FCOPADR
+	JMP ?FSETADR
+
+; convert relative address in FLASHTMP (lo, mid) and FBANKTMP (hi1, hi2)
+; into absolute addresses
+FSETTMP
+	LDA FLASHTMP+1
+	PHA
+.IF BANKSIZ = 16
+; 16k banks
+	ASL FLASHTMP+1
+	ROL FBANKTMP
+	ROL FBANKTMP+1
+	ASL FLASHTMP+1
+	ROL FBANKTMP
+	ROL FBANKTMP+1
+	PLA
+	AND #$3F
+.ELSE
+	ASL FLASHTMP+1
+	ROL FBANKTMP
+	ROL FBANKTMP+1
+	ASL FLASHTMP+1
+	ROL FBANKTMP
+	ROL FBANKTMP+1
+	ASL FLASHTMP+1
+	ROL FBANKTMP
+	ROL FBANKTMP+1
+	PLA
+	AND #$1F
+.ENDIF
+	CLC
+	ADC #>BANKBAS
+	STA FLASHTMP+1
+	RTS
+
+; convert internal flash address in FLASHADI to absolute address/bank,
+; sets FLASHVEC (absolute adress) and FBANKNO, FBASEBNK
+?FSETADR
+; copy address in temporary storage
+	LDA FLASHADI
+	STA FLASHTMP
+	LDA FLASHADI+1
+	STA FLASHTMP+1
+	LDA FLASHADI+2
+	STA FBANKTMP
+	LDA FLASHADI+3
+	STA FBANKTMP+1
+	JSR FSETTMP
+
+; copy address from FLASHTMP to FLASHVEC
+	LDA FLASHTMP
+	STA FLASHVEC
+	LDA FLASHTMP+1
+	STA FLASHVEC+1
+
+; setup base bank number
+	CBASE
+
+; setup bank number
+	CBANK
+	RTS
+
+; setup addresses and check if flash address starts
+; on page boundary
+?FSETUPP
+	STX ?FPCOUNT
+	JSR ?FCOPADR
+	LDY #0
+	STY FERROR	; clear error flag
+	LDA FLASHADI
+	BEQ ?FSETUPP1
+	LDA #EFLPAE	; set "page address error"
+	STA FERROR
+?FSETUPP1
+	RTS
+
+; setup address for byte mode: add Y to vector
+?FSETUPB
+	STX ?FBCOUNT
+
+	TYA		; add Y to flash adress
+	CLC
+	ADC FLASHADR
+	STA FLASHADI
+	LDA FLASHADR+1
+	ADC #0
+	STA FLASHADI+1
+	LDA FLASHADR+2
+	ADC #0
+	STA FLASHADI+2
+	LDA FLASHADR+3
+	ADC #0
+	STA FLASHADI+3
+	JSR ?FSETADR	; setup absolute adresses
+	TYA		; add Y to data vector
+	CLC
+	ADC DATAADR
+	STA DATAVEC
+	LDA DATAADR+1
+	ADC #0
+	STA DATAVEC+1
+	LDY #0		; set Y=0
+	STA FERROR	; clear error flag
+	RTS
+
+; common initialization stuff
+?FINIT	LDA #$FF
+	STA FRAMMOD
+	JMP FADRZERO	; just clear flash address
+
+; put the flash into "read" mode
+?SETREAD
+	LDX #5
+	JSR ?WAIT
+	SBASE
+	LDA #$F0
+	STA BANKBAS
+	RTS
+
+; put flash into "ID/autoselect" mode
+?SETID	SBASE
+	LDA #$AA
+	STA BANKBAS+$AAA
+	LDA #$55
+	STA BANKBAS+$555
+	LDA #$90
+	STA BANKBAS+$AAA
+	RTS
+
+; common signature for chip/block erase
+?SIGERAS
+	SBASE
+	LDA #$AA
+	STA BANKBAS+$AAA
+	LDA #$55
+	STA BANKBAS+$555
+	LDA #$80
+	STA BANKBAS+$AAA
+	LDA #$AA
+	STA BANKBAS+$AAA
+	LDA #$55
+	STA BANKBAS+$555
+	RTS
+
+; put flash into "chip erase" mode
+?SETCERA
+	JSR ?SIGERAS
+	LDA #$10
+	STA BANKBAS+$AAA
+	RTS
+
+; put flash into "Block erase" mode (bank must be set correctly!)
+?SETBERA
+	JSR ?SIGERAS
+	SBANK
+	LDA #$30
+	STA BANKBAS
+	RTS
+
+; wait for a short time (specified in X)
+?WAIT	LDY #0
+?WTLP	DEY
+	BNE ?WTLP
+	DEX
+	BNE ?WTLP
+	RTS
+
+; detect flash type, set FTYPE
+FDETECT	JSR ?FSETUPA	; setup addresses
+
+	JSR ?SETREAD
+	JSR ?SETID
+
+	LDX #251	; start at index -5
+?DET1	INX
+	INX
+	INX
+	INX
+	INX
+	LDA ?IDSP,X	; get flash type
+	STA FTYPE
+	BMI ?DET2	; negative means end of list
+	LDA BANKBAS
+	CMP ?IDSP+1,X
+	BNE ?DET1
+
+	LDA BANKBAS+2
+	CMP ?IDSP+2,X
+	BNE ?DET1
+
+	LDA BANKBAS+$1C
+	CMP ?IDSP+3,X
+	BNE ?DET1
+
+	LDA BANKBAS+$1E
+	CMP ?IDSP+4,X
+	BNE ?DET1
+
+	BNE ?DET1
+	BEQ ?DET4
+
+?DET2
+
+; setup flash/bank sizes etc.
+?DET4	
+; default values
+	LDA #0
+	STA FSIZE
+	STA FSIZE+1
+	STA FSIZE+2
+	STA FSIZE+3
+	STA FBLKSIZ
+	STA FBLKSIZ+1
+	STA FBLKSIZ+2
+	STA FBLKSIZ+3
+	STA FBLKMSK+3
+	STA FNUMBLK
+	STA FNUMBLK+1
+	LDA #$FF
+	STA FBLKMSK
+	STA FBLKMSK+1
+	STA FBLKMSK+2
+	STA FBLKMSK+3
+	STA FRAMMOD
+
+; check flash type
+	LDA FTYPE
+	CMP #TS29GL01
+	BNE ?DET10
+
+	LDA #8
+	STA FSIZE+3
+	LDA #64
+	STA FNUMBLK+1
+	LDA #2
+	STA FBLKSIZ+2
+	LDA #1
+	STA FBLKMSK+2
+	LDA #0
+	STA FBLKMSK+3
+	JMP ?DETX
+
+?DETX	LDA FRAMMOD	; are we in RAM mode?
+	BEQ ?DET99	; yes, just return
+	JMP ?SETREAD	; no, set flash back to read mode
+?DET99	RTS		
+	
+?DET10	CMP #TS29GL512
+	BNE ?DET11
+
+	LDA #4
+	STA FSIZE+3
+	LDA #32
+	STA FNUMBLK+1
+	LDA #2
+	STA FBLKSIZ+2
+	LDA #1
+	STA FBLKMSK+2
+	LDA #0
+	STA FBLKMSK+3
+
+?DET11	CMP #TS29GL256
+	BNE ?DET12
+
+	LDA #2
+	STA FSIZE+3
+	LDA #16
+	STA FNUMBLK+1
+	LDA #2
+	STA FBLKSIZ+2
+	LDA #1
+	STA FBLKMSK+2
+	LDA #0
+	STA FBLKMSK+3
+
+?DET12	CMP #TS29GL128
+	BNE ?DET13
+
+	LDA #1
+	STA FSIZE+3
+	LDA #8
+	STA FNUMBLK+1
+	LDA #2
+	STA FBLKSIZ+2
+	LDA #1
+	STA FBLKMSK+2
+	LDA #0
+	STA FBLKMSK+3
+
+?DET13	CMP #TRAM128
+	BEQ ?RAM128
+	CMP #TRAM512
+	BEQ ?RAM512
+	CMP #TRAM1024
+	BEQ ?RAM1024
+
+	JMP ?DETX
+
+?RAM512
+	INC FRAMMOD
+	LDA #8		; flash size 512k
+	STA FSIZE+2
+	RTS
+
+?RAM128
+	INC FRAMMOD
+?DET128
+	LDA #2		; flash size 128k
+	STA FSIZE+2
+	RTS
+
+?RAM1024
+	INC FRAMMOD
+	LDA #$10
+	STA FSIZE+2
+	RTS
+
+; set chip type (A=chip type)
+FSETCHP	STA FTYPE
+	CMP #TNOFLSH
+	BEQ ?FSETC1
+	JMP ?DET4	; valid type - setup config
+?FSETC1	RTS
+
+; ID tables
+; format: chip-type, manufacturer ID, device ID
+
+?IDSP	
+	.BYTE TS29GL01, $01, $7E, $28, $01	; Spansion S29GL01 (128MB)
+	.BYTE TS29GL512, $01, $7E, $23, $01	; Spansion S29GL512 (64MB)
+	.BYTE TS29GL256, $01, $7E, $22, $01	; Spansion S29GL512 (64MB)
+	.BYTE TS29GL128, $01, $7E, $21, $01	; Spansion S29GL512 (64MB)
+
+	.BYTE TNOFLSH,$FF,$FF,$FF,$FF	; end of table
+
+; DQ7 polling algorithm
+?WTDATA	AND #$80
+	STA ?WTBYTE
+?WTDLP	LDA (FLASHVEC),Y
+	EOR ?WTBYTE
+	BPL ?WTDOK
+	AND #$20
+	BEQ ?WTDLP
+	LDA (FLASHVEC),Y
+	EOR ?WTBYTE
+	BPL ?WTDOK
+	JSR ?SETREAD
+	LDA #$FF
+	RTS
+
+?WTDOK	LDA #$00
+	RTS
+
+; write X bytes from DATAADR,Y to FLASHADR,Y
+FWBYTE	JSR ?FSETUPB		; setup addresses for byte mode
+
+?FWBYTL	JSR ?FSETADR
+
+	BIT FRAMMOD
+	BPL ?FWBYT1
+	SBASE
+	LDA #$AA
+	STA BANKBAS+$AAA
+	LDA #$55
+	STA BANKBAS+$555
+	LDA #$A0
+	STA BANKBAS+$AAA
+?FWBYT1	
+	SBANK
+	LDA (DATAVEC),Y
+	STA (FLASHVEC),Y	; program data
+	BIT FRAMMOD
+	BPL ?FWBYT2
+	JSR ?WTDATA		; wait for programming to finish
+	BMI ?FBERR1		; error 1
+	LDA (DATAVEC),Y		; verify data
+?FWBYT2	CMP (FLASHVEC),Y
+	BNE ?FBERR2		; error 2
+	INC DATAVEC
+	BNE ?FWBYT3
+	INC DATAVEC+1
+?FWBYT3	INC FLASHADI
+	BNE ?FWBYT4
+	INC FLASHADI+1
+	BNE ?FWBYT4
+	INC FLASHADI+2
+	BNE ?FWBYT4
+	INC FLASHADI+3
+?FWBYT4	DEC ?FBCOUNT		; next byte?
+	BNE ?FWBYTL
+	LDA #0
+	RTS
+
+?FBERR2 STA FERRUD
+	LDA (FLASHVEC),Y
+	STA FERRFD
+	INC FERROR
+?FBERR1	INC FERROR
+?FBERR	LDA FERROR
+	ORA #$80
+	STA FERROR
+	RTS
+
+; write X pages of A to FLASHADR
+FWAPAGE	STA ?FVALUE
+	LDA #$80
+	BNE ?FWPAGE0
+
+; write X pages from DATAADR to FLASHADR
+FWPAGE	LDA #0
+?FWPAGE0
+	STA ?FVALFLG
+
+	JSR ?FSETUPP		; setup adresses and check for page mode
+	BPL ?FWPAG1
+	JMP ?FPERR
+
+?FWPAG1	JSR ?FSETADR		; setup absolute flash address
+	SBANK
+
+?FWPAGL 
+	BIT FRAMMOD
+	BMI ?FWPAGL2
+	JMP ?FWPAGR
+
+?FWPAGL2
+; write buffer programming mode,
+; program 32 bytes at a time
+	LDA #8
+	STA ?FBCOUNT
+?FWPAGL3
+	LDA #$AA
+	STA BANKBAS+$AAA
+	LDA #$55
+	STA BANKBAS+$555
+	LDA #$25		; write to buffer command
+	STA (FLASHVEC),Y
+	LDA #$1F		; number of bytes-1
+	STA (FLASHVEC),Y
+	LDX #$20
+	BIT ?FVALFLG
+	BPL ?FWPAGL42
+
+; write constant values
+	LDA ?FVALUE
+?FWPAGL41
+	STA (FLASHVEC),Y
+	INY
+	DEX
+	BNE ?FWPAGL41
+; setup data for DQ7 polling algorithm
+	AND #$80
+	STA ?WTBYTE
+	JMP ?FWPAGL43
+
+; write data
+?FWPAGL42
+	LDA (DATAVEC),Y
+	STA (FLASHVEC),Y
+	INY
+	DEX
+	BNE ?FWPAGL42
+; setup data for DQ7 polling algorithm
+	AND #$80
+	STA ?WTBYTE
+
+; finish buffer programming
+?FWPAGL43
+	DEY
+	LDA #$29
+	STA (FLASHVEC),Y
+
+?FWPAGW1
+	LDA (FLASHVEC),Y
+	EOR ?WTBYTE
+	BPL ?FWPAGW2
+	AND #$20
+	BEQ ?FWPAGW1
+	LDA (FLASHVEC),Y
+	EOR ?WTBYTE
+	BMI ?FPERRP
+?FWPAGW2
+	INY
+	DEC ?FBCOUNT
+	BNE ?FWPAGL3
+
+	BIT ?FVALFLG
+	BPL ?FWPAGL52
+
+; verify constant value page
+	LDA ?FVALUE
+?FWPAGL51
+	CMP (FLASHVEC),Y
+	BNE ?FPERR2
+	INY
+	BNE ?FWPAGL51
+	BEQ ?FWPAG2
+
+; verify data page
+?FWPAGL52
+	LDA (DATAVEC),Y
+	CMP (FLASHVEC),Y
+	BNE ?FPERR2
+	INY
+	BNE ?FWPAGL52
+
+?FWPAG2	DEC ?FPCOUNT
+	BEQ ?FWPAG4
+
+	INC DATAVEC+1
+	INC FLASHADI+1
+	BNE ?FWPAG3
+	INC FLASHADI+2
+	BNE ?FWPAG3
+	INC FLASHADI+3
+?FWPAG3	JMP ?FWPAG1
+
+?FWPAG4	LDA #0
+	RTS
+
+; program ram page
+?FWPAGR
+	SBANK
+	BIT ?FVALFLG
+	BPL ?FWPAGR12
+
+; program constant value
+	LDA ?FVALUE
+?FWPAGR11
+	STA (FLASHVEC),Y
+	CMP (FLASHVEC),Y
+	BNE ?FPERR2
+	INY
+	BNE ?FWPAGR11
+	BEQ ?FWPAG2
+
+; program user data
+?FWPAGR12
+	LDA (DATAVEC),Y
+	STA (FLASHVEC),Y
+	CMP (FLASHVEC),Y
+	BNE ?FPERR2
+	INY
+	BNE ?FWPAGR12
+	BEQ ?FWPAG2
+
+; error in write buffer command, send write to buffer abort reset cmd
+?FPERRP SBASE
+	LDA #$AA
+	STA BANKBAS+$AAA
+	LDA #$55
+	STA BANKBAS+$555
+	LDA #$F0
+	STA BANKBAS+$AAA
+	BNE ?FPERR1
+
+; error in page mode: add Y to current address and return
+?FPERR2	STA FERRUD
+	LDA (FLASHVEC),Y
+	STA FERRFD
+	INC FERROR
+?FPERR1	INC FERROR
+
+?FPERR	TYA			; calculate address of error byte
+	CLC
+	ADC FLASHADI
+	STA FLASHADI
+	BCC ?FPERR3
+	INC FLASHADI+1
+	BCC ?FPERR3
+	INC FLASHADI+2
+	BCC ?FPERR3
+	INC FLASHADI+3
+?FPERR3	LDA FERROR
+	ORA #$80
+	STA FERROR
+	RTS
+
+
+; copy X bytes from FLASHADR,Y to DATAADR,Y
+FRBYTE	JSR ?FSETUPB		; setup addresses for byte mode
+
+?FRBYTL	JSR ?FSETADR
+	SBANK
+	LDA (FLASHVEC),Y
+	STA (DATAVEC),Y
+	INC DATAVEC
+	BNE ?FRBYT1
+	INC DATAVEC+1
+?FRBYT1	INC FLASHADI
+	BNE ?FRBYT2
+	INC FLASHADI+1
+	BNE ?FRBYT2
+	INC FLASHADI+2
+	BNE ?FRBYT2
+	INC FLASHADI+3
+?FRBYT2	DEC ?FBCOUNT
+	BNE ?FRBYTL
+	LDA #0
+	RTS
+
+; copy X pages from FLASHADR to DATAADR
+FRPAGE	JSR ?FSETUPP
+	BPL ?FRPAG1
+	JMP ?FPERR
+
+?FRPAG1	JSR ?FSETADR
+	SBANK
+
+?FRPAGL	LDA (FLASHVEC),Y
+	STA (DATAVEC),Y
+	INY
+	BNE ?FRPAGL
+
+	INC DATAVEC+1
+	INC FLASHADI+1
+	BNE ?FRPAG2
+	INC FLASHADI+2
+	BNE ?FRPAG2
+	INC FLASHADI+3
+?FRPAG2 DEC ?FPCOUNT
+	BNE ?FRPAG1
+	LDA #0
+	RTS
+
+; compare X bytes from FLASHADR,Y to DATAADR,Y
+FCBYTE	JSR ?FSETUPB		; setup addresses for byte mode
+	
+?FCBYT1	JSR ?FSETADR
+	SBANK
+
+	LDA (FLASHVEC),Y
+	CMP (DATAVEC),Y
+	BNE ?FCBYT4		; bytes differ
+	INC DATAVEC
+	BNE ?FCBYT2
+	INC DATAVEC+1
+?FCBYT2
+	INC FLASHADI
+	BNE ?FCBYT3
+	INC FLASHADI+1
+	BNE ?FCBYT3
+	INC FLASHADI+2
+	BNE ?FCBYT3
+	INC FLASHADI+3
+?FCBYT3 DEC ?FBCOUNT
+	BNE ?FCBYT1
+	LDA #0
+	RTS
+?FCBYT4	JMP ?FBERR2
+
+; compara X pages from FLASHADR to A
+FCAPAGE	STA ?FVALUE
+	LDA #$80
+	BNE ?FCPAG0
+
+; compare X pages from FLASHADR to DATAADR
+FCPAGE	LDA #0
+?FCPAG0	STA ?FVALFLG
+
+	JSR ?FSETUPP		; setup adresses and check for page start
+	BPL ?FCPAG1
+	JMP ?FPERR
+
+?FCPAG1	JSR ?FSETADR
+	SBANK
+	BIT ?FVALFLG
+	BPL ?FCPAGL2
+
+; compare with constant value
+	LDA ?FVALUE
+?FCPAGL1
+	CMP (FLASHVEC),Y
+	BNE ?FCPAG3
+	INY
+	BNE ?FCPAGL1
+	BEQ ?FCPAGL3
+
+; compare with data
+?FCPAGL2
+	LDA (DATAVEC),Y
+	CMP (FLASHVEC),Y
+	BNE ?FCPAG3
+	INY
+	BNE ?FCPAGL2
+
+?FCPAGL3
+	INC DATAVEC+1
+	INC FLASHADI+1
+	BNE ?FCPAG2
+	INC FLASHADI+2
+	BNE ?FCPAG2
+	INC FLASHADI+3
+?FCPAG2	DEC ?FPCOUNT
+	BNE ?FCPAG1
+	LDA #0
+	RTS
+?FCPAG3	JMP ?FPERR2
+
+; completely erase flash chip
+FCERAS	JSR ?FSETUPA		; setup addresses
+
+	BIT FRAMMOD
+	BMI ?FCERA1
+
+?FCERA0	LDA #EFLUNS		; erasing RAM not supported
+	STA FERROR
+	RTS
+
+?FCERA1	JSR ?SETCERA
+?FCERA2	LDA #$FF
+	LDY #0
+	STY FERROR
+	JSR ?WTDATA
+	BPL ?FCERA3
+	LDA #EFLFTO
+	STA FERROR
+?FCERA3	LDA FERROR
+	RTS
+
+; erase flash bank
+FPERAS	JSR ?FSETUPA		; setup addresses
+	BIT FRAMMOD
+	BPL ?FCERA0		; erasing RAM not supported
+	JSR ?SETBERA
+	JMP ?FCERA2
+
+; check for presence of flash(cart)
+FPRESENT
+	JSR ?FSETUPA
+	JSR FDISABLE
+	LDA BANKBAS		; save RAM content
+	STA FLASHTMP
+	JSR FENABLE
+	SBASE
+	LDA BANKBAS		; read flash content
+	EOR #$FF		; invert it
+	PHA
+	PHA
+	JSR FDISABLE
+	PLA
+	STA BANKBAS		; store inverted flash in RAM
+	JSR FENABLE
+	SBASE
+	PLA
+	CMP BANKBAS		; compare with flash
+	PHP
+	JSR FDISABLE
+	LDA FLASHTMP		; restore RAM content
+	STA BANKBAS
+	PLP
+	BEQ ?FPRES1		; values are equal - only RAM present
+	LDA #0			; values different - flash
+	RTS
+?FPRES1	LDA #$FF
+	RTS
+

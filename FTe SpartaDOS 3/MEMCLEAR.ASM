@@ -21,8 +21,56 @@ ICBLH       = $0349
 ICAX1		= $034a
 ICAX2		= $034b
 
+
+;
+; SpartaDOS 
+;
+DOSVEC		= $000A
+;
+SD_BUFOFF   = $0A ; offset in line buffer
+SD_LBUF     = $3F ; offset to line buffer
+SD_ZCRNAME  = $03 ; offset for jmp to crunch name
+SD_COMFNAM  = $21 ; offset to buffer for crunch name 
+SD_LSIO     = $0A ; negative offset to SIO vector
+
+
 			org $0480
 
+			jsr pcheck			; check for parameter 1
+			bcc startClear
+
+			jsr pget			; get parameter
+			beq parameterError
+			
+            ldx #$00
+            ldy #SD_COMFNAM+3	; get value
+loop_r2     lda (DOSVEC),Y
+			cmp #$9b
+			beq parameterError
+			sta clr_char,x
+			iny
+			inx
+vchar_cnt	cpx #$02
+			bne loop_r2
+			
+			lda (DOSVEC),Y		; check for end after second char
+			cmp #$9b
+			bne parameterError
+			
+			ldx clr_char			; convert to hex
+			ldy clr_char+1
+			jsr conva2h			
+			sta clearValue+1
+
+			jsr pcheck			; check for too many parameter
+			bcc startClear
+
+parameterError
+			jsr print
+			.byte 'Parameter Error: use MEMCLEAR [hh]',$9b,$ff
+			rts
+
+startClear
 			lda MEMLO+1
 			jsr convh2a
 			stx adr_low
@@ -42,9 +90,10 @@ ICAX2		= $034b
 			sty adr_high+3
 
 	        jsr PRINT
-    	    .byte 'Clear memory $' 
+    	    .byte 'Clear $' 
 adr_low		.byte 'xxxx-$'
-adr_high	.byte 'yyyy ? (Y)',$ff
+adr_high	.byte 'yyyy with $'
+clr_char	.byte '00? (Y)',$ff
 
 	        jsr getKey
     	    cmp #$2B
@@ -59,7 +108,7 @@ clear_start
 			lda MEMLO+1
 			sta clear_loop+2
 			
-			ldx #$00
+clearValue	ldx #$00
 clear_loop	stx $ffff
 
 			lda clear_loop+2	; check for MEMTOP
@@ -133,6 +182,32 @@ convh2a		pha
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
+; convert atascii to hex
+;   atascii X,Y -> hex A            
+;
+conva2h		txa
+			jsr conva2h_h
+			asl
+			asl
+			asl
+			asl
+			sta conva2h_o+1
+			tya
+			jsr conva2h_h
+conva2h_o	ora #$00
+			rts
+			
+conva2h_h   sec
+            sbc #'0'
+            cmp #$0A
+            bcc conva2h_hl
+            clc
+            adc #$09
+conva2h_hl  and #$0F
+            rts
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
 ; get key
 ;
 getKey
@@ -143,4 +218,47 @@ getKey
 		lda CH
 		stx CH
 		rts
+			
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; check for next parameter
+;   sets carry if next parameter is available
+;
+pcheck		ldy #SD_BUFOFF
+            lda (DOSVEC),Y
+            clc
+            adc #SD_LBUF
+            tay
+            lda (DOSVEC),Y
+            cmp #$9b
+            clc
+            beq pcheck_end
+			sec
+pcheck_end	rts
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; get next parameter
+;   calls crunch name 
+;
+; jump for jsr to crunch name
+pget_set	.byte $ff
+pget		; set crunch name address, if necessary
+			bit pget_set
+			bpl pget_call
+			
+			lda DOSVEC
+            clc
+            adc #SD_ZCRNAME
+            sta pget_call+1
+            
+            lda DOSVEC+1
+            adc #$00
+            sta pget_call+2
+            
+			lda #$00
+			sta pget_set
+			
+pget_call	jsr $ffff
+			rts
 			

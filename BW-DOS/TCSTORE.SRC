@@ -1,0 +1,179 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Store RAMCART RAM to flash
+;
+
+;
+; Main
+;
+; The!Cart 512k user space banks from $3fc0 - $3fff
+; The!Cart 640k user space banks from $3fb0 - $3fef
+;
+        *= $3000
+ 
+        jsr PRINT
+        .byte "STORE for The!Ramdisk ver42 hjx",$9B,$FF
+
+; check if we are running on THE!CART hardware
+        lda TCMOSL
+        cmp #TCMOSLXLLOCK
+        beq errorNoCart
+        cmp #TCMOSLXELOCK
+        beq errorNoCart
+        bne startCheckParam
+ 
+errorNoCart
+ ; no cart no flash
+        jsr PRINT
+        .byte "  Error - The!Cart not found",$9B,$FF
+        rts
+
+startCheckParam
+		jsr get_drv_idx
+		bcs startCopy
+		rts 
+
+startCopy
+; set flash ram bank
+        lda flash_tab_adr,X
+        sta flash_adr3+1		; set 3rd address byte
+        
+		inx		; conver to flash drive number
+		txa
+		ora #$30
+		sta flash_drv_anr
+
+        jsr PRINT
+        .byte "Copy RAM disk to Flash disk F"
+flash_drv_anr
+        .byte "x:.",$9b
+        .byte "Flash disk will be deleted!",$9b
+        .byte "Screen goes black for ca. 20 seconds.",$9b
+        .byte "Start store (flashing) RAM disk? (Y)",$ff
+        
+        jsr getKey
+        cmp #$2B
+        beq startCopy2
+
+        jsr PRINT
+        .byte $9b,"Abort.",$9b,$ff
+        rts
+
+startCopy2
+        jsr globalStoreTCreg
+; init flasher
+        jsr finit
+        jsr fenable
+        jsr fdetect
+        jsr fdisable
+; check and set flash type -> no flash = no The!Cart
+;        lda ftype
+;        cmp #tnoflsh
+;        bne startCopy
+; set buffer address 8k at $4000       
+        lda #$00
+        sta dataadr
+        lda #$40
+        sta dataadr+1
+; 512k set flash address $07.f8.00.00 for bank $3f.c0
+; 640k set flash address $07.f6.00.00 for bank $3f.b0
+        lda #$00
+        sta flashadr
+        sta flashadr+1
+flash_adr3
+        lda #$f6
+        sta flashadr+2
+        lda #$07
+        sta flashadr+3        
+_loopCopy
+; get 8k RAM bank to buffer
+        jsr storeTCreg  ; save TC state
+        jsr setTCRAM    ; set 8k at $A000
+        jsr copy8k_A24  ; copy 8k from A000 to 4000
+        jsr restoreTCreg ; restore TC state
+; flash
+        jsr flash
+        bcs _endFlash
+; increase flash address
+        clc
+        lda flashadr+1
+        adc #$20
+        sta flashadr+1
+        lda flashadr+2
+        adc #$00
+        sta flashadr+2
+        lda flashadr+3
+        adc #$00
+        sta flashadr+3        
+; check ram bank number
+        inc ramBank
+        lda #$40
+        cmp ramBank
+        bne _loopCopy
+; end flash
+_endFlash
+        jsr globalRestoreTCreg
+        jsr PRINT
+        .byte $9b,"Store (flashing) done.",$9B,$FF
+        rts
+
+flash
+; erase
+        bit flashadr    ; erase every 128k 
+        bne _program
+        bit flashadr+1
+        bne _program
+        lda #$01
+        and flashadr+2
+        bne _program
+        jsr fenable
+        ldx #$20
+        jsr fperas
+        php
+        jsr fdisable
+        plp
+        bmi flashError
+_program
+; program
+        jsr fenable
+        ldx #$20
+        jsr fwpage
+        php
+        jsr fdisable
+        plp
+        bmi flashError
+; verify
+        jsr fenable
+        ldx #$20
+        jsr fcpage
+        php
+        jsr fdisable
+        plp
+        bmi flashError
+; flash OK        
+        clc
+        rts        
+; flash error
+flashError
+        lda ramBank
+        jsr convha
+        stx _ramNo
+        sty _ramNo+1
+        jsr PRINT
+        .byte "  Error at bank $"
+_ramNo  .byte "XX",$ff
+        sec
+        rts        
+
+;
+; Subroutines
+;
+        .include "TCCOPY.INC"
+
+;
+; Flasher Source Include
+;
+        THECART = 1 ; use The!Cart
+        .include "libflash16/libflash.inc"
+        .include "libflash16/libflash.src"
+        .include "libflash16/libflash-ramloc.src"
