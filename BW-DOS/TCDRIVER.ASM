@@ -213,7 +213,7 @@ M_cart_pop  .macro
             pla                 
             sta TCMOFR          
             pla                 
-            sta TCMOSL          
+            sta TCMOSL
             pla                 
             sta TCPBEN          
             .endm
@@ -240,7 +240,7 @@ M_cart_set  .macro
             
 ; info message
             jsr PRINT
-            .byte 'The!Ramdisk for The!Cart ver42 hjx',$9B,$FF
+            .byte 'The!Ramdisk for The!Cart ver42bw hjx',$9B,$FF
 
 ; check for The!Cart
              lda TCMOSL

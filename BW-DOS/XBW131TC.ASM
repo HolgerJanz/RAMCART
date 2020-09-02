@@ -2084,13 +2084,18 @@ L3E5F       jmp $0E8A              ; 4C 38 0D
 
             .byte $9b,'BW-DOS TC 1.31b BEWESOFT & HJX 2020',$9B,$00
            
-; CHANGE: add TC off
+;; CHANGE: add TC off
+;			lda #$00
+;			sta TCMOSL
+;			sta TCPBRL      ; set S bank 
+;			sta TCPBEN      ; disable S
+;			sta TCPBRH
+;			sta TCPBEN      ; disable S
+
+; CHANGE: legt margin 0
 			lda #$00
-			sta TCMOSL
-			sta TCPBRL      ; set S bank 
-			sta TCPBEN      ; disable S
-			sta TCPBRH
-			sta TCPBEN      ; disable S
+            sta $52
+
             jmp L0D38              ; 4C 38 0D
 
 ;            .byte $9B,$21,$22,$23,$24,$25,$26,$27

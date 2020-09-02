@@ -75,6 +75,7 @@ TCMOSL = $d5a6    ; mode ($00-$3d,$01)
 ; $3C: 512k SWXEGS cart
 ; $3D: 1024k SWXEGS cart
 TCMOSL.OFF   = $00    ; off, cartridge disabled
+TCMOSL.OSS   = $04
 TCMOSL.8K    = $01    ; 8k banks at $A000
 TCMOSL.FLEXI = $21    ; flexi mode,
                          ; separate 8k banks at $A000 and $8000
@@ -123,20 +124,28 @@ TCCOLO = $d5af
 start
 ; info message
             jsr print
-            .byte 'The!Cart Set Drive ver42 hjx',$9B,$FF
+            .byte 'The!Cart Set Drive ver42bw hjx',$9B,$FF
 
+; !!! DO NOT TOUCH TC REGISTERS, OSS CARTRIDGES HATE IT !!!!
 ; check for The!Cart
-             lda TCMOSL
-             cmp #TCMOSL.XLLOCK
-             beq noRamDisk
-             cmp #TCMOSL.XELOCK
-             bne checkDOS
-noRamDisk
-            jsr print
-            .byte '  Error: The!Cart not found',$9B,$FF
-            jmp printHelp
+;             lda TCMOSL
+;             cmp #TCMOSL.XLLOCK
+;             beq noRamDisk
+;             cmp #TCMOSL.XELOCK
+;             bne checkDOS
+;noRamDisk
+;            jsr print
+;            .byte '  Error: The!Cart not found',$9B,$FF
+;            jmp printHelp
 
 checkDOS
+			lda MEMLO			; calc MEMLO-$08
+			sec
+			sbc #$08
+			sta checkDOSel+1
+			lda MEMLO+1
+			sbc #$00
+			sta checkDOSeh+1
 			ldx #$07
 checkDOSloop			
 			lda checkArray,X
@@ -151,10 +160,10 @@ noCheckArray
 			bne *+5
 			inc checkDOSa+2
 			
-			lda MEMLO			; check address for MEMLO
+checkDOSel	lda #$00			; check address for MEMLO
 			cmp checkDOSa+1
 			bne checkDOS
-			lda MEMLO+1
+checkDOSeh	lda #$30
 			cmp checkDOSa+2
 			bne checkDOS		
 noBWTCDOS			
@@ -244,6 +253,7 @@ driveNumbers
 			.byte $00	; F4:
 
 ;checkArray	.byte $b0,$70,$30,$f0,$3f,$3f,$3f,$3e
+; must be hidden else it would be found in sector buffer
 checkArray	.byte $4f,$8f,$Cf,$0f,$c0,$c0,$c0,$c1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

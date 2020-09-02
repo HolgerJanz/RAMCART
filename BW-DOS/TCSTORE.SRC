@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE for The!Ramdisk ver42 hjx",$9B,$FF
+        .byte "STORE for The!Ramdisk ver42bw hjx",$9B,$FF
 
 ; check if we are running on THE!CART hardware
         lda TCMOSL

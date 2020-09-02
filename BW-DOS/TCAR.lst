@@ -6,7 +6,7 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/TCAR.ASM
      4 				;
      5 				; OS equ
      6 				;
-     7
+     7 = 0006			TRNSMZ  = $0006
      8 = 000A			DOSVEC  = $000a
      9 = 0042			CRITIC  = $0042
     10
@@ -21,589 +21,622 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/TCAR.ASM
     19 = D400			DMACTL  = $d400 
     20 = D40E			NMIEN   = $d40e
     21
-    22 = E474			WARMST  = $e474
+    22 = E474			WARMSV  = $e474
     23
-    24 				; 
-    25 				; IO EQUATES
-    26 				; 
-    27 = 0340			IOCB0        =  $0340     ; address of first IOCB
-    28 = 0342			IOCB0.CMD    = IOCB0+2    ; where command goes in IOCB
-    29 = 0343			IOCB0.STAT   = IOCB0+3    ; state returned
-    30 = 0344			IOCB0.BUF    = IOCB0+4    ; buffer (or name) address
-    31 = 0348			IOCB0.BUFLEN = IOCB0+8    ; max buffer length address
-    32 = 034A			IOCB0.AUX1   = IOCB0+10   ; Auxilliary byte 1
-    33 = 034B			IOCB0.AUX2   = IOCB0+11   ; Auxilliary byte 2
-    34
-    35 = 0350			IOCB1        =  $0350     ; address of first IOCB
-    36 = 0352			IOCB1.CMD    = IOCB1+2    ; where command goes in IOCB
-    37 = 0353			IOCB1.STAT   = IOCB1+3    ; state returned
-    38 = 0354			IOCB1.BUF    = IOCB1+4    ; buffer (or name) address
-    39 = 0358			IOCB1.BUFLEN = IOCB1+8    ; max buffer length address
-    40 = 035A			IOCB1.AUX1   = IOCB1+10   ; Auxilliary byte 1
-    41 = 035B			IOCB1.AUX2   = IOCB1+11   ; Auxilliary byte 2
-    42
-    43
-    44 = 00FE			XIO.FMT = 254   ; Format command
-    45 = 0005			XIO.INPUT = 5   ; Input Line
-    46 = 0009			XIO.PRINT = 9   ; Print line
-    47 = 0003			XIO.OPEN  = 3   ; Open
-    48 = 000C			XIO.CLOSE = 12  ; Close
-    49 = 0004			XIO.READ  = 4   ; Read
-    50 = 0008			XIO.WRITE = 8   ; Write
-    51 = 0007			XIO.GET   = 7   ; Get
-    52 = 000B			XIO.PUT   = 11  ; Put
-    53
-    54 = 0088			XIO.STAT.EOF = $88
-    55
-    56 = E456			CIOV = $E456   ; the classic location
+    24 = 0008			WARMST = $08
+    25 = 0009			BOOT?  = $09
+    26 = 0244			COLDST = $0244
+    27
+    28 				; 
+    29 				; IO EQUATES
+    30 				; 
+    31 = 0340			IOCB0        =  $0340     ; address of first IOCB
+    32 = 0342			IOCB0.CMD    = IOCB0+2    ; where command goes in IOCB
+    33 = 0343			IOCB0.STAT   = IOCB0+3    ; state returned
+    34 = 0344			IOCB0.BUF    = IOCB0+4    ; buffer (or name) address
+    35 = 0348			IOCB0.BUFLEN = IOCB0+8    ; max buffer length address
+    36 = 034A			IOCB0.AUX1   = IOCB0+10   ; Auxilliary byte 1
+    37 = 034B			IOCB0.AUX2   = IOCB0+11   ; Auxilliary byte 2
+    38
+    39 = 0350			IOCB1        =  $0350     ; address of first IOCB
+    40 = 0352			IOCB1.CMD    = IOCB1+2    ; where command goes in IOCB
+    41 = 0353			IOCB1.STAT   = IOCB1+3    ; state returned
+    42 = 0354			IOCB1.BUF    = IOCB1+4    ; buffer (or name) address
+    43 = 0358			IOCB1.BUFLEN = IOCB1+8    ; max buffer length address
+    44 = 035A			IOCB1.AUX1   = IOCB1+10   ; Auxilliary byte 1
+    45 = 035B			IOCB1.AUX2   = IOCB1+11   ; Auxilliary byte 2
+    46
+    47
+    48 = 00FE			XIO.FMT = 254   ; Format command
+    49 = 0005			XIO.INPUT = 5   ; Input Line
+    50 = 0009			XIO.PRINT = 9   ; Print line
+    51 = 0003			XIO.OPEN  = 3   ; Open
+    52 = 000C			XIO.CLOSE = 12  ; Close
+    53 = 0004			XIO.READ  = 4   ; Read
+    54 = 0008			XIO.WRITE = 8   ; Write
+    55 = 0007			XIO.GET   = 7   ; Get
+    56 = 000B			XIO.PUT   = 11  ; Put
     57
-    58 				;
-    59 				; SpartaDOS 
-    60 				;
-    61 = 000A			SD_BUFOFF      = $0A ; offset in line buffer
-    62 = 003F			SD_LBUF        = $3F ; offset to line buffer
-    63 = 0003			SD_ZCRNAME     = $03 ; offset for jmp to crunch name
-    64 = 0021			SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
-    65 = 000A			SD_LSIO        = $0A ; negative offset to SIO vector
-    66
-    67 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    68 				; 
-    69 				; The!Cart programming information
-    70 				; (c) 2013 Matthias Reichl
-    71 				;
-    72 				; The!Cart is equipped with 128MB flash (Spansion S29GL01
-    73 				; chip), 512k RAM and a 256-byte SPI EEPROM (Microchip
-    74 				; 25AA020A). The memory is addressed using 16384 8k banks
-    75 				; (64 8k banks when using RAM instead of flash).
-    76 				; 
-    77 				; The cartridge configuration registers are located at
-    78 				; $D5A0-$D5A8. All registers are read/write unless noted
-    79 				; otherwise. Unused bits shall be written as '0' and
-    80 				; always read back as '0'.
-    81 				; 
-    82 				; Powerup configuration is 8k mode ($A000-$BFFF) using
-    83 				; flash bank 0, writes to flash are disabled.
-    84 				; 
-    85 				; Depending on the selected cartridge mode additional
-    86 				; registers are enabled at $D5xx.
-    87 				; 
-    88 				; The primary bank register also serves as a base bank
-    89 				; register for the various sub-modes.
-    90 				; 
-    91 				; The secondary bank register is only used in "flexi mode".
-    92 				;
-    93
-    94 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    95 				; 
-    96 				; The!Cart Register (from-to,default)
-    97 				;
-    98
-    99 				; Mode Select
-   100 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
-   101 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
-   102 				; other than the ones listed here are reserved (and result
-   103 				; in "cartridge off"):
-   104 				; $00: off, cartridge disabled
-   105 				; $01: 8k banks at $A000
-   106 				; $02: AtariMax 1MBit / 128k
-   107 				; $03: Atarimax 8MBit / 1MB
-   108 				; $04: OSS M091
-   109 				; $08: SDX 64k cart, $D5Ex banking
-   110 				; $09: Diamond GOS 64k cart, $D5Dx banking
-   111 				; $0A: Express 64k cart, $D57x banking
-   112 				; $0C: Atrax 128k cart
-   113 				; $0D: Williams 64k cart
-   114 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
-   115 				; $21: standard 16k cart at $8000-$BFFF
-   116 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
-   117 				; $23: Blizzard 16k
-   118 				; $24: Sic!Cart 512k
-   119 				; $28: 16k Mega cart
-   120 				; $29: 32k Mega cart
-   121 				; $2A: 64k Mega cart
-   122 				; $2B: 128k Mega cart
-   123 				; $2C: 256k Mega cart
-   124 				; $2D: 512k Mega cart
-   125 				; $2E: 1024k Mega cart
-   126 				; $2F: 2048k Mega cart
-   127 				; $30: 32k XEGS cart
-   128 				; $31: 64k XEGS cart
-   129 				; $32: 128k XEGS cart
-   130 				; $33: 256k XEGS cart
-   131 				; $34: 512k XEGS cart
-   132 				; $35: 1024k XEGS cart
-   133 				; $38: 32k SWXEGS cart
-   134 				; $39: 64k SWXEGS cart
-   135 				; $3A: 128k SWXEGS cart
-   136 				; $3B: 256k SWXEGS cart
-   137 				; $3C: 512k SWXEGS cart
-   138 				; $3D: 1024k SWXEGS cart
-   139 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
-   140 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
-   141 = 0021			TCMOSL.FLEXI = $21    ; flexi mode,
-   142 				                         ; separate 8k banks at $A000 and $8000
-   143 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
-   144
-   145 				; how to figure out that The!Cart is not active?
-   146 				; If the address is not used then the XL returns $ff but
-   147 				; the XE (and old 800) return $d5 (high byte of address,
-   148 				; the value of the last bus cycle)
-   149 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
-   150 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
-   151
-   152 				; Mode Flash/RAM Select
-   153 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
-   154 				; bit 0: primary bank write enable (0=readOnly, 1=write)
-   155 				; bit 1: primary bank source (0=flash, 1=RAM)
-   156 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
-   157 				; bit 3: secondary bank source (0=flash, 1=RAM)
-   158 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
-   159 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
-   160
-   161 				; Primary Bank
-   162 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
-   163 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
-   164 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+    58 = 0088			XIO.STAT.EOF = $88
+    59
+    60 = E456			CIOV = $E456   ; the classic location
+    61
+    62 				;
+    63 				; SpartaDOS 
+    64 				;
+    65 = 000A			SD_BUFOFF      = $0A ; offset in line buffer
+    66 = 003F			SD_LBUF        = $3F ; offset to line buffer
+    67 = 0003			SD_ZCRNAME     = $03 ; offset for jmp to crunch name
+    68 = 0021			SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
+    69 = 000A			SD_LSIO        = $0A ; negative offset to SIO vector
+    70
+    71 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    72 				; 
+    73 				; The!Cart programming information
+    74 				; (c) 2013 Matthias Reichl
+    75 				;
+    76 				; The!Cart is equipped with 128MB flash (Spansion S29GL01
+    77 				; chip), 512k RAM and a 256-byte SPI EEPROM (Microchip
+    78 				; 25AA020A). The memory is addressed using 16384 8k banks
+    79 				; (64 8k banks when using RAM instead of flash).
+    80 				; 
+    81 				; The cartridge configuration registers are located at
+    82 				; $D5A0-$D5A8. All registers are read/write unless noted
+    83 				; otherwise. Unused bits shall be written as '0' and
+    84 				; always read back as '0'.
+    85 				; 
+    86 				; Powerup configuration is 8k mode ($A000-$BFFF) using
+    87 				; flash bank 0, writes to flash are disabled.
+    88 				; 
+    89 				; Depending on the selected cartridge mode additional
+    90 				; registers are enabled at $D5xx.
+    91 				; 
+    92 				; The primary bank register also serves as a base bank
+    93 				; register for the various sub-modes.
+    94 				; 
+    95 				; The secondary bank register is only used in "flexi mode".
+    96 				;
+    97
+    98 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    99 				; 
+   100 				; The!Cart Register (from-to,default)
+   101 				;
+   102
+   103 				; Mode Select
+   104 = D5A6			TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+   105 				; Cartridge mode is selected with bits 0-5 of $D5A6, values
+   106 				; other than the ones listed here are reserved (and result
+   107 				; in "cartridge off"):
+   108 				; $00: off, cartridge disabled
+   109 				; $01: 8k banks at $A000
+   110 				; $02: AtariMax 1MBit / 128k
+   111 				; $03: Atarimax 8MBit / 1MB
+   112 				; $04: OSS M091
+   113 				; $08: SDX 64k cart, $D5Ex banking
+   114 				; $09: Diamond GOS 64k cart, $D5Dx banking
+   115 				; $0A: Express 64k cart, $D57x banking
+   116 				; $0C: Atrax 128k cart
+   117 				; $0D: Williams 64k cart
+   118 				; $20: flexi mode (separate 8k banks at $A000 and $8000)
+   119 				; $21: standard 16k cart at $8000-$BFFF
+   120 				; $22: MegaMax 16k mode (up to 2MB), AtariMax 8Mbit banking
+   121 				; $23: Blizzard 16k
+   122 				; $24: Sic!Cart 512k
+   123 				; $28: 16k Mega cart
+   124 				; $29: 32k Mega cart
+   125 				; $2A: 64k Mega cart
+   126 				; $2B: 128k Mega cart
+   127 				; $2C: 256k Mega cart
+   128 				; $2D: 512k Mega cart
+   129 				; $2E: 1024k Mega cart
+   130 				; $2F: 2048k Mega cart
+   131 				; $30: 32k XEGS cart
+   132 				; $31: 64k XEGS cart
+   133 				; $32: 128k XEGS cart
+   134 				; $33: 256k XEGS cart
+   135 				; $34: 512k XEGS cart
+   136 				; $35: 1024k XEGS cart
+   137 				; $38: 32k SWXEGS cart
+   138 				; $39: 64k SWXEGS cart
+   139 				; $3A: 128k SWXEGS cart
+   140 				; $3B: 256k SWXEGS cart
+   141 				; $3C: 512k SWXEGS cart
+   142 				; $3D: 1024k SWXEGS cart
+   143 = 0000			TCMOSL.OFF   = $00    ; off, cartridge disabled
+   144 = 0001			TCMOSL.8K    = $01    ; 8k banks at $A000
+   145 = 0004			TCMOSL.OSS   = $04
+   146 = 0021			TCMOSL.FLEXI = $21    ; flexi mode,
+   147 				                         ; separate 8k banks at $A000 and $8000
+   148 = 0021			TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
+   149
+   150 				; how to figure out that The!Cart is not active?
+   151 				; If the address is not used then the XL returns $ff but
+   152 				; the XE (and old 800) return $d5 (high byte of address,
+   153 				; the value of the last bus cycle)
+   154 = 00FF			TCMOSL.XLLOCK  = $ff    ; config lock or not present
+   155 = 00D5			TCMOSL.XELOCK  = $d5    ; config lock or not present
+   156
+   157 				; Mode Flash/RAM Select
+   158 = D5A7			TCMOFR = $d5a7    ;flash/RAM mode (0-15,0)
+   159 				; bit 0: primary bank write enable (0=readOnly, 1=write)
+   160 				; bit 1: primary bank source (0=flash, 1=RAM)
+   161 				; bit 2: secondary bank write enable (0=readOnly, 1=write)
+   162 				; bit 3: secondary bank source (0=flash, 1=RAM)
+   163 = 0003			TCMOFR.PBRAM = $03    ; primary bank RAM
+   164 = 000C			TCMOFR.SBRAM = $0C    ; secondary bank RAM
    165
-   166 				; Secondary Bank 
-   167 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
-   168 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
-   169 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   166 				; Primary Bank
+   167 = D5A0			TCPBRL = $d5a0    ; register low byte (0-255,0)
+   168 = D5A1			TCPBRH = $d5a1    ; register high byte (0-63,0)
+   169 = D5A2			TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
    170
-   171 				; SPI interface to EEPROM
-   172 = D5A8			TCINEP = $d5a8
-   173 				; bit 0: SPI CLK
-   174 				; bit 1: SPI CS
-   175 				; bit 7: SPI data in (on reads), SPI data out (on writes)
-   176
-   177 				; configuration lock
-   178 = D5AF			TCCOLO = $d5af
-   179 				; Writing to this register disables "The!Cart" registers
-   180 				; at $d5aX.
+   171 				; Secondary Bank 
+   172 = D5A3			TCSBRL = $d5a3    ; register low byte (0-255,0)
+   173 = D5A4			TCSBRH = $d5a4  ; register high byte (0-63,0)
+   174 = D5A5			TCSBEN = $d5a5    ; enable (0=dis-1=en,0)
+   175
+   176 				; SPI interface to EEPROM
+   177 = D5A8			TCINEP = $d5a8
+   178 				; bit 0: SPI CLK
+   179 				; bit 1: SPI CS
+   180 				; bit 7: SPI data in (on reads), SPI data out (on writes)
    181
-   182
-   183 				;		    org $480
-   184 				;clear_and_warm
-   185 				;			lda MEMLO
-   186 				;			sta clear_loop+1
-   187 				;			lda MEMLO+1
-   188 				;			sta clear_loop+2
-   189 				;			
-   190 				;			ldx #$00
-   191 				;clear_loop	stx $ffff
-   192 				;
-   193 				;			inc clear_loop+1	; inc address
-   194 				;           bne clear_loop
-   195 				;			inc clear_loop+2
-   196 				;			lda clear_loop+2
-   197 				;			cmp RAMSIZ
-   198 				;			bcc clear_loop
-   199 							
-   200 				;clear_end	jmp WARMST      ; warm start
-   201
-   202
-   203 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   204 				;
-   205 				; Main
-   206 				;
-   207
-   208 				        org $5000
-   209 				start        
-   210 				; message
-   211 FFFF> 5000-52B3> A2 E0	        ldx #<startmsg.begin
-   212 5002 A0 50		        ldy #>startmsg.begin
-   213 5004 A9 1B		        lda #startmsg.end-startmsg.begin
-   214 5006 20 52 52		        jsr print
-   215
-   216 				; check for parameter
-   217 5009 A0 0A		        ldy #SD_BUFOFF
-   218 500B B1 0A		        lda (DOSVEC),y
-   219 500D 18			        clc
-   220 500E 69 3F		        adc #SD_LBUF
-   221 5010 A8			        tay
-   222 5011 B1 0A		        lda (DOSVEC),y
-   223 5013 C9 9B		        cmp #$9B
-   224 5015 F0 27		        beq prserr
-   225
-   226 5017 C8			        iny
-   227 5018 8C 64 51		        sty paridy      ;set index to parameter
-   228
-   229 				; read sys file        
-   230 501B 20 6B 52		        jsr open
-   231 501E 30 1E		        bmi prserr
-   232 				                
-   233 5020 20 8A 52		rdnext  jsr input       ; read line
-   234 5023 30 29		        bmi filerr
-   235 				                
-   236 5025 A9 20		        lda #' '
-   237 5027 CD 81 51		        cmp pbuffer+8   ; check for spaces at 9 and 12
-   238 502A D0 22		        bne filerr
-   239 502C A9 20		        lda #' '
-   240 502E CD 84 51		        cmp pbuffer+11
-   241 5031 D0 1B		        bne filerr
-   242 				        
-   243 5033 20 FB 51		        jsr check
-   244 5036 B0 46		        bcs found
-   245 				        
-   246 5038 EE 63 51		        inc lcnt
-   247 503B 4C 20 50		        jmp rdnext
-   248
-   249 				; exit with parse error                  
-   250 503E 20 A9 52		prserr  jsr close
-   251 5041 A2 FB		        ldx #<errprs.begin
-   252 5043 A0 50		        ldy #>errprs.begin
-   253 5045 A9 17		        lda #errprs.end-errprs.begin
-   254 5047 20 52 52		        jsr print
-   255 504A 20 8B 51		        jsr list
-   256 504D 60			        rts
-   257
-   258 				; exit with file error                  
-   259 504E A9 88		filerr  lda #XIO.STAT.EOF     ; ignore end of file
-   260 5050 CD 53 03		        cmp IOCB1.STAT
-   261 5053 F0 19		        beq filend
-   262 5055 AD 63 51		        lda lcnt
-   263 5058 20 3B 52		        jsr convha
-   264 505B 8E 38 51		        stx errfil.line
-   265 505E 8C 39 51		        sty errfil.line+1
-   266 5061 A2 12		        ldx #<errfil.begin
-   267 5063 A0 51		        ldy #>errfil.begin
-   268 5065 A9 29		        lda #errfil.end-errfil.begin
-   269 5067 20 52 52		        jsr print
-   270 506A 20 A9 52		        jsr close
-   271 506D 60			        rts
-   272 				        
-   273 506E A2 3B		filend  ldx #<errnfd.begin
-   274 5070 A0 51		        ldy #>errnfd.begin
-   275 5072 A9 14		        lda #errnfd.end-errnfd.begin
-   276 5074 20 52 52		        jsr print
-   277 5077 20 A9 52		        jsr close
-   278 507A 20 8B 51		        jsr list
-   279 507D 60			        rts
-   280
-   281 				; read mode and bank
-   282 507E 20 A9 52		found   jsr close
-   283
-   284 5081 20 D6 51		        jsr rpara
-   285 				        
-   286 				; switch The!Cart
-   287 5084 A9 00		        lda #$00        ; switch off DMA
-   288 5086 8D 2F 02		        sta SDMCTL
-   289 5089 8D 00 D4		        sta DMACTL
-   290
-   291 508C 78			        sei             ; mask all interrupts
-   292 508D A9 00		        lda #$00
-   293 508F 8D 0E D4		        sta NMIEN
-   294
-   295 5092 AD 66 51		        lda bankl
-   296 5095 8D A0 D5		        sta TCPBRL
-   297 5098 AD 67 51		        lda bankh       ; set P bank 
-   298 509B 8D A1 D5		        sta TCPBRH
-   299 				        
-   300 509E A9 00		        lda #$00
-   301 50A0 8D A3 D5		        sta TCSBRL      ; set S bank 
-   302 50A3 8D A4 D5		        sta TCSBRH
-   303 50A6 8D A5 D5		        sta TCSBEN      ; disable S
-   304
-   305 50A9 8D A7 D5		        sta TCMOFR      ; cfg flash r/o
-   306 50AC AD 65 51		        lda mode        ; set mode
-   307 50AF 8D A6 D5		        sta TCMOSL
-   308
-   309 50B2 C9 00		        cmp #TCMOSL.OFF
-   310 50B4 F0 18		        beq _nocar
-   311
-   312 50B6 A9 01		        lda #$01        ; set cartridge flag
-   313 50B8 8D 13 D0		        sta TRIG3
-   314 50BB 8D FA 03		        sta GINTLK
-   315 				        
-   316 50BE A9 00		        lda #$00        ; set cart check sum
-   317 50C0 AA			        tax
-   318 50C1 18			        clc
-   319 50C2 7D F0 BF		_ccloop adc $bff0,x
-   320 50C5 E8			        inx
-   321 50C6 D0 FA		        bne _ccloop
-   322 50C8 8D EB 03		        sta CARTCK
-   323 50CB 4C DB 50		        jmp _end
-   324
-   325 50CE A9 00		_nocar  lda #$00        ; set cartridge flag
-   326 50D0 8D 13 D0		        sta TRIG3
-   327 50D3 8D FA 03		        sta GINTLK
-   328 50D6 A9 00		        lda #$00        ; set cart check sum
-   329 50D8 8D EB 03		        sta CARTCK
-   330
-   331 50DB 68			_end    pla             ; clear return adr from stack 
-   332 50DC 68			        pla
-   333 				        
-   334 				;        jmp clear_and_warm
-   335 50DD 4C 74 E4				jmp WARMST
-   336
-   337 				; THE END
-   338
+   182 				; configuration lock
+   183 = D5AF			TCCOLO = $d5af
+   184 				; Writing to this register disables "The!Cart" registers
+   185 				; at $d5aX.
+   186
+   187
+   188 						    org $600
+   189 				clear_cold
+   190 FFFF> 0600-0642> AD E7 + 		lda MEMLO
+   191 0603 8D 0F 06				sta clrloop+1
+   192 0606 AD E8 02				lda MEMLO+1
+   193 0609 8D 10 06				sta clrloop+2
+   194 							
+   195 060C A2 00				ldx #$00
+   196 060E 8E FF FF		clrloop	stx $ffff
+   197 0611 EE 0F 06				inc clrloop+1	; inc address
+   198 0614 D0 F8				bne clrloop
+   199 0616 EE 10 06				inc clrloop+2
+   200 0619 AD 10 06				lda clrloop+2
+   201 061C C9 C0				cmp #$C0            ;  max RAMSIZ
+   202 061E 90 EE				bcc clrloop
+   203
+   204 				; cold start cartridge
+   205 0620 A9 FF				lda #$ff
+   206 0622 8D 44 02		        sta COLDST
+   207 0625 A9 00				lda #$00
+   208 0627 85 08				sta WARMST
+   209 0629 A9 01				lda #$01
+   210 062B 85 09				sta BOOT?
+   211 062D 20 40 06				jsr _inicarvec
+   212 0630 A9 FF				lda #$ff
+   213 0632 85 08				sta WARMST
+   214 0634 A9 00				lda #$00
+   215 0636 8D 44 02				sta COLDST
+   216 0639 A9 01				lda #$01
+   217 063B 85 09				sta BOOT?
+   218
+   219 063D			just_warm			
+   220 063D 4C 74 E4				jmp WARMSV      	; warm start
+   221
+   222 0640			_inicarvec
+   223 0640 6C FE BF				jmp ($bffe)		; Cartridge init vector
+   224
+   225 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   226 				;
+   227 				; Main
+   228 				;
+   229
+   230 0643			        org $3000
+   231 3000			start        
+   232 				; message
+   233 3000-32BD> A2 EE		        ldx #<startmsg.begin
+   234 3002 A0 30		        ldy #>startmsg.begin
+   235 3004 A9 1D		        lda #startmsg.end-startmsg.begin
+   236 3006 20 5C 32		        jsr print
+   237
+   238 				; check for parameter
+   239 3009 A0 0A		        ldy #SD_BUFOFF
+   240 300B B1 0A		        lda (DOSVEC),y
+   241 300D 18			        clc
+   242 300E 69 3F		        adc #SD_LBUF
+   243 3010 A8			        tay
+   244 3011 B1 0A		        lda (DOSVEC),y
+   245 3013 C9 9B		        cmp #$9B
+   246 3015 F0 27		        beq prserr
+   247
+   248 3017 C8			        iny
+   249 3018 8C 6E 31		        sty paridy      ;set index to parameter
+   250
+   251 				; read sys file        
+   252 301B 20 75 32		        jsr open
+   253 301E 30 1E		        bmi prserr
+   254 				                
+   255 3020 20 94 32		rdnext  jsr input       ; read line
+   256 3023 30 29		        bmi filerr
+   257 				                
+   258 3025 A9 20		        lda #' '
+   259 3027 CD 8B 31		        cmp pbuffer+8   ; check for spaces at 9 and 12
+   260 302A D0 22		        bne filerr
+   261 302C A9 20		        lda #' '
+   262 302E CD 8E 31		        cmp pbuffer+11
+   263 3031 D0 1B		        bne filerr
+   264 				        
+   265 3033 20 05 32		        jsr check
+   266 3036 B0 46		        bcs found
+   267 				        
+   268 3038 EE 6D 31		        inc lcnt
+   269 303B 4C 20 30		        jmp rdnext
+   270
+   271 				; exit with parse error                  
+   272 303E 20 B3 32		prserr  jsr close
+   273 3041 A2 0B		        ldx #<errprs.begin
+   274 3043 A0 31		        ldy #>errprs.begin
+   275 3045 A9 17		        lda #errprs.end-errprs.begin
+   276 3047 20 5C 32		        jsr print
+   277 304A 20 95 31		        jsr list
+   278 304D 60			        rts
+   279
+   280 				; exit with file error                  
+   281 304E A9 88		filerr  lda #XIO.STAT.EOF     ; ignore end of file
+   282 3050 CD 53 03		        cmp IOCB1.STAT
+   283 3053 F0 19		        beq filend
+   284 3055 AD 6D 31		        lda lcnt
+   285 3058 20 45 32		        jsr convha
+   286 305B 8E 45 31		        stx errfil.line
+   287 305E 8C 46 31		        sty errfil.line+1
+   288 3061 A2 22		        ldx #<errfil.begin
+   289 3063 A0 31		        ldy #>errfil.begin
+   290 3065 A9 26		        lda #errfil.end-errfil.begin
+   291 3067 20 5C 32		        jsr print
+   292 306A 20 B3 32		        jsr close
+   293 306D 60			        rts
+   294 				        
+   295 306E A2 48		filend  ldx #<errnfd.begin
+   296 3070 A0 31		        ldy #>errnfd.begin
+   297 3072 A9 14		        lda #errnfd.end-errnfd.begin
+   298 3074 20 5C 32		        jsr print
+   299 3077 20 B3 32		        jsr close
+   300 307A 20 95 31		        jsr list
+   301 307D 60			        rts
+   302
+   303 				; read mode and bank
+   304 307E 20 B3 32		found   jsr close
+   305
+   306 3081 20 E0 31		        jsr rpara
+   307 				        
+   308 				; switch The!Cart
+   309 3084 A9 00		        lda #$00        ; switch off DMA
+   310 3086 8D 2F 02		        sta SDMCTL
+   311 3089 8D 00 D4		        sta DMACTL
+   312
+   313 308C 78			        sei             ; mask all interrupts
+   314 308D A9 00		        lda #$00
+   315 308F 8D 0E D4		        sta NMIEN
+   316
+   317 				; set TC register
+   318 3092 8D A2 D5		        sta TCPBEN		; diable and set:
+   319 3095 8D A3 D5		        sta TCSBRL      ; disable Secondary Bank 
+   320 3098 8D A4 D5		        sta TCSBRH
+   321 309B 8D A5 D5		        sta TCSBEN
+   322 309E 8D A7 D5		        sta TCMOFR      ; cfg flash r/o
+   323
+   324 30A1 AD 6F 31		        lda mode        ; set mode
+   325 30A4 8D A6 D5		        sta TCMOSL
+   326 30A7 AA			        tax				; in X for cmp laetr
+   327
+   328 30A8 AD 70 31		        lda bankl		; set P bank
+   329 30AB 8D A0 D5		        sta TCPBRL
+   330 30AE AD 71 31		        lda bankh
+   331 30B1 8D A1 D5		        sta TCPBRH
+   332 				        
+   333 30B4 A9 01				lda #$01		; finally enable and do not read/write
+   334 30B6 8D A2 D5		        sta TCPBEN		; TC register any further
+   335
+   336 				; check for off
+   337 30B9 E0 00		        cpx #TCMOSL.OFF
+   338 30BB F0 21		        beq _nocar
    339
-   340 				; messages        
-   341
-   342 50E0			startmsg.begin
-   343 50E0 43 41 52 20 66 6F +         .byte 'CAR for The!Cart ver42 hjx',$9B
-   344 50FB			startmsg.end
-   345
-   346 50FB			errprs.begin
-   347 50FB 20 20 45 72 72 6F +         .byte '  Error - no parameter',$9b
-   348 5112			errprs.end
-   349
-   350 5112			errfil.begin
-   351 5112 20 20 45 72 72 6F +         .byte '  Error - THECART.SYS',$9b
-   352 5128 20 20 50 61 72 73 +         .byte '  Parsing line $'
-   353 5138			errfil.line
-   354 5138 58 58 9B		        .byte 'XX',$9B
-   355 513B			errfil.end
-   356
-   357 513B			errnfd.begin
-   358 513B 20 20 45 72 72 6F +         .byte '  Error - not found',$9b
-   359 514F			errnfd.end
-   360
-   361 514F			erruse.begin
-   362 514F 20 20 55 73 65 20 +         .byte '  Use THECART name:',$9B
-   363 5163			erruse.end
-   364
-   365 				; variables
-   366
-   367 5163 01			lcnt    .byte $01        
-   368 5164 00			paridy  .byte $00
-   369 5165 00			mode    .byte $00
-   370 5166 00			bankl   .byte $00
-   371 5167 00			bankh   .byte $00
-   372 				        
-   373 5168 44 31 3A 3E 54 43 + fname   .byte 'D1:>TCAR.CFG',$9b
-   374 5175 20 20 20 20		lbuffer .byte '    '
-   375 5179 5F 5F 5F 5F 5F 5F + pbuffer .byte '________________',$9b,$FF
-   376
-   377
-   378 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   379 				; 
-   380 				; List 
-   381 				;
-   382 518B A2 4F		list    ldx #<erruse.begin
-   383 518D A0 51		        ldy #>erruse.begin
-   384 518F A9 14		        lda #erruse.end-erruse.begin
-   385 5191 20 52 52		        jsr print
-   386 				        
-   387 5194 20 6B 52		        jsr open
-   388 5197 20 8A 52		_list   jsr input       ; read line
-   389 519A 30 36		        bmi _endlst
-   390
-   391 519C A9 20		        lda #' '        ; reset current mark
-   392 519E 8D 78 51		        sta lbuffer+3
-   393 				        
-   394 51A1 20 D6 51		        jsr rpara
-   395 				        
-   396 51A4 AD A6 D5		        lda TCMOSL      ; cmp current with para
-   397 51A7 CD 65 51		        cmp mode
-   398 51AA D0 15		        bne _print
+   340 				; check for OSS
+   341 30BD E0 04				cpx #TCMOSL.OSS
+   342 30BF D0 03				bne _inicar
+   343 30C1 8D 00 D5				sta $d500		; reset OSS cartdridge
+   344
+   345 30C4			_inicar
+   346 				; prepare init car and warm start
+   347 30C4 A9 01		        lda #$01        ; set cartridge flag
+   348 30C6 8D 13 D0		        sta TRIG3
+   349 30C9 8D FA 03		        sta GINTLK
+   350 30CC 85 06		        sta TRNSMZ
+   351 				        
+   352 30CE A9 00		        lda #$00        ; set cart check sum
+   353 30D0 AA			        tax
+   354 30D1 18			        clc
+   355 30D2 7D F0 BF		_ccloop adc $bff0,x
+   356 30D5 E8			        inx
+   357 30D6 D0 FA		        bne _ccloop
+   358 30D8 8D EB 03		        sta CARTCK
+   359
+   360 30DB 4C 00 06				jmp clear_cold
+   361
+   362 30DE A9 00		_nocar  lda #$00        ; set cartridge flag
+   363 30E0 8D 13 D0		        sta TRIG3
+   364 30E3 8D FA 03		        sta GINTLK
+   365 30E6 85 06		        sta TRNSMZ
+   366 30E8 8D EB 03		        sta CARTCK      ; set cart check sum
+   367
+   368 30EB 4C 3D 06				jmp just_warm
+   369
+   370 				; THE END
+   371
+   372
+   373 				; messages        
+   374
+   375 30EE			startmsg.begin
+   376 30EE 43 41 52 20 66 6F +         .byte 'CAR for The!Cart ver42bw hjx',$9B
+   377 310B			startmsg.end
+   378
+   379 310B			errprs.begin
+   380 310B 20 20 45 72 72 6F +         .byte '  Error - no parameter',$9b
+   381 3122			errprs.end
+   382
+   383 3122			errfil.begin
+   384 3122 20 20 45 72 72 6F +         .byte '  Error - TCAR.SYS',$9b
+   385 3135 20 20 50 61 72 73 +         .byte '  Parsing line $'
+   386 3145			errfil.line
+   387 3145 58 58 9B		        .byte 'XX',$9B
+   388 3148			errfil.end
+   389
+   390 3148			errnfd.begin
+   391 3148 20 20 45 72 72 6F +         .byte '  Error - not found',$9b
+   392 315C			errnfd.end
+   393
+   394 315C			erruse.begin
+   395 315C 20 20 55 73 65 20 +         .byte '  Use TCAR name:',$9B
+   396 316D			erruse.end
+   397
+   398 				; variables
    399
-   400 51AC AD A1 D5		        lda TCPBRH
-   401 51AF CD 67 51		        cmp bankh
-   402 51B2 D0 0D		        bne _print
-   403
-   404 51B4 AD A0 D5		        lda TCPBRL
-   405 51B7 CD 66 51		        cmp bankl
-   406 51BA D0 05		        bne _print
-   407
-   408 51BC A9 3E		        lda #'>'        ; set current mark
-   409 51BE 8D 78 51		        sta lbuffer+3
+   400 316D 01			lcnt    .byte $01        
+   401 316E 00			paridy  .byte $00
+   402 316F 00			mode    .byte $00
+   403 3170 00			bankl   .byte $00
+   404 3171 00			bankh   .byte $00
+   405 				        
+   406 3172 44 31 3A 3E 54 43 + fname   .byte 'D1:>TCAR.CFG',$9b
+   407 317F 20 20 20 20		lbuffer .byte '    '
+   408 3183 5F 5F 5F 5F 5F 5F + pbuffer .byte '________________',$9b,$FF
+   409
    410
-   411 51C1 A9 9B		_print  lda #$9b        ; set return after name
-   412 51C3 8D 81 51		        sta pbuffer+8
-   413
-   414 51C6 A2 75		        ldx #<lbuffer
-   415 51C8 A0 51		        ldy #>lbuffer
-   416 51CA A9 0D		        lda #$0d
-   417 51CC 20 52 52		        jsr print
-   418 				        
-   419 51CF 4C 97 51		        jmp _list 
-   420
-   421 51D2 20 A9 52		_endlst jsr close
-   422 51D5 60			        rts
+   411 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   412 				; 
+   413 				; List 
+   414 				;
+   415 3195 A2 5C		list    ldx #<erruse.begin
+   416 3197 A0 31		        ldy #>erruse.begin
+   417 3199 A9 11		        lda #erruse.end-erruse.begin
+   418 319B 20 5C 32		        jsr print
+   419 				        
+   420 319E 20 75 32		        jsr open
+   421 31A1 20 94 32		_list   jsr input       ; read line
+   422 31A4 30 36		        bmi _endlst
    423
-   424 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   425 				;
-   426 				; Read parameter (mode, bank low and bank high)
-   427 				;
-   428 51D6 AE 82 51		rpara   ldx pbuffer+9   ; read mode
-   429 51D9 AC 83 51		        ldy pbuffer+10
-   430 51DC 20 1B 52		        jsr convah
-   431 51DF 8D 65 51		        sta mode
+   424 31A6 A9 20		        lda #' '        ; reset current mark
+   425 31A8 8D 82 31		        sta lbuffer+3
+   426 				        
+   427 31AB 20 E0 31		        jsr rpara
+   428 				        
+   429 31AE AD A6 D5		        lda TCMOSL      ; cmp current with para
+   430 31B1 CD 6F 31		        cmp mode
+   431 31B4 D0 15		        bne _print
    432
-   433 51E2 AE 85 51		        ldx pbuffer+12  ; read bank low
-   434 51E5 AC 86 51		        ldy pbuffer+13
-   435 51E8 20 1B 52		        jsr convah
-   436 51EB 8D 67 51		        sta bankh
-   437
-   438 51EE AE 87 51		        ldx pbuffer+14  ; read bank high
-   439 51F1 AC 88 51		        ldy pbuffer+15
-   440 51F4 20 1B 52		        jsr convah
-   441 51F7 8D 66 51		        sta bankl
-   442 				        
-   443 51FA 60			        rts
-   444
-   445 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   446 				; 
-   447 				; Check Command Line with File Buffer
-   448 				;
-   449 				; IN    pbuffer   address to file buffer
-   450 				;       paridy    index to parameter in DOSVEC
-   451
-   452 51FB			check ; check command line and file buffer  
-   453 51FB A2 00		        ldx #$00
-   454 51FD AC 64 51		        ldy paridy 
-   455 5200 B1 0A		checkn  lda (DOSVEC),y
-   456 5202 DD 79 51		        cmp pbuffer,x
-   457 5205 D0 05		        bne checkc
-   458 5207 E8			        inx
-   459 5208 C8			        iny
-   460 5209 4C 00 52		        jmp checkn
-   461 				        
-   462 520C C9 9B		checkc  cmp #$9b
-   463 520E D0 09		        bne notfnd
-   464 5210 A9 20		        lda #' '
-   465 5212 DD 79 51		        cmp pbuffer,x
-   466 5215 D0 02		        bne notfnd
-   467 				        
-   468 5217 38			        sec
-   469 5218 60			        rts
+   433 31B6 AD A1 D5		        lda TCPBRH
+   434 31B9 CD 71 31		        cmp bankh
+   435 31BC D0 0D		        bne _print
+   436
+   437 31BE AD A0 D5		        lda TCPBRL
+   438 31C1 CD 70 31		        cmp bankl
+   439 31C4 D0 05		        bne _print
+   440
+   441 31C6 A9 3E		        lda #'>'        ; set current mark
+   442 31C8 8D 82 31		        sta lbuffer+3
+   443
+   444 31CB A9 9B		_print  lda #$9b        ; set return after name
+   445 31CD 8D 8B 31		        sta pbuffer+8
+   446
+   447 31D0 A2 7F		        ldx #<lbuffer
+   448 31D2 A0 31		        ldy #>lbuffer
+   449 31D4 A9 0D		        lda #$0d
+   450 31D6 20 5C 32		        jsr print
+   451 				        
+   452 31D9 4C A1 31		        jmp _list 
+   453
+   454 31DC 20 B3 32		_endlst jsr close
+   455 31DF 60			        rts
+   456
+   457 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   458 				;
+   459 				; Read parameter (mode, bank low and bank high)
+   460 				;
+   461 31E0 AE 8C 31		rpara   ldx pbuffer+9   ; read mode
+   462 31E3 AC 8D 31		        ldy pbuffer+10
+   463 31E6 20 25 32		        jsr convah
+   464 31E9 8D 6F 31		        sta mode
+   465
+   466 31EC AE 8F 31		        ldx pbuffer+12  ; read bank low
+   467 31EF AC 90 31		        ldy pbuffer+13
+   468 31F2 20 25 32		        jsr convah
+   469 31F5 8D 71 31		        sta bankh
    470
-   471 5219 18			notfnd  clc
-   472 521A 60			        rts
-   473
-   474 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   475 				; 
-   476 				; Convert ATASCI to hex
-   477 				;
-   478 				; IN    X,Y   high, low ASCII digit 
-   479 				;        A    hex value
-   480
-   481 521B 8A			convah  txa
-   482 521C 38			        sec
-   483 521D E9 30		        sbc #'0'
-   484 521F C9 0A		        cmp #10
-   485 5221 90 02		        bcc hnum0_9
-   486 5223 E9 07		        sbc #'A'-'9'-1
-   487 5225 0A			hnum0_9 asl
-   488 5226 0A			        asl
-   489 5227 0A			        asl
-   490 5228 0A			        asl
-   491 5229 8D 39 52		        sta hbits+1
-   492 522C 98			        tya
-   493 522D 38			        sec
-   494 522E E9 30		        sbc #'0'
-   495 5230 C9 0A		        cmp #10
-   496 5232 90 02		        bcc lnum0_9
-   497 5234 E9 07		        sbc #'A'-'9'-1
-   498 5236 29 0F		lnum0_9 and #$0F
-   499 5238 09 00		hbits   ora #$00
-   500 523A 60			        rts
-   501
-   502 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   503 				; 
-   504 				; Convert Hex to ATASCII
-   505 				;
-   506 				; IN    A    byte
-   507 				; OUT X,Y    two ATASCII codes of hex representation
-   508 				;
-   509
-   510 523B			convha ; conv hex to atascii
-   511 523B 48			        pha                    
-   512 523C 4A			        lsr
-   513 523D 4A			        lsr
-   514 523E 4A			        lsr
-   515 523F 4A			        lsr
-   516 5240 F8			        sed        
-   517 5241 18			        clc
-   518 5242 69 90		        adc #$90
-   519 5244 69 40		        adc #$40
-   520 5246 AA			        tax
-   521 5247 68			        pla
-   522 5248 29 0F		        and #$0f
-   523 524A 18			        clc
-   524 524B 69 90		        adc #$90
-   525 524D 69 40		        adc #$40
-   526 524F A8			        tay
-   527 5250 D8			        cld            
-   528 5251 60			        rts
-   529
-   530 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   531 				; 
-   532 				; Print Message
-   533 				;
-   534 				; IN    X,Y    low, high byte of address to message
-   535 				;        A    length of message
-   536
-   537 5252			print ; print message
-   538 5252 8D 48 03		        sta IOCB0.BUFLEN
-   539 5255 A9 00		        lda #$00
-   540 5257 8D 49 03		        sta IOCB0.BUFLEN+1
-   541 525A 8E 44 03		        stx IOCB0.BUF
-   542 525D 8C 45 03		        sty IOCB0.BUF+1
-   543 5260 A9 0B		        lda #XIO.PUT
-   544 5262 8D 42 03		        sta IOCB0.CMD
-   545 5265 A2 00		        ldx #$00
-   546 5267 20 56 E4		        jsr CIOV
-   547 526A 60			        rts
-   548
-   549 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   550 				; 
-   551 				; Open File for Read
-   552 				;
-   553 				; IN    X,Y    low, high byte of address to file name
-   554 				;
-   555
-   556 526B			open ; open file
-   557 526B A9 68		        lda #<fname
-   558 526D 8D 54 03		        sta IOCB1.BUF
-   559 5270 A9 51		        lda #>fname
-   560 5272 8D 55 03		        sta IOCB1.BUF+1
-   561 5275 A9 04		        lda #XIO.READ
-   562 5277 8D 5A 03		        sta IOCB1.AUX1
-   563 527A A9 00		        lda #$00
-   564 527C 8D 5B 03		        sta IOCB1.AUX2
-   565 527F A9 03		        lda #XIO.OPEN
-   566 5281 8D 52 03		        sta IOCB1.CMD
-   567 5284 A2 10		        ldx #$10
-   568 5286 20 56 E4		        jsr CIOV
-   569 5289 60			        rts
-   570
-   571 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   572 				; 
-   573 				; Input from File
-   574 				;
-   575 				; IN    X,Y    low, high byte of address to buffer
-   576 				;       A      length of buffer
-   577
-   578 528A			input ; input file
-   579 528A A9 79		        lda #<pbuffer
-   580 528C 8D 54 03		        sta IOCB1.BUF
-   581 528F A9 51		        lda #>pbuffer
-   582 5291 8D 55 03		        sta IOCB1.BUF+1
-   583 5294 A9 11		        lda #$11
-   584 5296 8D 58 03		        sta IOCB1.BUFLEN
-   585 5299 A9 00		        lda #$00
-   586 529B 8D 59 03		        sta IOCB1.BUFLEN+1        
-   587 529E A9 05		        lda #XIO.INPUT
-   588 52A0 8D 52 03		        sta IOCB1.CMD
-   589 52A3 A2 10		        ldx #$10
-   590 52A5 20 56 E4		        jsr CIOV
-   591 52A8 60			        rts
-   592 				        
-   593 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   594 				; 
-   595 				; Close File
-   596 				;
-   597 52A9 A9 0C		close   lda #XIO.CLOSE
-   598 52AB 8D 52 03		        sta IOCB1.CMD
-   599 52AE A2 10		        ldx #$10
-   600 52B0 20 56 E4		        jsr CIOV
-   601 52B3 60			        rts
-   602 				        
-   603 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-   604 				; 
-   605 				; Run address
-   606 				;
-   607 02E0-02E1> 00 50		        run start
+   471 31F8 AE 91 31		        ldx pbuffer+14  ; read bank high
+   472 31FB AC 92 31		        ldy pbuffer+15
+   473 31FE 20 25 32		        jsr convah
+   474 3201 8D 70 31		        sta bankl
+   475 				        
+   476 3204 60			        rts
+   477
+   478 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   479 				; 
+   480 				; Check Command Line with File Buffer
+   481 				;
+   482 				; IN    pbuffer   address to file buffer
+   483 				;       paridy    index to parameter in DOSVEC
+   484
+   485 3205			check ; check command line and file buffer  
+   486 3205 A2 00		        ldx #$00
+   487 3207 AC 6E 31		        ldy paridy 
+   488 320A B1 0A		checkn  lda (DOSVEC),y
+   489 320C DD 83 31		        cmp pbuffer,x
+   490 320F D0 05		        bne checkc
+   491 3211 E8			        inx
+   492 3212 C8			        iny
+   493 3213 4C 0A 32		        jmp checkn
+   494 				        
+   495 3216 C9 9B		checkc  cmp #$9b
+   496 3218 D0 09		        bne notfnd
+   497 321A A9 20		        lda #' '
+   498 321C DD 83 31		        cmp pbuffer,x
+   499 321F D0 02		        bne notfnd
+   500 				        
+   501 3221 38			        sec
+   502 3222 60			        rts
+   503
+   504 3223 18			notfnd  clc
+   505 3224 60			        rts
+   506
+   507 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   508 				; 
+   509 				; Convert ATASCI to hex
+   510 				;
+   511 				; IN    X,Y   high, low ASCII digit 
+   512 				;        A    hex value
+   513
+   514 3225 8A			convah  txa
+   515 3226 38			        sec
+   516 3227 E9 30		        sbc #'0'
+   517 3229 C9 0A		        cmp #10
+   518 322B 90 02		        bcc hnum0_9
+   519 322D E9 07		        sbc #'A'-'9'-1
+   520 322F 0A			hnum0_9 asl
+   521 3230 0A			        asl
+   522 3231 0A			        asl
+   523 3232 0A			        asl
+   524 3233 8D 43 32		        sta hbits+1
+   525 3236 98			        tya
+   526 3237 38			        sec
+   527 3238 E9 30		        sbc #'0'
+   528 323A C9 0A		        cmp #10
+   529 323C 90 02		        bcc lnum0_9
+   530 323E E9 07		        sbc #'A'-'9'-1
+   531 3240 29 0F		lnum0_9 and #$0F
+   532 3242 09 00		hbits   ora #$00
+   533 3244 60			        rts
+   534
+   535 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   536 				; 
+   537 				; Convert Hex to ATASCII
+   538 				;
+   539 				; IN    A    byte
+   540 				; OUT X,Y    two ATASCII codes of hex representation
+   541 				;
+   542
+   543 3245			convha ; conv hex to atascii
+   544 3245 48			        pha                    
+   545 3246 4A			        lsr
+   546 3247 4A			        lsr
+   547 3248 4A			        lsr
+   548 3249 4A			        lsr
+   549 324A F8			        sed        
+   550 324B 18			        clc
+   551 324C 69 90		        adc #$90
+   552 324E 69 40		        adc #$40
+   553 3250 AA			        tax
+   554 3251 68			        pla
+   555 3252 29 0F		        and #$0f
+   556 3254 18			        clc
+   557 3255 69 90		        adc #$90
+   558 3257 69 40		        adc #$40
+   559 3259 A8			        tay
+   560 325A D8			        cld            
+   561 325B 60			        rts
+   562
+   563 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   564 				; 
+   565 				; Print Message
+   566 				;
+   567 				; IN    X,Y    low, high byte of address to message
+   568 				;        A    length of message
+   569
+   570 325C			print ; print message
+   571 325C 8D 48 03		        sta IOCB0.BUFLEN
+   572 325F A9 00		        lda #$00
+   573 3261 8D 49 03		        sta IOCB0.BUFLEN+1
+   574 3264 8E 44 03		        stx IOCB0.BUF
+   575 3267 8C 45 03		        sty IOCB0.BUF+1
+   576 326A A9 0B		        lda #XIO.PUT
+   577 326C 8D 42 03		        sta IOCB0.CMD
+   578 326F A2 00		        ldx #$00
+   579 3271 20 56 E4		        jsr CIOV
+   580 3274 60			        rts
+   581
+   582 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   583 				; 
+   584 				; Open File for Read
+   585 				;
+   586 				; IN    X,Y    low, high byte of address to file name
+   587 				;
+   588
+   589 3275			open ; open file
+   590 3275 A9 72		        lda #<fname
+   591 3277 8D 54 03		        sta IOCB1.BUF
+   592 327A A9 31		        lda #>fname
+   593 327C 8D 55 03		        sta IOCB1.BUF+1
+   594 327F A9 04		        lda #XIO.READ
+   595 3281 8D 5A 03		        sta IOCB1.AUX1
+   596 3284 A9 00		        lda #$00
+   597 3286 8D 5B 03		        sta IOCB1.AUX2
+   598 3289 A9 03		        lda #XIO.OPEN
+   599 328B 8D 52 03		        sta IOCB1.CMD
+   600 328E A2 10		        ldx #$10
+   601 3290 20 56 E4		        jsr CIOV
+   602 3293 60			        rts
+   603
+   604 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   605 				; 
+   606 				; Input from File
+   607 				;
+   608 				; IN    X,Y    low, high byte of address to buffer
+   609 				;       A      length of buffer
+   610
+   611 3294			input ; input file
+   612 3294 A9 83		        lda #<pbuffer
+   613 3296 8D 54 03		        sta IOCB1.BUF
+   614 3299 A9 31		        lda #>pbuffer
+   615 329B 8D 55 03		        sta IOCB1.BUF+1
+   616 329E A9 11		        lda #$11
+   617 32A0 8D 58 03		        sta IOCB1.BUFLEN
+   618 32A3 A9 00		        lda #$00
+   619 32A5 8D 59 03		        sta IOCB1.BUFLEN+1        
+   620 32A8 A9 05		        lda #XIO.INPUT
+   621 32AA 8D 52 03		        sta IOCB1.CMD
+   622 32AD A2 10		        ldx #$10
+   623 32AF 20 56 E4		        jsr CIOV
+   624 32B2 60			        rts
+   625 				        
+   626 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   627 				; 
+   628 				; Close File
+   629 				;
+   630 32B3 A9 0C		close   lda #XIO.CLOSE
+   631 32B5 8D 52 03		        sta IOCB1.CMD
+   632 32B8 A2 10		        ldx #$10
+   633 32BA 20 56 E4		        jsr CIOV
+   634 32BD 60			        rts
+   635 				        
+   636 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   637 				; 
+   638 				; Run address
+   639 				;
+   640 02E0-02E1> 00 30		        run start

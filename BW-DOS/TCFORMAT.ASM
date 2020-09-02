@@ -120,7 +120,7 @@ TCCOLO = $d5af
 start
 ; info message
             jsr print
-            .byte 'Format for The!Cart ver42 hjx',$9B,$FF
+            .byte 'Format for The!Cart ver42bw hjx',$9B,$FF
             
 ; check if we are running on THE!CART hardware
 	        lda TCMOSL

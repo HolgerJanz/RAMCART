@@ -4,7 +4,7 @@
 ;
 ; OS equ
 ;
-
+TRNSMZ  = $0006
 DOSVEC  = $000a
 CRITIC  = $0042
 
@@ -19,7 +19,11 @@ TRIG3   = $d013
 DMACTL  = $d400 
 NMIEN   = $d40e
 
-WARMST  = $e474
+WARMSV  = $e474
+
+WARMST = $08
+BOOT?  = $09
+COLDST = $0244
 
 ; 
 ; IO EQUATES
@@ -138,6 +142,7 @@ TCMOSL = $d5a6    ; mode ($00-$3d,$01)
 ; $3D: 1024k SWXEGS cart
 TCMOSL.OFF   = $00    ; off, cartridge disabled
 TCMOSL.8K    = $01    ; 8k banks at $A000
+TCMOSL.OSS   = $04
 TCMOSL.FLEXI = $21    ; flexi mode,
                          ; separate 8k banks at $A000 and $8000
 TCMOSL.16K   = $21    ; standard 16k cart at $8000-$BFFF
@@ -180,32 +185,49 @@ TCCOLO = $d5af
 ; at $d5aX.
 
 
-;		    org $480
-;clear_and_warm
-;			lda MEMLO
-;			sta clear_loop+1
-;			lda MEMLO+1
-;			sta clear_loop+2
-;			
-;			ldx #$00
-;clear_loop	stx $ffff
-;
-;			inc clear_loop+1	; inc address
-;           bne clear_loop
-;			inc clear_loop+2
-;			lda clear_loop+2
-;			cmp RAMSIZ
-;			bcc clear_loop
+		    org $600
+clear_cold
+		lda MEMLO
+		sta clrloop+1
+		lda MEMLO+1
+		sta clrloop+2
 			
-;clear_end	jmp WARMST      ; warm start
+		ldx #$00
+clrloop	stx $ffff
+		inc clrloop+1	; inc address
+		bne clrloop
+		inc clrloop+2
+		lda clrloop+2
+		cmp #$C0            ;  max RAMSIZ
+		bcc clrloop
 
+; cold start cartridge
+		lda #$ff
+        sta COLDST
+		lda #$00
+		sta WARMST
+		lda #$01
+		sta BOOT?
+		jsr _inicarvec
+		lda #$ff
+		sta WARMST
+		lda #$00
+		sta COLDST
+		lda #$01
+		sta BOOT?
+
+just_warm			
+		jmp WARMSV      	; warm start
+
+_inicarvec
+		jmp ($bffe)		; Cartridge init vector
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Main
 ;
 
-        org $5000
+        org $3000
 start        
 ; message
         ldx #<startmsg.begin
@@ -292,26 +314,40 @@ found   jsr close
         lda #$00
         sta NMIEN
 
-        lda bankl
-        sta TCPBRL
-        lda bankh       ; set P bank 
-        sta TCPBRH
-        
-        lda #$00
-        sta TCSBRL      ; set S bank 
+; set TC register
+        sta TCPBEN		; diable and set:
+        sta TCSBRL      ; disable Secondary Bank 
         sta TCSBRH
-        sta TCSBEN      ; disable S
-
+        sta TCSBEN
         sta TCMOFR      ; cfg flash r/o
+
         lda mode        ; set mode
         sta TCMOSL
+        tax				; in X for cmp laetr
 
-        cmp #TCMOSL.OFF
+        lda bankl		; set P bank
+        sta TCPBRL
+        lda bankh
+        sta TCPBRH
+        
+		lda #$01		; finally enable and do not read/write
+        sta TCPBEN		; TC register any further
+
+; check for off
+        cpx #TCMOSL.OFF
         beq _nocar
 
+; check for OSS
+		cpx #TCMOSL.OSS
+		bne _inicar
+		sta $d500		; reset OSS cartdridge
+
+_inicar
+; prepare init car and warm start
         lda #$01        ; set cartridge flag
         sta TRIG3
         sta GINTLK
+        sta TRNSMZ
         
         lda #$00        ; set cart check sum
         tax
@@ -320,19 +356,16 @@ _ccloop adc $bff0,x
         inx
         bne _ccloop
         sta CARTCK
-        jmp _end
+
+		jmp clear_cold
 
 _nocar  lda #$00        ; set cartridge flag
         sta TRIG3
         sta GINTLK
-        lda #$00        ; set cart check sum
-        sta CARTCK
+        sta TRNSMZ
+        sta CARTCK      ; set cart check sum
 
-_end    pla             ; clear return adr from stack 
-        pla
-        
-;        jmp clear_and_warm
-		jmp WARMST
+		jmp just_warm
 
 ; THE END
 
@@ -340,7 +373,7 @@ _end    pla             ; clear return adr from stack
 ; messages        
 
 startmsg.begin
-        .byte 'CAR for The!Cart ver42 hjx',$9B
+        .byte 'CAR for The!Cart ver42bw hjx',$9B
 startmsg.end
 
 errprs.begin
@@ -348,7 +381,7 @@ errprs.begin
 errprs.end
 
 errfil.begin
-        .byte '  Error - THECART.SYS',$9b
+        .byte '  Error - TCAR.SYS',$9b
         .byte '  Parsing line $'
 errfil.line
         .byte 'XX',$9B
@@ -359,7 +392,7 @@ errnfd.begin
 errnfd.end
 
 erruse.begin
-        .byte '  Use THECART name:',$9B
+        .byte '  Use TCAR name:',$9B
 erruse.end
 
 ; variables

@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "RESTORE for The!Ramdisk ver42 hjx",$9B,$FF
+        .byte "RESTORE for The!Ramdisk ver42bw hjx",$9B,$FF
  
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -71,15 +71,15 @@ startCopy2
 
 _loopCopy
 ; read
-        jsr storeTCreg
+;        jsr storeTCreg
         jsr setTCFLASH
         jsr copy8k_A24
-        jsr restoreTCreg
+;        jsr restoreTCreg
 ; write
-        jsr storeTCreg
+;        jsr storeTCreg
         jsr setTCRAM
         jsr copy8k_42A
-        jsr restoreTCreg
+;        jsr restoreTCreg
 ; increase
         inc flashBL
         inc ramBank

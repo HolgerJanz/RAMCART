@@ -1942,17 +1942,21 @@ L3E5F       jmp $0E87              ; 4C 38 0D
 ;            .byte $3D,$79,$2A,$29,$33,$3A,$2C,$3E
 ;            .byte $0D,$41,$43,$F8,$64
 
-; CHANGE: add TC off
-TCMOSL = $d5a6    ; mode ($00-$3d,$01)
-TCPBRL = $d5a0    ; register low byte (0-255,0)
-TCPBRH = $d5a1    ; register high byte (0-63,0)
-TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+;; CHANGE: add TC off
+;TCMOSL = $d5a6    ; mode ($00-$3d,$01)
+;TCPBRL = $d5a0    ; register low byte (0-255,0)
+;TCPBRH = $d5a1    ; register high byte (0-63,0)
+;TCPBEN = $d5a2    ; enable (0=dis-1=en,1)
+;			lda #$00
+;			sta TCMOSL
+;			sta TCPBRL      ; set S bank 
+;			sta TCPBEN      ; disable S
+;			sta TCPBRH
+;			sta TCPBEN      ; disable S
+
+; CHANGE: legt margin 0
 			lda #$00
-			sta TCMOSL
-			sta TCPBRL      ; set S bank 
-			sta TCPBEN      ; disable S
-			sta TCPBRH
-			sta TCPBEN      ; disable S
+            sta $52
             jmp L0D38              ; 4C 38 0D
 
 ;			.byte $42,$56,$2F,$47,$4B,$56,$26,$36

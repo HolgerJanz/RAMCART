@@ -10,6 +10,11 @@ CH       = $02FC
 DMACTL   = $D400
 NMIEN    = $D40E
 
+TRIG3   = $d013
+GINTLK  = $03fa
+CARTCK  = $03eb
+TRNSMZ  = $0006
+
 ;
 ; IO EQUATES
 ;
@@ -283,6 +288,11 @@ ramBank .byte $00
 ;
 storeTCreg
 
+        sei                 ; disable interrupts
+
+        lda #$00
+        sta NMIEN
+        
         lda TCMOSL
         sta _tcmosl
 
@@ -298,11 +308,6 @@ storeTCreg
         lda TCPBEN
         sta _tcpben
 
-        sei                 ; disable interrupts
-
-        lda #$00
-        sta NMIEN
-        
         rts
 
 ;
@@ -344,26 +349,10 @@ _sdmctl .byte $00
 ;
 globalStoreTCreg
 
-        lda TCMOSL
-        sta _gtcmosl
-
-        lda TCPBRL
-        sta _gtcpbrl
-
-        lda TCPBRH
-        sta _gtcpbrh
-
-        lda TCMOFR
-        sta _gtcmofr
-
-        lda TCPBEN
-        sta _gtcpben
-
-        lda SDMCTL          ; DMA control
-        sta _gsdmctl
-
         inc CRITIC
         
+        lda SDMCTL          ; disable DMA control
+        sta _gsdmctl
         lda #$00
         sta SDMCTL
         sta DMACTL
@@ -372,6 +361,38 @@ globalStoreTCreg
         lda #$00
         sta NMIEN
         
+        lda TRIG3
+        sta _gtrig3
+        lda GINTLK
+        sta _ggintlk
+        lda TRNSMZ
+        sta _gtrnsmz
+        lda CARTCK      ; set cart check sum
+		sta _gcartck
+        
+        lda TCINEP			; save TC register
+		sta _gtcinep
+
+        lda TCMOFR
+        sta _gtcmofr
+        
+        lda TCMOSL
+        sta _gtcmosl
+
+        lda TCSBRL
+        sta _gtcsbrl
+        lda TCSBRH
+        sta _gtcsbrh
+        lda TCSBEN
+        sta _gtcsben
+
+        lda TCPBRL
+        sta _gtcpbrl
+        lda TCPBRH
+        sta _gtcpbrh
+        lda TCPBEN
+        sta _gtcpben
+
         rts
 
 ;
@@ -379,39 +400,67 @@ globalStoreTCreg
 ;
 globalRestoreTCreg
 
-        lda _gtcmosl
-        sta TCMOSL
-
-        lda _gtcpbrl
-        sta TCPBRL
-
-        lda _gtcpbrh
-        sta TCPBRH
+        lda _gtcinep			; restor TC register
+		sta TCINEP
 
         lda _gtcmofr
         sta TCMOFR
+        
+        lda _gtcmosl
+        sta TCMOSL
 
+        lda _gtcsbrl
+        sta TCSBRL
+        lda _gtcsbrh
+        sta TCSBRH
+        lda _gtcsben
+        sta TCSBEN
+
+        lda _gtcpbrl
+        sta TCPBRL
+        lda _gtcpbrh
+        sta TCPBRH
         lda _gtcpben
         sta TCPBEN
+
+        lda _gtrig3
+        sta TRIG3
+        lda _ggintlk
+        sta GINTLK
+        lda _gtrnsmz
+        sta TRNSMZ
+		lda _gcartck
+        sta CARTCK      ; set cart check sum
+
+        lda _gsdmctl		; restore DMA control
+        sta SDMCTL
 
         lda #$E0			; enable interrupts
         sta NMIEN
         cli
 
-        lda _gsdmctl         ; restore DMA control
-        sta SDMCTL
-
-        dec CRITIC
+		lda #$00
+        sta CRITIC
         
         rts
 
 _gtcmosl .byte $00
 _gtcmofr .byte $00
+_gtcinep .byte $00
+
 _gtcpbrl .byte $00
 _gtcpbrh .byte $00
 _gtcpben .byte $00
-_gsdmctl .byte $00
 
+_gtcsbrl .byte $00
+_gtcsbrh .byte $00
+_gtcsben .byte $00
+
+_gsdmctl .byte $00
+_gtrig3  .byte $00
+_ggintlk .byte $00
+_gtrnsmz .byte $00
+_gcartck .byte $00
 
 ;
 ; copy 8k from $A000 to $8000
