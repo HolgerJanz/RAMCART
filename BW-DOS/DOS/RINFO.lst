@@ -1,0 +1,152 @@
+mads 2.0.9
+Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/DOS/RINFO.ASM
+     1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     2 				;
+     3 				; Poke for SpartaDOS 3 by hjx
+     4
+     5 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+     6 				;
+     7 				; Equates
+     8 				;
+     9
+    10 				; 
+    11 				; CIO
+    12 				; 
+    13 = E456			CIOV        = $E456
+    14 				; CIOCB addresses
+    15 = 0340			ICHID		= $0340
+    16 = 0341			ICDNO		= $0341
+    17 = 0342			ICCOM       = $0342
+    18 = 0343			ICSTA		= $0343
+    19 = 0344			ICBAL       = $0344
+    20 = 0345			ICBAH       = $0345
+    21 = 0346			ICPTL		= $0346
+    22 = 0347			ICPTH		= $0347
+    23 = 0348			ICBLL       = $0348
+    24 = 0349			ICBLH       = $0349
+    25 = 034A			ICAX1		= $034a
+    26 = 034B			ICAX2		= $034b
+    27
+    28 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    29 				;
+    30 				; Start of code
+    31 				;
+    32 				            org $0600
+    33 				start
+    34
+    35 FFFF> 0600-06EF> A2 00				ldx #$00
+    36 0602 8A			aLoop		txa
+    37 0603 48						pha
+    38 							
+    39 0604 BD E4 02					lda $02e4,x
+    40 0607 20 A6 06					jsr convh2a
+    41 060A 8E 38 06		aDmpAdr1	stx aDmpAdr
+    42 060D 8C 39 06		aDmpAdr2	sty aDmpadr+1
+    43
+    44 0610 EE 0B 06					inc aDmpAdr1+1
+    45 0613 EE 0B 06					inc aDmpAdr1+1
+    46 0616 EE 0B 06					inc aDmpAdr1+1
+    47
+    48 0619 EE 0E 06					inc aDmpAdr2+1
+    49 061C EE 0E 06					inc aDmpAdr2+1
+    50 061F EE 0E 06					inc aDmpAdr2+1
+    51
+    52 0622 68						pla
+    53 0623 AA						tax
+    54 0624 E8						inx
+    55 0625 E0 05					cpx #$05
+    56 0627 D0 D9					bne aLoop
+    57 							
+    58 0629 20 BD 06					jsr print
+    59 062C 24 30 32 45 34 2D + 			.byte '$02E4-$02E8',$9b
+    60 0638 78 78 20 78 78 20 + aDmpAdr		.byte 'xx xx xx xx xx'
+    61 0646 9B FF		aDmpAdrEnd	.byte $9b,$ff
+    62
+    63 0648 A2 00					ldx #$00
+    64 064A 8A			oLoop		txa
+    65 064B 48						pha
+    66 							
+    67 064C BD EE FF					lda $ffee,x
+    68 064F 20 A6 06					jsr convh2a
+    69 0652 8E 80 06		oDmpAdr1	stx oDmpAdr
+    70 0655 8C 81 06		oDmpAdr2	sty oDmpadr+1
+    71
+    72 0658 EE 53 06					inc oDmpAdr1+1
+    73 065B EE 53 06					inc oDmpAdr1+1
+    74 065E EE 53 06					inc oDmpAdr1+1
+    75
+    76 0661 EE 56 06					inc oDmpAdr2+1
+    77 0664 EE 56 06					inc oDmpAdr2+1
+    78 0667 EE 56 06					inc oDmpAdr2+1
+    79
+    80 066A 68						pla
+    81 066B AA						tax
+    82 066C E8						inx
+    83 066D E0 0C					cpx #$0c
+    84 066F D0 D9					bne oLoop
+    85 							
+    86 0671 20 BD 06					jsr print
+    87 0674 24 46 46 45 45 2D + 			.byte '$FFEE-$FFF9',$9b
+    88 0680 78 78 20 78 78 20 + oDmpAdr		.byte 'xx xx xx xx xx xx xx xx xx xx xx xx'
+    89 06A3 9B FF		oDmpAdrEnd	.byte $9b,$ff
+    90 							
+    91 06A5 60						rts
+    92
+    93 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    94 				;
+    95 				; convert hex to atascii
+    96 				;   hex A -> atascii X,Y            
+    97 				;
+    98 06A6 48			convh2a		pha
+    99 06A7 4A						lsr
+   100 06A8 4A						lsr
+   101 06A9 4A						lsr
+   102 06AA 4A						lsr
+   103 06AB F8						sed		
+   104 06AC 18						clc
+   105 06AD 69 90					adc #$90
+   106 06AF 69 40					adc #$40
+   107 06B1 AA						tax
+   108 06B2 68						pla
+   109 06B3 29 0F					and #$0f
+   110 06B5 18						clc
+   111 06B6 69 90					adc #$90
+   112 06B8 69 40					adc #$40
+   113 06BA A8						tay
+   114 06BB D8						cld			
+   115 06BC 60						rts
+   116
+   117 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   118 				;
+   119 				; print subroutine            
+   120 				;
+   121 06BD 68			print		pla
+   122 06BE 8D CE 06		            sta print_iter+1
+   123 06C1 68			            pla
+   124 06C2 8D CF 06		            sta print_iter+2
+   125 06C5 EE CE 06		print_loop  inc print_iter+1
+   126 06C8 D0 03		            bne print_iter
+   127 06CA EE CF 06		            inc print_iter+2
+   128 06CD AD FF FF		print_iter  lda $ffff
+   129 06D0 C9 FF		            cmp #$ff
+   130 06D2 F0 13		            beq print_end
+   131 				            
+   132 06D4 A2 00		            ldx #$00			; put char
+   133 06D6 8E 48 03		            stx ICBLL
+   134 06D9 8E 49 03		            stx ICBLH
+   135 06DC A0 0B		            ldy #$0B
+   136 06DE 8C 42 03		            sty ICCOM
+   137 06E1 20 56 E4		            jsr CIOV
+   138 				            
+   139 06E4 4C C5 06		            jmp print_loop
+   140 06E7 AD CF 06		print_end   lda print_iter+2
+   141 06EA 48			            pha
+   142 06EB AD CE 06		            lda print_iter+1
+   143 06EE 48			            pha
+   144 06EF 60			            rts
+   145
+   146 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   147 				;
+   148 				; run address            
+   149 				;
+   150 02E0-02E1> 00 06		            run start

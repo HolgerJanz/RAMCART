@@ -7,6 +7,9 @@
 TRNSMZ  = $0006
 DOSVEC  = $000a
 CRITIC  = $0042
+LOMEM   = $0080
+
+BASICF  = $03f8
 
 SDMCTL  = $022f
 GINTLK  = $3fa
@@ -18,6 +21,8 @@ MEMLO   = $02E7
 TRIG3   = $d013
 DMACTL  = $d400 
 NMIEN   = $d40e
+
+PORTB   = $d301
 
 WARMSV  = $e474
 
@@ -185,20 +190,39 @@ TCCOLO = $d5af
 ; at $d5aX.
 
 
-		    org $600
+
+;
+; BW-DOS
+;
+
+BW_WARMST = $0ce4 ; BW-DOS saves and increment WARMST here
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Clear memory and init cart
+;
+
+		org $600
 clear_cold
+; clear zero page non OS part
+        lda #$00
+		ldx #$7f
+clrlpp  sta LOMEM,x
+		dex
+		bpl clrlpp
+
+; clear main memory
 		lda MEMLO
 		sta clrloop+1
 		lda MEMLO+1
 		sta clrloop+2
-			
 		ldx #$00
 clrloop	stx $ffff
 		inc clrloop+1	; inc address
 		bne clrloop
 		inc clrloop+2
 		lda clrloop+2
-		cmp #$C0            ;  max RAMSIZ
+		cmp #$C0        ;  max RAMSIZ
 		bcc clrloop
 
 ; cold start cartridge
@@ -209,12 +233,16 @@ clrloop	stx $ffff
 		lda #$01
 		sta BOOT?
 		jsr _inicarvec
-		lda #$ff
+		lda #$00 ;$ff
 		sta WARMST
 		lda #$00
 		sta COLDST
 		lda #$01
 		sta BOOT?
+
+; reset BW-DOS WARMST
+		lda #$00
+		sta BW_WARMST
 
 just_warm			
 		jmp WARMSV      	; warm start
@@ -313,6 +341,12 @@ found   jsr close
         sei             ; mask all interrupts
         lda #$00
         sta NMIEN
+        
+        lda #$02		; switch off BASIC ROM
+		ora PORTB
+		sta PORTB
+		lda #$01
+		sta BASICF
 
 ; set TC register
         sta TCPBEN		; diable and set:
@@ -323,7 +357,7 @@ found   jsr close
 
         lda mode        ; set mode
         sta TCMOSL
-        tax				; in X for cmp laetr
+        tax				; in X for cmp later
 
         lda bankl		; set P bank
         sta TCPBRL
@@ -348,7 +382,6 @@ _inicar
         sta TRIG3
         sta GINTLK
         sta TRNSMZ
-        
         lda #$00        ; set cart check sum
         tax
         clc
@@ -356,7 +389,6 @@ _ccloop adc $bff0,x
         inx
         bne _ccloop
         sta CARTCK
-
 		jmp clear_cold
 
 _nocar  lda #$00        ; set cartridge flag
@@ -364,7 +396,6 @@ _nocar  lda #$00        ; set cartridge flag
         sta GINTLK
         sta TRNSMZ
         sta CARTCK      ; set cart check sum
-
 		jmp just_warm
 
 ; THE END
@@ -373,7 +404,7 @@ _nocar  lda #$00        ; set cartridge flag
 ; messages        
 
 startmsg.begin
-        .byte 'CAR for The!Cart ver42bw hjx',$9B
+        .byte 'CAR for The!Cart ver43bw hjx',$9B
 startmsg.end
 
 errprs.begin
