@@ -993,16 +993,21 @@ L36EB       lda L3700,X            ; BD 00 37
             jmp L0E0B              ; 4C 0B 0E
 
 ; page 7 table
-L3700       .byte $53,$32,$00,$42,$57,$13,$57
-            php                    ; 08
-            bvc L3712              ; 50 08
-            rol                    ; 2A
-            .byte $07
-            jmp L0CEE              ; 4C EE 0C
+L3700       .byte $53     ;$700 the character "S" for SpartaDOS
+			.byte $32     ;$701 $32 for compatibility with SpartaDOS 3.2
+			.byte $00
+			.byte $42,$57 ;$703 "BW" when BW-DOS is installed
+			.byte,$13     ;$705 BW-DOS version 1.3x etc.
+			.word $0857   ;$706 Adress GETTD
+			.word $0850   ;$708 Adress SETTD
+			.word $072A   ;$70A Adress CONVDC
+            jmp L0CEE     ;$70C jmp LSIO for compatibility with BiboDOS
+
             .byte $0F
             sta BITMSK,X           ; 95 6E
 L3712       .byte $97,$7F
             sta (COUNTR,X)         ; 81 7E
+
             asl                    ; 0A
             php                    ; 08
             .byte $0B,$0C,$0C,$0C
@@ -1146,10 +1151,14 @@ L3843       rts                    ; 60
             jmp (DOSINI)           ; 6C 0C 00
             .byte $1C,$0B,$5F
             asl APPMHI,X           ; 16 0E
-            asl ICHIDZ             ; 06 20
-            ora LCD09,Y            ; 19 09 CD
-            asl L00C8              ; 06 C8
+			.byte $06
+
+; $850 SETTD
+			jsr $0919			   ; 20 19 09
+			cmp $C806			   ; CD 06 C8
             lsr                    ; 4A
+
+; $857 GETTD
             jsr L0919              ; 20 19 09
             iny                    ; C8
             lsr                    ; 4A
@@ -1179,6 +1188,7 @@ L3886       inx                    ; E8
             txa                    ; 8A
             beq L3886              ; F0 F1
             rts                    ; 60
+
             bne L389B              ; D0 03
 L3898       jmp (L0D36)            ; 6C 36 0D
 L389B       jsr L0919              ; 20 19 09
@@ -1374,6 +1384,8 @@ L39EC       stx L0D19              ; 8E 19 0D
             .byte $0D,$40,$00      ; ora FREQ
             jsr L0BAA              ; 20 AA 0B
             jmp L09E1              ; 4C E1 09
+
+; Command CAR
             lda LBFFD              ; AD FD BF
             inc LBFFD              ; EE FD BF
             cmp LBFFD              ; CD FD BF
@@ -1387,9 +1399,11 @@ L39EC       stx L0D19              ; 8E 19 0D
             dex                    ; CA
             stx L0CE4              ; 8E E4 0C
             jmp (LBFFA)            ; 6C FA BF
+
 L3A32       sta BASICF             ; 8D F8 03
             php                    ; 08
             jsr L096F              ; 20 6F 09
+
             .byte $0C
             bpl L3A44              ; 10 08
             rti                    ; 40
@@ -1421,6 +1435,7 @@ L3A4B       txa                    ; 8A
             .byte $80
             clc                    ; 18
             .byte $03,$E2,$0B,$00,$00
+            
             ldx #$00               ; A2 00
             stx L0CE4              ; 8E E4 0C
             sta L0946              ; 8D 46 09
@@ -1428,6 +1443,8 @@ L3A4B       txa                    ; 8A
             pla                    ; 68
             sta L0943              ; 8D 43 09
             rts                    ; 60
+
+; Command BASIC
             lda L0D1D              ; AD 1D 0D
             cmp #$4F               ; C9 4F
             bne L3A92              ; D0 0C
@@ -1437,9 +1454,11 @@ L3A4B       txa                    ; 8A
             clc                    ; 18
             eor #$4E               ; 49 4E
             beq L3A32              ; F0 A0
-L3A92       lda #$9C               ; A9 9C
+
+L3A92       lda #$9C ; error 156 no cart ; A9 9C
             pha                    ; 48
             jmp L09C2              ; 4C C2 09
+
             .byte $00,$00,$00,$00,$00,$00,$00,$00
             .byte $00,$00,$00,$00
 L3AA4       jmp (L09B8)            ; 6C B8 09
@@ -1672,6 +1691,7 @@ L3C48       iny                    ; C8
             .byte $00,$00,$1A
             .byte $0D,$1C,$00      ; ora ABUFPT
             rts                    ; 60
+
 L3C74       tay                    ; A8
             lda L0708,Y            ; B9 08 07
             pha                    ; 48
@@ -1679,6 +1699,7 @@ L3C74       tay                    ; A8
             pha                    ; 48
             cpx #$03               ; E0 03
             rts                    ; 60
+
             lda #$80               ; A9 80
             eor #$12               ; 49 12
             pha                    ; 48
@@ -1734,50 +1755,40 @@ L3CA6       jsr L096B              ; 20 6B 09
             rts                    ; 60
 
 ; start of COMTAB
-            .byte $FF				; COMTAB-21: DWARM 
+            .byte $FF				; COMTAB-21: DWARM $0ce4
             .byte $80
 			.byte $20,$20,$20,$20	; COMTAB-19: DECOUT
 			.byte $20,$20,$20,$20
-			.byte $4C
-			.word $E459				; COMTAB-10: LSIO
-			.byte $FF				; COMTAB-8: ECHOFLG
-            .byte $FF				; COMTAB-7: BATFLG 
-            .byte $00,$00,$00,$00	; COMTAB-6: DECIN
-			.byte $50				; COMTAB-2: WRTCMD 
-			.byte $FF
-            jmp L09E1               ; COMTAB: Jump to DOS CP
-            jmp L0766               ; COMTAB+3: CRNAME
-            .word $0AFC				; COMTAB+6: DIVIO
-            .word $0B7E				; COMTAB+8: XDIVIO
-            .byte $00      			; COMTAB+10: BUFOFF
+			.byte $4C				; jmp SIO
+			.word $E459				; COMTAB-10 LSIO
+			.byte $FF				; COMTAB-8  ECHOFLG
+            .byte $FF				; COMTAB-7  BATFLG 
+            .byte $00,$00,$00,$00	; COMTAB-6  DECIN
+			.byte $50				; COMTAB-2  WRTCMD 
+			.byte $FF				; COMTAB-1  WARMST
+; DOSVEC => $0CF9
+            jmp L09E1               ; COMTAB    Jump to DOS CP
+            jmp L0766               ; COMTAB+3  CRNAME
+            .word $0AFC				; COMTAB+6  DIVIO
+            .word $0B7E				; COMTAB+8  XDIVIO
+            .byte $00      			; COMTAB+10 BUFOFF
             .byte $00,$07
-            .byte $1C,$0B,$5F		; COMTAB+13: DATER 28.11.95
-            asl APPMHI,X           ; 16 0E
-            asl ABUFPT             ; 06 1C
-            .byte $0B,$5F
-            asl APPMHI,X           ; 16 0E
-            asl $00                ; 06 00
-            lsr L1108,X            ; 5E 08 11
-            .byte $17
-            
- ; set MEMLO
-            .word $1EE4
-
-;            cpx ABUFPT+2           ; E4 1E
-            .byte $00,$44
-            and (XMTDON),Y         ; 31 3A
-            .byte $53,$54
-            eor (LMARGN,X)         ; 41 52
-            .byte $54
-            eor TEMP,X             ; 55 50
-            rol L4142              ; 2E 42 41
-            .byte $54,$9B
-            jsr L2020              ; 20 20 20
-            jsr L2020              ; 20 20 20
-            jsr L2020              ; 20 20 20
-            jsr L2020              ; 20 20 20
-            jsr L085E              ; 20 5E 08
-
+            .byte $1C,$0B,$5F		; COMTAB+13 DATER 28.11.95
+			.byte $16,$0E,$06		; COMTAB+16 TIMER 22:14:06
+            .byte $1C,$0B,$5F		; COMTAB+19 ODATER
+			.byte $16,$0E,$06		; COMTAB+22 OTIMER
+			.byte $00				; COMTAB+25 TDOVER
+            .word $085E				; COMTAB+26 TRUN
+            .byte $11,$17			; ??? buffer adr ???
+            .word $1EE4				; COMTAB+30 SMEMLO start up MEMLO
+            .byte $00				; COMTAB+32 INCMND Reset $00-CP $FF-Cart
+			.byte 'D1:STARTUP.BAT',$9B ; COMTAB+33 COMFNAM 28 Bytes
+			.byte $20,$20,$20
+			.byte $20,$20,$20
+			.byte $20,$20,$20
+			.byte $20,$20,$20,$20
+			.word $085E				; COMTAB+61 RUNLOC address for RUN
+									; COMTAB+63  LBUF comman line buffer 64 Bytes
             jsr L07F2              ; 20 F2 07
             lda #$FF               ; A9 FF
             sta FMSZPG+4           ; 85 47
