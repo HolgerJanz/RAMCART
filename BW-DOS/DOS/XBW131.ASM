@@ -1766,8 +1766,8 @@ L3CA6       jsr L096B              ; 20 6B 09
 			.byte $FF				; COMTAB-8: ECHOFLG
             .byte $FF				; COMTAB-7: BATFLG 
             .byte $00,$00,$00,$00	; COMTAB-6: DECIN
-			.byte $50				; COMTAB-2: WRTCMD 
-			.byte $FF
+			.byte 'P'				; COMTAB-2: WRTCMD W=verify P=no verify
+			.byte $FF				; COMTAB-1: WARMST 00 in CP, $FF trap errors
 ; DOSVEC =>
             jmp L09E1               ; COMTAB: Jump to DOS CP
             jmp L0766               ; COMTAB+3: CRNAME
@@ -1792,21 +1792,26 @@ L3CA6       jsr L096B              ; 20 6B 09
 			.word $085E				; COMTAB+61 RUNLOC address for RUN
 									; COMTAB+63  LBUF comman line buffer 64 Bytes
 
+; start code to check for STARTUP.BAT
             jsr L07F2              ; 20 F2 07
             lda #$FF               ; A9 FF
             sta FMSZPG+4           ; 85 47
             ldy #$01               ; A0 01
             jsr L0AFC              ; 20 FC 0A
-            bmi L3D55              ; 30 0F
+;            bmi L3D55              ; 30 0F
+;			nop						; never jump to cart
+;			nop
             jsr L0A71              ; 20 71 0A
             stx COLDST             ; 8E 44 02
             lda BOOT               ; A5 09
             ora #$01               ; 09 01
             sta BOOT               ; 85 09
             jmp L09E1              ; 4C E1 09
-
 L3D55       clc                    ; 18
             rts                    ; 60
+; change for two nops
+			.byte $20,$20			; fill bytes
+
             jsr L2020              ; 20 20 20
             jsr L2020              ; 20 20 20
             jsr L2020              ; 20 20 20
