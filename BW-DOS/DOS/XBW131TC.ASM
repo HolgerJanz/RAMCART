@@ -1758,21 +1758,12 @@ L3B93       lda #$20               ; A9 20
             .byte $D4,$9B
             .byte 'Error'
             .byte $9B,$9B,$90,$94
-
-;            .byte 'CREDI'
-;            .byte $D2
-;            .byte 'DELDI'
-;            .byte $D2
-
             .byte 'M'		; MD make dir
             .byte $C4
             .byte 'R'		; RD remove dir
             .byte $C4
-
-;            .byte 'CW'		; change dir
             .byte 'C'
             .byte $C4
-
             .byte 'LOA'
             .byte $C4
             .byte 'CA'
@@ -1790,8 +1781,11 @@ L3B93       lda #$20               ; A9 20
             .byte 'BASI'
             .byte $C3
             .byte $00
-            
-            .byte $00,$00,$00,$00,$00,$00,$00,$00
+; free 9 bytes (from CWD-CD etc.)            
+            .byte $00,$00
+            .byte $00,$00
+            .byte $00,$00
+            .byte $00,$00
             .byte $00
 
 ; end statement table
@@ -2082,8 +2076,8 @@ L3E47       tya                    ; 98
             bne L3E47              ; D0 E8
 
 ; CHANGE: set TC off
-L3E5F       jmp $0E8A              ; 4C 38 0D
-;L3E5F       jmp L0D38              ; 4C 38 0D
+;L3E5F       jmp $0E8A              ; 4C 38 0D
+L3E5F       jmp L0D38              ; 4C 38 0D
 
 ; set DOSINI
             .word $07E0
@@ -2101,10 +2095,9 @@ L3E5F       jmp $0E8A              ; 4C 38 0D
 ;			sta TCPBEN      ; disable S
 
 ; CHANGE: legt margin 0
-			lda #$00
-            sta $52
-
-            jmp L0D38              ; 4C 38 0D
+;			lda #$00
+;            sta $52
+;            jmp L0D38              ; 4C 38 0D
 
 ;            .byte $9B,$21,$22,$23,$24,$25,$26,$27
 ;            .byte $36,$37,$2A,$49,$5B,$20,$4A,$40

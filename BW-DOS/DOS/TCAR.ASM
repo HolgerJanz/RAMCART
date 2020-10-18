@@ -67,11 +67,17 @@ CIOV = $E456   ; the classic location
 ;
 ; SpartaDOS 
 ;
-SD_BUFOFF      = $0A ; offset in line buffer
-SD_LBUF        = $3F ; offset to line buffer
-SD_ZCRNAME     = $03 ; offset for jmp to crunch name
-SD_COMFNAM     = $21 ; offset to result buffer for crunch name 
-SD_LSIO        = $0A ; negative offset to SIO vector
+SD_BUFOFF		= $0A ; offset in line buffer
+SD_LBUF			= $3F ; offset to line buffer
+SD_ZCRNAME		= $03 ; offset for jmp to crunch name
+SD_COMFNAM		= $21 ; offset to result buffer for crunch name 
+SD_LSIO			= $0A ; negative offset to SIO vector
+
+;
+; BW-DOS
+;
+
+BW_WARMST 		= $15 ; negative offset WARMST $0ce4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
@@ -191,11 +197,6 @@ TCCOLO = $d5af
 
 
 
-;
-; BW-DOS
-;
-
-BW_WARMST = $0ce4 ; BW-DOS saves and increment WARMST here
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -242,7 +243,7 @@ clrloop	stx $ffff
 
 ; reset BW-DOS WARMST
 		lda #$00
-		sta BW_WARMST
+_warmst	sta $FFFF
 
 just_warm			
 		jmp WARMSV      	; warm start
@@ -332,7 +333,16 @@ filend  ldx #<errnfd.begin
 found   jsr close
 
         jsr rpara
-        
+
+; set WARMST
+		sec
+		lda DOSVEC
+		sbc #BW_WARMST
+		sta _warmst+1        
+		lda DOSVEC+1
+		sbc #$00
+		sta _warmst+2
+
 ; switch The!Cart
         lda #$00        ; switch off DMA
         sta SDMCTL
@@ -404,7 +414,7 @@ _nocar  lda #$00        ; set cartridge flag
 ; messages        
 
 startmsg.begin
-        .byte 'CAR for The!Cart ver43bw hjx',$9B
+        .byte 'CAR for The!Cart ver44bw hjx',$9B
 startmsg.end
 
 errprs.begin

@@ -981,7 +981,7 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/DOS/XBW131.
    979 				            org $36E6
    980
    981 				; copy from page $30 to $7
-   982 FFFF> 36E6-3E8D> D8	L36E6       cld                    ; D8
+   982 FFFF> 36E6-3E86> D8	L36E6       cld                    ; D8
    983 36E7 A2 00		            ldx #$00               ; A2 00
    984 36E9 A0 20		            ldy #$20               ; A0 20
    985 36EB BD 00 37		L36EB       lda L3700,X            ; BD 00 37
@@ -1932,8 +1932,8 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/DOS/XBW131.
   1930 3E5D D0 E8		            bne L3E47              ; D0 E8
   1931
   1932 				; CHANGE: add TC off
-  1933 3E5F 4C 87 0E		L3E5F       jmp $0E87              ; 4C 38 0D
-  1934 				;L3E5F       jmp L0D38              ; 4C 38 0D
+  1933 				;L3E5F       jmp $0E87              ; 4C 38 0D
+  1934 3E5F 4C 38 0D		L3E5F       jmp L0D38              ; 4C 38 0D
   1935
   1936 				; set DOSINI
   1937 3E62 E0 07		            .word $07E0
@@ -1969,9 +1969,9 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/DOS/XBW131.
   1967 				;			sta TCPBEN      ; disable S
   1968
   1969 				; CHANGE: legt margin 0
-  1970 3E87 A9 00					lda #$00
-  1971 3E89 85 52		            sta $52
-  1972 3E8B 4C 38 0D		            jmp L0D38              ; 4C 38 0D
+  1970 				;			lda #$00
+  1971 				;            sta $52
+  1972 				;            jmp L0D38              ; 4C 38 0D
   1973
   1974 				;			.byte $42,$56,$2F,$47,$4B,$56,$26,$36
   1975 				;			.byte $26,$3A,$3A,$43,$46,$55,$2E,$27
@@ -1985,7 +1985,7 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/DOS/XBW131.
   1983
   1984 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   1985 				;
-  1986 3E8E			            org $3F4C
+  1986 3E87			            org $3F4C
   1987 				;
   1988 3F4C-4710> AE 3D 0E	            ldx L0E3D              ; AE 3D 0E
   1989 3F4F AD 3E 0E		            lda L0E3E              ; AD 3E 0E

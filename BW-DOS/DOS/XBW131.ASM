@@ -1930,8 +1930,8 @@ L3E47       tya                    ; 98
             bne L3E47              ; D0 E8
 
 ; CHANGE: add TC off
-L3E5F       jmp $0E87              ; 4C 38 0D
-;L3E5F       jmp L0D38              ; 4C 38 0D
+;L3E5F       jmp $0E87              ; 4C 38 0D
+L3E5F       jmp L0D38              ; 4C 38 0D
 
 ; set DOSINI
             .word $07E0
@@ -1967,9 +1967,9 @@ L3E5F       jmp $0E87              ; 4C 38 0D
 ;			sta TCPBEN      ; disable S
 
 ; CHANGE: legt margin 0
-			lda #$00
-            sta $52
-            jmp L0D38              ; 4C 38 0D
+;			lda #$00
+;            sta $52
+;            jmp L0D38              ; 4C 38 0D
 
 ;			.byte $42,$56,$2F,$47,$4B,$56,$26,$36
 ;			.byte $26,$3A,$3A,$43,$46,$55,$2E,$27
