@@ -284,6 +284,28 @@ ramBank .byte $00
 
 
 ;
+; Set MENU The!Cart register
+;
+setTCMENU
+
+        lda #TCMOSL8K
+        sta TCMOSL
+        
+        lda #TCMOFRFLASH
+        sta TCMOFR
+
+        lda #$00
+        sta TCPBRL
+
+        lda #$00
+        sta TCPBRH
+
+        lda #$01
+        sta TCPBEN
+
+        rts
+
+;
 ; Store The!Cart register
 ;
 storeTCreg
@@ -745,3 +767,47 @@ convha ; conv hex to atascii
         cld            
         rts
 
+;
+; Check User Space Size
+; 
+;	sets Carry to 1 if OK
+;   else write error message and set Carry is 0
+;
+
+checkUserSpace
+; get menu bank at the end
+        jsr storeTCreg  	; save TC state
+        jsr setTCMENU    	; bank for MENU at $A000
+		lda $BF06
+		sta _menuBank
+		lda $BF07
+		sta _menuBank+1
+        jsr restoreTCreg 	; restore TC state
+; check menu bank
+_Debugging
+		lda #>maxMenuBank
+		cmp _menuBank+1
+		bcc _UM2small
+		bne _UMOK
+		lda #<maxMenuBank
+		cmp _menuBank
+		bcs _UMOK
+		jmp _UM2small
+		
+_UMOK
+		sec
+		rts
+			
+_UM2small
+        jsr globalRestoreTCreg
+        jsr PRINT
+        .byte $9b,"ERROR - User Space Size too small.",$9B
+        .byte "        At least 2176kB needed.",$9B
+        .byte "        See docu for TheCartStudio",$9B
+        .byte "        for more information.",$9B,$FF
+        clc
+		rts
+
+maxMenuBank = $3E6F		
+_menuBank	.word $FFFF
+		

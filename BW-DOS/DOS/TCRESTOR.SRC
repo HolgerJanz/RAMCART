@@ -69,6 +69,11 @@ flash_drv_anr
 startCopy2
         jsr globalStoreTCreg
 
+; check user memory
+		jsr checkUserSpace
+		bcs _loopCopy
+		rts
+
 _loopCopy
 ; read
 ;        jsr storeTCreg

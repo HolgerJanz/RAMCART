@@ -12,7 +12,7 @@
         *= $3000
  
         jsr PRINT
-        .byte "STORE for The!Ramdisk ver42bw hjx",$9B,$FF
+        .byte "STORE for The!Ramdisk ver43bw hjx",$9B,$FF
 
 ; check if we are running on THE!CART hardware
         lda TCMOSL
@@ -61,7 +61,14 @@ flash_drv_anr
 
 startCopy2
         jsr globalStoreTCreg
+
+; check user memory
+		jsr checkUserSpace
+		bcs _startFlashing
+		rts
+				
 ; init flasher
+_startFlashing
         jsr finit
         jsr fenable
         jsr fdetect
