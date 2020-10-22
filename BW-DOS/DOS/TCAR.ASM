@@ -279,7 +279,7 @@ start
 
 ; read sys file        
         jsr open
-        bmi prserr
+        bmi opnerr
                 
 rdnext  jsr input       ; read line
         bmi filerr
@@ -297,6 +297,14 @@ rdnext  jsr input       ; read line
         inc lcnt
         jmp rdnext
 
+; exit with open error                  
+opnerr  jsr close
+        ldx #<erropn.begin
+        ldy #>erropn.begin
+        lda #erropn.end-erropn.begin
+        jsr print
+        rts
+
 ; exit with parse error                  
 prserr  jsr close
         ldx #<errprs.begin
@@ -306,7 +314,7 @@ prserr  jsr close
         jsr list
         rts
 
-; exit with file error                  
+; exit with file error
 filerr  lda #XIO.STAT.EOF     ; ignore end of file
         cmp IOCB1.STAT
         beq filend
@@ -410,45 +418,6 @@ _nocar  lda #$00        ; set cartridge flag
 
 ; THE END
 
-
-; messages        
-
-startmsg.begin
-        .byte 'CAR for The!Cart ver44bw hjx',$9B
-startmsg.end
-
-errprs.begin
-        .byte '  Error - no parameter',$9b
-errprs.end
-
-errfil.begin
-        .byte '  Error - TCAR.SYS',$9b
-        .byte '  Parsing line $'
-errfil.line
-        .byte 'XX',$9B
-errfil.end
-
-errnfd.begin
-        .byte '  Error - not found',$9b
-errnfd.end
-
-erruse.begin
-        .byte '  Use TCAR name:',$9B
-erruse.end
-
-; variables
-
-lcnt    .byte $01        
-paridy  .byte $00
-mode    .byte $00
-bankl   .byte $00
-bankh   .byte $00
-        
-fname   .byte 'D1:>TCAR.CFG',$9b
-lbuffer .byte '    '
-pbuffer .byte '________________',$9b,$FF
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
 ; List 
@@ -458,11 +427,17 @@ list    ldx #<erruse.begin
         lda #erruse.end-erruse.begin
         jsr print
         
+        lda #$01
+        sta lcnt
+        
         jsr open
-_list   jsr input       ; read line
-        bmi _endlst
+		bpl _list
+		jmp opnerr
 
-        lda #' '        ; reset current mark
+_list   jsr input       ; read line
+        bmi _lsterr
+
+_lnext	lda #' '        ; reset current mark
         sta lbuffer+3
         
         jsr rpara
@@ -482,17 +457,23 @@ _list   jsr input       ; read line
         lda #'>'        ; set current mark
         sta lbuffer+3
 
-_print  lda #$9b        ; set return after name
-        sta pbuffer+8
+_print
+;		lda #$9b        ; set return after name
+;        sta pbuffer+8
 
         ldx #<lbuffer
         ldy #>lbuffer
-        lda #$0d
+        lda #$15
         jsr print
         
+        inc lcnt
         jmp _list 
 
-_endlst jsr close
+_lsterr lda #XIO.STAT.EOF     ; ignore end of file
+        cmp IOCB1.STAT
+        beq _lstend
+		jmp filerr
+_lstend	jsr close
         rts
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -673,6 +654,51 @@ close   lda #XIO.CLOSE
         ldx #$10
         jsr CIOV
         rts
+
+
+
+; messages        
+
+startmsg.begin
+        .byte 'CAR for The!Cart ver45bw hjx',$9B
+startmsg.end
+
+errprs.begin
+        .byte '  Error - no parameter',$9b
+errprs.end
+
+errfil.begin
+        .byte '  Error - D1:TCAR.CFG',$9b
+        .byte '  Parsing line $'
+errfil.line
+        .byte 'XX',$9B
+errfil.end
+
+errnfd.begin
+        .byte '  Error - not found',$9b
+errnfd.end
+
+erropn.begin
+        .byte '  Error - Cannot open D1:TCAR.CFG',$9b
+erropn.end
+
+erruse.begin
+        .byte '  Use TCAR name:',$9B
+erruse.end
+
+; variables
+
+lcnt    .byte $01        
+paridy  .byte $00
+mode    .byte $00
+bankl   .byte $00
+bankh   .byte $00
+        
+fname   .byte 'D1:>TCAR.CFG',$9b
+lbuffer .byte '    '
+pbuffer .byte '________________',$9b,$FF
+
+
         
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
