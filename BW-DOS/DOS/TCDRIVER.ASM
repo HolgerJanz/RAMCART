@@ -374,11 +374,11 @@ PARAMERR    jsr PRINT
             .byte '  Error: Wrong parameter',$9B,$FF
 PRNHLP
             jsr PRINT
-            .byte '  Parameter: Dx: [Da:]..[Dd:] [/DF]',$9B
+            .byte '  Parameter: Dx: [Da:]..[Dd:] [/D]',$9B
             .byte '    x - number for ramdisk',$9B
             .byte '    a-d - number for flash disk 1-4',$9B
             .byte '    D - install driver only',$9B
-            .byte '    F - format ramdisk only',$9B
+            .byte '        no ramdisk format',$9B
             .byte '  Use shift+return/esc in start menu.',$9B
             .byte '  If Dx: equals Da-d:, Dx: precedes.',$9B,$FF
             rts
