@@ -367,10 +367,11 @@ found   jsr close
 		sta BASICF
 
 ; set TC register
+        lda #$00
         sta TCPBEN		; diable and set:
-        sta TCSBRL      ; disable Secondary Bank 
+        sta TCSBEN      ; disable Secondary Bank 
+        sta TCSBRL
         sta TCSBRH
-        sta TCSBEN
         sta TCMOFR      ; cfg flash r/o
 
         lda mode        ; set mode
@@ -660,7 +661,7 @@ close   lda #XIO.CLOSE
 ; messages        
 
 startmsg.begin
-        .byte 'CAR for The!Cart ver45bw hjx',$9B
+        .byte 'CAR for The!Cart ver46bw hjx',$9B
 startmsg.end
 
 errprs.begin
