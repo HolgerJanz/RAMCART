@@ -1908,7 +1908,6 @@ L3CA6       jsr L096B              ; 20 6B 09
 			.byte $20,$20,$20,$20	; COMTAB-19: DECOUT
 			.byte $20,$20,$20,$20
 			.byte $4C				; jmp SIO
-; CHANGE: set LSIO
 			.word RAMDSIO-$3000		; COMTAB-10: LSIO
 ;			.word $E459				; COMTAB-10: LSIO
 			.byte $FF				; COMTAB-8: ECHOFLG
