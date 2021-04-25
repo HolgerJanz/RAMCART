@@ -117,7 +117,7 @@ TCCOLO = $d5af
 ; Writing to this register disables "The!Cart" registers
 ; at $d5aX.
 
-		org $3000
+		org $500
 start
 ; switch The!Cart
         lda #$00        ; switch off DMA
@@ -150,5 +150,5 @@ start
 ; jump cold start
 		jmp COLDSV 
 		
-		run start
+;		run start
 		

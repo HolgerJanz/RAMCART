@@ -1,5 +1,5 @@
 mads 2.0.9
-Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/COLD.ASM
+Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/DOS/COLD.ASM
      1 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
      2 				; 
      3 				; Cold Start with jump to The!Cart Menu
@@ -119,38 +119,38 @@ Source: /Users/holgerjanz/Documents/ATARI-XL/Projects/RAMCART/BW-DOS/COLD.ASM
    117 				; Writing to this register disables "The!Cart" registers
    118 				; at $d5aX.
    119
-   120 						org $3000
+   120 						org $500
    121 				start
    122 				; switch The!Cart
-   123 FFFF> 3000-3034> A9 00	        lda #$00        ; switch off DMA
-   124 3002 8D 2F 02		        sta SDMCTL
-   125 3005 8D 00 D4		        sta DMACTL
+   123 FFFF> 0500-0534> A9 00	        lda #$00        ; switch off DMA
+   124 0502 8D 2F 02		        sta SDMCTL
+   125 0505 8D 00 D4		        sta DMACTL
    126
-   127 3008 78			        sei             ; mask all interrupts
-   128 3009 A9 00		        lda #$00
-   129 300B 8D 0E D4		        sta NMIEN
+   127 0508 78			        sei             ; mask all interrupts
+   128 0509 A9 00		        lda #$00
+   129 050B 8D 0E D4		        sta NMIEN
    130
    131 				; set TC register
-   132 300E 8D A2 D5		        sta TCPBEN		; diable and set:
-   133 3011 8D A3 D5		        sta TCSBRL      ; disable Secondary Bank 
-   134 3014 8D A4 D5		        sta TCSBRH
-   135 3017 8D A5 D5		        sta TCSBEN
-   136 301A 8D A7 D5		        sta TCMOFR      ; cfg flash r/o
+   132 050E 8D A2 D5		        sta TCPBEN		; diable and set:
+   133 0511 8D A3 D5		        sta TCSBRL      ; disable Secondary Bank 
+   134 0514 8D A4 D5		        sta TCSBRH
+   135 0517 8D A5 D5		        sta TCSBEN
+   136 051A 8D A7 D5		        sta TCMOFR      ; cfg flash r/o
    137
-   138 301D A5 01		        lda TCMOSL.8K   ; set mode
-   139 301F 8D A6 D5		        sta TCMOSL
-   140 3022 AA			        tax				; in X for cmp laetr
+   138 051D A5 01		        lda TCMOSL.8K   ; set mode
+   139 051F 8D A6 D5		        sta TCMOSL
+   140 0522 AA			        tax				; in X for cmp laetr
    141
-   142 3023 A9 00		        lda #$00		; set P bank (Menu = $0000)
-   143 3025 8D A0 D5		        sta TCPBRL
-   144 3028 A9 00		        lda #$00
-   145 302A 8D A1 D5		        sta TCPBRH
+   142 0523 A9 00		        lda #$00		; set P bank (Menu = $0000)
+   143 0525 8D A0 D5		        sta TCPBRL
+   144 0528 A9 00		        lda #$00
+   145 052A 8D A1 D5		        sta TCPBRH
    146 				        
-   147 302D A9 01				lda #$01		; finally enable and do not read/write
-   148 302F 8D A2 D5		        sta TCPBEN		; TC register any further
+   147 052D A9 01				lda #$01		; finally enable and do not read/write
+   148 052F 8D A2 D5		        sta TCPBEN		; TC register any further
    149
    150 				; jump cold start
-   151 3032 4C 77 E4				jmp COLDSV 
+   151 0532 4C 77 E4				jmp COLDSV 
    152 						
-   153 02E0-02E1> 00 30				run start
+   153 				;		run start
    154 						
