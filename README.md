@@ -26,9 +26,7 @@ More Information about:
 
 ---
 
-Holger Janz
-
-<holgerjanz@abbuc.social>
+holgerjanz@abbuc.social
 
 
 
